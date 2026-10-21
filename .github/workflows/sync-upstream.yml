@@ -1,0 +1,33 @@
+name: sync-upstream
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin upstream:upstream
+      - id: sync
+        run: echo "commit=$(scripts/sync-upstream.sh)" >> "$GITHUB_OUTPUT"
+      - if: steps.sync.outputs.commit != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git push origin upstream
+          gh pr list --head upstream --base main --state open --json number --jq 'length' | grep -qx 0 || exit 0
+          gh pr create --head upstream --base main \
+            --title "Sync ${{ steps.sync.outputs.commit }}" \
+            --body "Merges the latest cursor/plugins/pstack into main. Follow MIRROR.md: if the audit check fails, add rows to CURSOR-DEPENDENCIES.md and the Orca handling before merging. Merge with a merge commit, never squash, so the upstream branch stays an ancestor of main."
