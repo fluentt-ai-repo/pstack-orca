@@ -5,6 +5,8 @@ paths: ["**/*.ts", "**/*.tsx"]
 disable-model-invocation: true
 ---
 
+> **In Orca** (`ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+
 # TypeScript best practices
 
 Apply the **type-system-discipline** principle skill first.

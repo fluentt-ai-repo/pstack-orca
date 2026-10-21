@@ -4,6 +4,8 @@ description: "Make a task deeper, not bigger, then rewrite the prompt. Use for /
 disable-model-invocation: true
 ---
 
+> **In Orca** (`ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+
 I want a deeper version of this task, not a bigger one. Before rewriting it, do four things:
 
 1. Say what a top professional in this field would do here that I'm not asking for.

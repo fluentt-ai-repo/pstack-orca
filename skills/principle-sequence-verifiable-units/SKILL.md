@@ -4,6 +4,8 @@ description: "Apply to multi-step work (sweeps, migrations, runs of similar edit
 disable-model-invocation: true
 ---
 
+> **In Orca** (`ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+
 # Sequence work into verifiable units
 
 Order work as a sequence of small units, each ending in a state you can check, and don't advance until the current one is green.
