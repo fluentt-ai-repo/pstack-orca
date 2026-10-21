@@ -1,0 +1,21 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git fetch origin upstream:upstream
+      - name: Every Cursor dependency upstream has a row in CURSOR-DEPENDENCIES.md
+        run: node scripts/audit-cursor-deps.mjs
+      - name: Every orca command we reference exists in the snapshotted Orca
+        run: node scripts/check-orca-commands.mjs
+      - name: Every skill that needs Orca handling points at orca-harness
+        run: node scripts/apply-orca-pointer.mjs --check
