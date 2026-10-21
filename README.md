@@ -1,3 +1,41 @@
+<!-- mirror:start — this section is specific to pstack-orca. Everything after mirror:end is the upstream README from cursor/plugins/pstack, unchanged. To sync, follow MIRROR.md. -->
+# pstack for Orca
+
+> **Mirror** of [`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack), adapted for [Orca](https://github.com/stablyai/orca) running Claude Code, Codex, and Grok.
+
+pstack splits work by model family: Grok writes code, Opus judges, and review panels mix families. Inside one Claude Code or Codex session, only that vendor's models are reachable, so those panels collapse to one family. Orca runs all three agents side by side and starts any of them as a supervised worker. This fork maps pstack's Cursor tools onto Orca so the panels stay mixed.
+
+Cursor's original README is [further down this page](#pstack).
+
+## Install
+
+```bash
+npx skills add ynginkim/pstack-orca -g -a claude-code -a codex
+ln -s ../../.agents/skills/<name> ~/.grok/skills/<name>   # Grok reads ~/.grok/skills; link each skill you want
+```
+
+Then run `/setup-pstack` to write `~/.agents/pstack-models.md`, and link it so Claude Code loads it:
+
+```bash
+ln -s ~/.agents/pstack-models.md ~/.claude/rules/pstack-models.md
+```
+
+## What this fork adds
+
+| File | What it is |
+| --- | --- |
+| [`skills/orca-harness/SKILL.md`](./skills/orca-harness/SKILL.md) | The adapter. Maps every Cursor name (`Task`, model slugs, `environment: "cloud"`, `/loop`, Automations, transcripts) to Orca or to the agent's own tool. Each skill that needs it starts with a one-line pointer to it. |
+| [`CURSOR-DEPENDENCIES.md`](./CURSOR-DEPENDENCIES.md) | Every Cursor-dependent line in upstream pstack, with its Orca handling. CI fails when upstream adds one without a row. |
+| [`MIRROR.md`](./MIRROR.md) | How the `upstream` (Cursor) and `upstream-orca` (Orca's bundled skills) branches are synced into `main`. |
+| `orca/` | Snapshot of the Orca skill guides and command schema this fork was checked against. CI fails when a doc names an `orca` command or flag that is not in it. |
+
+## Status
+
+The adapter and the inventory are done. Rows marked `todo` in `CURSOR-DEPENDENCIES.md` still read as Cursor text in their skill and rely on the adapter's general mapping. `setup-pstack`, the cross-model skills, and the orchestrate playbook get Orca-specific rewrites next.
+<!-- mirror:end -->
+
+---
+
 # pstack
 
 i'm [poteto](https://x.com/poteto). i'm not a president or ceo, but i've worked with millions of lines of code at Meta, Netflix, and Cursor. i'm also on the react core team where i help build and maintain react compiler.
