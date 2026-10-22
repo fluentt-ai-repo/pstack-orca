@@ -38,6 +38,9 @@ const CODE_NOISE = [/\breadonly\b/g, /\b\w+Cursor\b/g, /\bcursor is exhausted\b/
 
 const PATHS = ['skills', 'agents', 'automations', 'docs', 'README.md', 'plugin.json', '.cursor-plugin']
 
+// Files this fork deleted (see docs/removed-cursor-features.md). Their upstream lines need no row.
+const REMOVED = [/^automations\//, /^skills\/make-bot-ui\//]
+
 function upstreamHits() {
   const grepArgs = ['grep', '-n', '-I', '-E', '-e', '.', ref, '--', ...PATHS, ':!*.lock']
   const out = execFileSync('git', grepArgs, { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 })
@@ -47,6 +50,7 @@ function upstreamHits() {
     const m = raw.match(/^[^:]+:([^:]+):(\d+):(.*)$/)
     if (!m) continue
     const [, file, line, text] = m
+    if (REMOVED.some((r) => r.test(file))) continue
     const scanned = CODE_FILE.test(file) ? CODE_NOISE.reduce((t, n) => t.replace(n, ''), text) : text
     if (PATTERNS.some((p) => p.test(scanned))) hits.push({ file, line: Number(line), text })
   }

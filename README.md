@@ -27,6 +27,7 @@ ln -s ~/.agents/pstack-models.md ~/.claude/rules/pstack-models.md
 | [`skills/orca-harness/SKILL.md`](./skills/orca-harness/SKILL.md) | The adapter. Maps every Cursor name (`Task`, model slugs, `environment: "cloud"`, `/loop`, Automations, transcripts) to Orca or to the agent's own tool. Each skill that needs it starts with a one-line pointer to it. |
 | [`CURSOR-DEPENDENCIES.md`](./CURSOR-DEPENDENCIES.md) | Every Cursor-dependent line in upstream pstack, with its Orca handling. CI fails when upstream adds one without a row. |
 | [`MIRROR.md`](./MIRROR.md) | How the `upstream` (Cursor) and `upstream-orca` (Orca's bundled skills) branches are synced into `main`. |
+| [`docs/removed-cursor-features.md`](./docs/removed-cursor-features.md) | The Cursor-only features this fork deleted (benny, `make-bot-ui`), with the Claude Code, Codex, and Orca equivalents checked and what to build on request. |
 | `orca/` | Snapshot of the Orca skill guides and command schema this fork was checked against. CI fails when a doc names an `orca` command or flag that is not in it. |
 
 ## Status
@@ -174,7 +175,6 @@ to keep [`/poteto-mode`](./skills/poteto-mode/SKILL.md) on across turns, pick it
 | [`/swarm`](./skills/swarm/SKILL.md) | you want N parallel workers across different slices or races, then one aggregated report. |
 | [`/interrogate`](./skills/interrogate/SKILL.md) | you have a diff and want different models to try to break it, including a strict code-quality lens. |
 | [`/automate-me`](./skills/automate-me/SKILL.md) | you want your own `-mode` skill, drafted from how you've actually worked. |
-| [`/make-bot-ui`](./skills/make-bot-ui/SKILL.md) | you want a page or dashboard whose buttons wake a Grok Bot over a webhook, including the sender-key handoff and Tailscale. |
 | [`/setup-pstack`](./skills/setup-pstack/SKILL.md) | you want to pick which models pstack uses per role. detects your models and writes a config rule. |
 | [`/reflect`](./skills/reflect/SKILL.md) | a long task landed and you want the recipe captured as a skill edit. |
 | [`/correct`](./skills/correct/SKILL.md) | you keep correcting agents for the same mistakes. mines history for mistake classes, fixes each at the highest level that works (architecture, then types, lint, and ci, then tests, with docs last), and keeps a table pairing each rule with what enforces it. |
@@ -315,11 +315,9 @@ models are configurable too. type [`/setup-pstack`](./skills/setup-pstack/SKILL.
 
 when a default changes, a rule written before the change still pins the old default. delete those role lines, or delete the file, then run `/setup-pstack` again. a rerun keeps any role whose model differs from the default.
 
-## automations
+## removed: automations and bot ui
 
-pstack also ships a dormant [benny automation pack](./automations/benny/). benny triages slack issue reports, then reproduces and fixes confirmed bugs with real ui evidence. its files are not registered as slash skills.
-
-to set it up, point cursor at [`FOR_AGENTS.md`](./automations/benny/FOR_AGENTS.md). setup copies the pack into the target repository at `.cursor/automations/benny/`, enables pstack there for shared skills, and keeps user configuration outside the copied pack. benny runs on cursor automations, so it is cursor-only.
+the benny automation pack and the `/make-bot-ui` skill only work in cursor, so this fork removed them. [`docs/removed-cursor-features.md`](./docs/removed-cursor-features.md) records what each did, what claude code, codex, and orca offer instead, and how to rebuild them.
 
 ## license
 
