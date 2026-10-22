@@ -40,6 +40,8 @@ const PATHS = ['skills', 'agents', 'automations', 'docs', 'README.md', 'plugin.j
 
 // Files this fork deleted (see docs/removed-cursor-features.md). Their upstream lines need no row.
 const REMOVED = [/^automations\//, /^skills\/make-bot-ui\//]
+// Skills rewritten by hand (scripts/rewritten.json). scripts/lint-rewritten.mjs keeps Cursor wording out of them.
+const REWRITTEN = JSON.parse(readFileSync(join(root, 'scripts/rewritten.json'), 'utf8')).paths
 
 function upstreamHits() {
   const grepArgs = ['grep', '-n', '-I', '-E', '-e', '.', ref, '--', ...PATHS, ':!*.lock']
@@ -50,7 +52,7 @@ function upstreamHits() {
     const m = raw.match(/^[^:]+:([^:]+):(\d+):(.*)$/)
     if (!m) continue
     const [, file, line, text] = m
-    if (REMOVED.some((r) => r.test(file))) continue
+    if (REMOVED.some((r) => r.test(file)) || REWRITTEN.some((r) => file.startsWith(r))) continue
     const scanned = CODE_FILE.test(file) ? CODE_NOISE.reduce((t, n) => t.replace(n, ''), text) : text
     if (PATTERNS.some((p) => p.test(scanned))) hits.push({ file, line: Number(line), text })
   }

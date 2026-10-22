@@ -19,6 +19,9 @@ const ANY_POINTER = /^> \*\*In Orca\*\* \(.*\): read `\.\.\/orca-harness\/SKILL\
 
 const NEEDS_POINTER = new Set(['orca', 'agent-native', 'fallback-only', 'skip'])
 
+// Skills rewritten by hand carry no Cursor names, so they need no pointer (scripts/rewritten.json).
+const rewritten = JSON.parse(readFileSync(join(root, 'scripts/rewritten.json'), 'utf8')).paths
+
 const skills = new Set()
 for (const line of readFileSync(join(root, 'CURSOR-DEPENDENCIES.md'), 'utf8').split('\n')) {
   if (!/^\| CD-\d+/.test(line)) continue
@@ -26,7 +29,7 @@ for (const line of readFileSync(join(root, 'CURSOR-DEPENDENCIES.md'), 'utf8').sp
   const file = cells[2].replace(/`/g, '').replace(/:\d+$/, '')
   const [category, handling] = [cells[4], cells[6]]
   const m = file.match(/^skills\/([^/]+)\//)
-  if (m && NEEDS_POINTER.has(handling) && category !== 'frontmatter') skills.add(m[1])
+  if (m && NEEDS_POINTER.has(handling) && category !== 'frontmatter' && !rewritten.some((p) => file.startsWith(p))) skills.add(m[1])
 }
 
 const stale = []

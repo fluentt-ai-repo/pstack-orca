@@ -484,9 +484,9 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 | CD-399 | `skills/why/references/sources/slack.md:5` | `` It may require `mcp_auth`. If authentication fails, stop `` | tool-name | `mcp_auth` is Cursor's MCP OAuth tool. | agent-native | Claude `/mcp` (interactive only), Codex `codex mcp login <server>`. A headless Orca worker cannot do OAuth, so report the gap. | todo |
 | CD-400 | `skills/why/references/synthesizer-prompt.md:44` | `check it by reading the codebase or calling MCP tools` | implicit | Assumes the synthesizer subagent has the parent's MCPs. | fallback-only | Same as why:13 (MCP). | todo |
 
-## Setup and help (setup-pstack, poteto-help)
+## Setup and help (poteto-help; setup-pstack was rewritten by hand)
 
-66 rows.
+30 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -520,42 +520,6 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 | CD-428 | `skills/poteto-help/references/prompting.md:41` | `` Write done as checks every iteration can run, and give `/loop` `` | automation | Cursor `/loop`. | orca | Same as poteto-help:145. | todo |
 | CD-429 | `skills/poteto-help/references/recipes.md:7` | `/poteto-mode read <thread>. restate the underlying issue` | skill-path | Cursor slash-command skill invocation, used throughout the file. | agent-native | Claude `/pstack:<name>`, Codex `$<name>`, Grok its skill invocation. | todo |
 | CD-430 | `skills/poteto-help/references/recipes.md:45` | `/loop until done` | automation | Cursor `/loop`. | orca | Same as poteto-help:145. | todo |
-| CD-431 | `skills/setup-pstack/SKILL.md:3` | `writes an always-applied rule that overrides the skill defaults` | frontmatter | Describes Cursor's always-applied rule type. The missing `disable-model-invocation` lets Cursor auto-load the skill. | agent-native | Reword to "writes the pstack model config". Claude `~/.claude/rules/*.md` auto-loads; Codex and Grok read the file explicitly. | todo |
-| CD-432 | `skills/setup-pstack/SKILL.md:8` | `` Write `~/.cursor/rules/pstack-models.mdc`, an always-applied rule `` | settings-path | Cursor rule file target. | agent-native | Claude `~/.claude/rules/pstack-models.md` (auto-loaded). Codex and Grok need a shared `~/.pstack/models.md` that skills read explicitly (never `AGENTS.md`). Orca has no config store for this. | todo |
-| CD-433 | `skills/setup-pstack/SKILL.md:14` | `` Enumerate the model slugs you can pass to a `Task` subagent `` | tool-name | Model detection via Cursor's Task `model` enum. | orca | Read `~/Library/Application Support/orca/agent-model-catalog.json`: `jq -r '.entries[] \| .agent as $a \| .discovered.models[] \| "\($a) \(.id) \([.efforts[].value]\|join(","))"'`. Here it gives claude (opus/sonnet/haiku/fable/...), codex (gpt-6.1-sol...) and grok (grok-4.7, grok-4.7-build-fast, ...). Outside Orca, use the Claude `Agent` model enum or Codex `codex` model config. | todo |
-| CD-434 | `skills/setup-pstack/SKILL.md:14` | `If Cursor also exposes a models API or CLI` | implicit | Cursor entitlement API. | orca | The catalog file above is Orca's equivalent. There is no `orca` CLI verb for model listing, so read the file. | todo |
-| CD-435 | `skills/setup-pstack/SKILL.md:14` | `` The aliases `inherit-parent` and `auto` are always valid `` | model-slug | Cursor Auto and parent aliases. | orca | Means "omit `--model`/`--effort` on worker-start", so the agent uses its own default. | todo |
-| CD-436 | `skills/setup-pstack/SKILL.md:18` | `` If `~/.cursor/rules/pstack-models.mdc` already exists, read it `` | settings-path | Cursor rule path. | agent-native | Read the harness file from setup-pstack:8. | todo |
-| CD-437 | `skills/setup-pstack/SKILL.md:22` | `Prefer AskQuestion over free text.` | tool-name | Cursor's AskQuestion tool. | agent-native | Claude `AskUserQuestion` (absent in `-p`), Codex/Grok plain text. Inside an Orca worker, `orca orchestration ask --question ... --options <csv>`. | todo |
-| CD-438 | `skills/setup-pstack/SKILL.md:29` | `` The effort token is the last token, or the one before a trailing `fast` `` | model-slug | Budget math parses effort out of the Cursor slug string. | orca | Store each role as `<agent> <model> <effort>`. Budget sets the `--effort` value, clamped to that model's `efforts[]` in the catalog (grok-4.7 max is xhigh, opus max is max, codex gpt-6.x up to ultra). | todo |
-| CD-439 | `skills/setup-pstack/SKILL.md:29` | `` `unlimited` turns `claude-opus-5-5-xhigh` into `claude-opus-5-5-max` `` | model-slug | Cursor slug arithmetic. | orca | `claude opus max`. Grok stays `grok grok-4.7-build-fast xhigh`. Small budget gives `claude opus medium` and `grok grok-4.7-build-fast medium`. | todo |
-| CD-440 | `skills/setup-pstack/SKILL.md:31` | `Prefer AskQuestion over free text.` | tool-name | Cursor AskQuestion. | agent-native | Same as setup-pstack:22. | todo |
-| CD-441 | `skills/setup-pstack/SKILL.md:31` | `which is how Auto users stay on Auto` | model-slug | Cursor Auto model mode. | skip | No Auto in Orca agents. `inherit-parent` just omits `--model`. | todo |
-| CD-442 | `skills/setup-pstack/SKILL.md:35` | `Every real slug written must be in the detected set` | model-slug | Validates against Cursor slugs. | orca | Validate `(agent, model, effort)` against agent-model-catalog.json entries and `efforts[].value`. | todo |
-| CD-443 | `skills/setup-pstack/SKILL.md:39` | `` Write `~/.cursor/rules/pstack-models.mdc` with `alwaysApply: true` `` | settings-path | Cursor rule file plus always-apply semantics. | agent-native | Claude `~/.claude/rules/pstack-models.md` with no frontmatter. Codex and Grok use `~/.pstack/models.md`, read on demand. | todo |
-| CD-444 | `skills/setup-pstack/SKILL.md:43` | `description: pstack per-role model choices (overrides skill defaults)` | frontmatter | Cursor `.mdc` frontmatter. | skip | Omit frontmatter in non-Cursor files. | todo |
-| CD-445 | `skills/setup-pstack/SKILL.md:44` | `alwaysApply: true` | frontmatter | Cursor-only rule field. | skip | Claude auto-loads `~/.claude/rules`. Others read explicitly. | todo |
-| CD-446 | `skills/setup-pstack/SKILL.md:47` | `` the role runs on the parent chat model (omit Task `model`) `` | tool-name | Cursor Task `model` field. | orca | "Omit `--model`/`--effort` on worker-start." | todo |
-| CD-447 | `skills/setup-pstack/SKILL.md:49` | `feature, refactoring: grok-4.7-xhigh-fast` | model-slug | Cursor Grok slug. | orca | `grok grok-4.7-build-fast xhigh` (worker-start `--agent grok --model grok-4.7-build-fast --effort xhigh`). | todo |
-| CD-448 | `skills/setup-pstack/SKILL.md:50` | `bug-fix: grok-4.7-xhigh-fast` | model-slug | Cursor Grok slug. | orca | `grok grok-4.7-build-fast xhigh`. | todo |
-| CD-449 | `skills/setup-pstack/SKILL.md:51` | `perf-issue: grok-4.7-xhigh-fast` | model-slug | Cursor Grok slug. | orca | `grok grok-4.7-build-fast xhigh`. | todo |
-| CD-450 | `skills/setup-pstack/SKILL.md:52` | `hillclimb: grok-4.7-xhigh-fast` | model-slug | Cursor Grok slug. | orca | `grok grok-4.7-build-fast xhigh`. | todo |
-| CD-451 | `skills/setup-pstack/SKILL.md:53` | `judgment and prose: claude-opus-5-5-xhigh` | model-slug | Cursor Claude slug. | orca | `claude opus xhigh`. | todo |
-| CD-452 | `skills/setup-pstack/SKILL.md:54` | `hardest tasks: claude-opus-5-5-xhigh` | model-slug | Cursor Claude slug. | orca | `claude opus xhigh`. | todo |
-| CD-453 | `skills/setup-pstack/SKILL.md:55` | `how explorer: grok-4.7-xhigh-fast` | model-slug | Cursor Grok slug. | orca | `grok grok-4.7-build-fast xhigh`. | todo |
-| CD-454 | `skills/setup-pstack/SKILL.md:56` | `how explainer: claude-opus-5-5-xhigh` | model-slug | Cursor Claude slug. | orca | `claude opus xhigh`. | todo |
-| CD-455 | `skills/setup-pstack/SKILL.md:57` | `why investigators: grok-4.7-xhigh-fast` | model-slug | Cursor Grok slug. | orca | `grok grok-4.7-build-fast xhigh`, if Grok has the needed MCPs. | todo |
-| CD-456 | `skills/setup-pstack/SKILL.md:58` | `why synthesizer: claude-opus-5-5-xhigh` | model-slug | Cursor Claude slug. | orca | `claude opus xhigh`. | todo |
-| CD-457 | `skills/setup-pstack/SKILL.md:59` | `reflect tooling: grok-4.7-xhigh-fast` | model-slug | Cursor Grok slug. | orca | `grok grok-4.7-build-fast xhigh`. | todo |
-| CD-458 | `skills/setup-pstack/SKILL.md:60` | `reflect judgment, divergent, synthesizer: claude-opus-5-5-xhigh` | model-slug | Cursor Claude slug. | orca | `claude opus xhigh`. | todo |
-| CD-459 | `skills/setup-pstack/SKILL.md:61` | `arena runners: claude-opus-5-5-xhigh, grok-4.7-xhigh-fast` | model-slug | Cursor slug panel list. | orca | `claude opus xhigh, grok grok-4.7-build-fast xhigh`. Each entry is one worker-start seat. | todo |
-| CD-460 | `skills/setup-pstack/SKILL.md:62` | `arena cross-judge pool: claude-opus-5-5-xhigh, grok-4.7-xhigh-fast` | model-slug | Cursor slug list. | orca | `claude opus xhigh, grok grok-4.7-build-fast xhigh`. | todo |
-| CD-461 | `skills/setup-pstack/SKILL.md:63` | `swarm workers: grok-4.7-xhigh-fast` | model-slug | Cursor Grok slug. | orca | `grok grok-4.7-build-fast xhigh`. | todo |
-| CD-462 | `skills/setup-pstack/SKILL.md:64` | `architect runners: claude-opus-5-5-xhigh, grok-4.7-xhigh-fast` | model-slug | Cursor slug panel list. | orca | `claude opus xhigh, grok grok-4.7-build-fast xhigh`. | todo |
-| CD-463 | `skills/setup-pstack/SKILL.md:65` | `interrogate reviewers: claude-opus-5-5-xhigh, grok-4.7-xhigh-fast` | model-slug | Cursor slug panel list. | orca | `claude opus xhigh, grok grok-4.7-build-fast xhigh`. Could add `codex gpt-6.1-sol xhigh` as a third seat. | todo |
-| CD-464 | `skills/setup-pstack/SKILL.md:70` | `it applies to new sessions` | implicit | Cursor loads always-applied rules at chat start. | orca | Each worker-start launches a fresh agent session, so Claude workers auto-load `~/.claude/rules`. Other agents read the config file explicitly when a skill runs. | todo |
-| CD-465 | `skills/setup-pstack/SKILL.md:74` | `` invoke `/create-verification-skill` (resolves wherever pstack is installed `` | skill-path | Cursor slash resolution across workspace, user and plugin skill dirs. | agent-native | Claude `/pstack:create-verification-skill` or Read `<pstack>/skills/create-verification-skill/SKILL.md`. Codex `$create-verification-skill`. | todo |
-| CD-466 | `skills/setup-pstack/SKILL.md:78` | `` invoke `/create-formal-verification-skill` (resolves wherever pstack is installed `` | skill-path | Cursor slash resolution. | agent-native | Claude `/pstack:create-formal-verification-skill` or Read its SKILL.md. Codex `$create-formal-verification-skill`. | todo |
 
 ## Other skills
 

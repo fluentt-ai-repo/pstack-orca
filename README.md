@@ -28,11 +28,12 @@ ln -s ~/.agents/pstack-models.md ~/.claude/rules/pstack-models.md
 | [`CURSOR-DEPENDENCIES.md`](./CURSOR-DEPENDENCIES.md) | Every Cursor-dependent line in upstream pstack, with its Orca handling. CI fails when upstream adds one without a row. |
 | [`MIRROR.md`](./MIRROR.md) | How the `upstream` (Cursor) and `upstream-orca` (Orca's bundled skills) branches are synced into `main`. |
 | [`docs/removed-cursor-features.md`](./docs/removed-cursor-features.md) | The Cursor-only features this fork deleted (benny, `make-bot-ui`), with the Claude Code, Codex, and Orca equivalents checked and what to build on request. |
+| [`docs/decursor-progress.md`](./docs/decursor-progress.md) | Which skills are rewritten by hand, the rules used, and how each rewrite was tested. |
 | `orca/` | Snapshot of the Orca skill guides and command schema this fork was checked against. CI fails when a doc names an `orca` command or flag that is not in it. |
 
 ## Status
 
-The adapter and the inventory are done. Rows marked `todo` in `CURSOR-DEPENDENCIES.md` still read as Cursor text in their skill and rely on the adapter's general mapping. `setup-pstack`, the cross-model skills, and the orchestrate playbook get Orca-specific rewrites next.
+The adapter and the inventory are done. This fork is now rewriting skills by hand so they carry no Cursor wording and run on Claude Code, Codex, and Grok on their own, with Orca adding cross-agent workers. `setup-pstack` is the first one done. [`docs/decursor-progress.md`](./docs/decursor-progress.md) lists the rewrite rules, the order, and how each unit was checked. Every other skill still reads as Cursor text and relies on the adapter's general mapping.
 <!-- mirror:end -->
 
 ---
