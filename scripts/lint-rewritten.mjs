@@ -27,10 +27,16 @@ function* files(dir) {
   }
 }
 
+// A rewritten skill may keep a block of old wording between these markers while the skills it routes to are still being rewritten.
+const TRANSITION = /<!-- transition:start -->[\s\S]*?<!-- transition:end -->/g
+
 const hits = []
 for (const rel of paths) {
-  for (const file of files(join(root, rel))) {
+  const target = join(root, rel)
+  const list = statSync(target).isDirectory() ? [...files(target)] : [target]
+  for (const file of list) {
     readFileSync(file, 'utf8')
+      .replace(TRANSITION, (block) => block.replace(/[^\n]/g, ''))
       .split('\n')
       .forEach((text, i) => {
         for (const [re, why] of BANNED) if (re.test(text)) hits.push(`${file.slice(root.length + 1)}:${i + 1}  ${why}: ${text.trim().slice(0, 100)}`)

@@ -56,11 +56,11 @@ Before your first worker, run `orca skills get orchestration` and follow its coo
 
 Every spec ends with: "Write your full result to `<report path>`. Then send `worker_done` with `--report-path` as your preamble instructs."
 
-A Grok worker may ignore `--model` and use the model in `~/.grok/config.toml`. `worker-start`'s notes do not list Grok for `--model`. When the receipt shows a different model, say so in your reply.
+Orca refuses `--model` and `--effort` for Grok. `worker-start` exits 1 with `Agent grok does not support launch-time model selection. Omit --model to run the model from its own config.` Start a Grok worker with `--agent grok` alone. It runs the model in `~/.grok/config.toml`, and `worker-show` reports `launch.effective` as null. Read the model that actually ran from the Grok session record (`current_model_id` in `~/.grok/sessions/<url-encoded cwd>/<session>/summary.json`) and say so in your reply.
 
 ## Models
 
-The settings file is `~/.agents/pstack-models.md`. Claude Code loads it through the symlink `~/.claude/rules/pstack-models.md`. Codex and Grok read it at task start. Each role line is `<role>: <agent> <model> <effort>`, and panel roles list several triples separated by commas:
+The settings file is `~/.agents/pstack-models.md`. Skills read it at the start of a task. `/setup-pstack` writes it. Each role line is `<role>: <agent> <model> <effort>`, and panel roles list several triples separated by commas:
 
 ```text
 # budget: high

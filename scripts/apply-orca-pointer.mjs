@@ -34,6 +34,7 @@ for (const line of readFileSync(join(root, 'CURSOR-DEPENDENCIES.md'), 'utf8').sp
 
 const stale = []
 for (const name of [...skills].sort()) {
+  if (rewritten.some((p) => `skills/${name}/SKILL.md`.startsWith(p))) continue
   const path = join(root, 'skills', name, 'SKILL.md')
   const text = readFileSync(path, 'utf8')
   if (text.includes(POINTER)) continue

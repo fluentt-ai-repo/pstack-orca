@@ -1,4 +1,7 @@
 {
   "_comment": "Skills this fork rewrote by hand so they carry no Cursor wording. The mirror audit skips them, the Orca pointer is not added to them, and scripts/lint-rewritten.mjs keeps Cursor wording out of them.",
-  "paths": ["skills/setup-pstack/"]
+  "paths": [
+    "skills/setup-pstack/",
+    "skills/poteto-mode/SKILL.md"
+  ]
 }

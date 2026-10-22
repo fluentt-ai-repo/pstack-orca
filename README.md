@@ -14,11 +14,7 @@ npx skills add ynginkim/pstack-orca -g -a claude-code -a codex
 ln -s ../../.agents/skills/<name> ~/.grok/skills/<name>   # Grok reads ~/.grok/skills; link each skill you want
 ```
 
-Then run `/setup-pstack` to write `~/.agents/pstack-models.md`, and link it so Claude Code loads it:
-
-```bash
-ln -s ~/.agents/pstack-models.md ~/.claude/rules/pstack-models.md
-```
+Then run `/setup-pstack` (`$setup-pstack` in Codex) once to write `~/.agents/pstack-models.md`. Claude Code, Codex, and Grok share that file. Skills read it at the start of a task, so there is nothing to link.
 
 ## What this fork adds
 
