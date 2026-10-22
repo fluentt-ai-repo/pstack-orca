@@ -10,8 +10,12 @@ import { join } from 'node:path'
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim()
 const check = process.argv.includes('--check')
 
+// Orca terminals export only ORCA_CLI_BIN_DIR; Orca chat sessions export it and ORCA_CLI_COMMAND. Gate on either.
 export const POINTER =
-  '> **In Orca** (`ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.'
+  '> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.'
+
+// Any earlier wording of the pointer. Replaced in place so a rerun never adds a second line.
+const ANY_POINTER = /^> \*\*In Orca\*\* \(.*\): read `\.\.\/orca-harness\/SKILL\.md`.*$/m
 
 const NEEDS_POINTER = new Set(['orca', 'agent-native', 'fallback-only', 'skip'])
 
@@ -32,6 +36,10 @@ for (const name of [...skills].sort()) {
   if (text.includes(POINTER)) continue
   stale.push(name)
   if (check) continue
+  if (ANY_POINTER.test(text)) {
+    writeFileSync(path, text.replace(ANY_POINTER, POINTER))
+    continue
+  }
   const end = text.indexOf('\n---\n', 4)
   if (!text.startsWith('---\n') || end < 0) throw new Error(`${path}: no frontmatter`)
   const at = end + '\n---\n'.length

@@ -4,7 +4,7 @@ description: "Apply to any non-trivial work, not just bulk work: edits, migratio
 disable-model-invocation: true
 ---
 
-> **In Orca** (`ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
 # Build the Lever
 
 When the work isn't trivial, build the tool that does it instead of doing it by hand.

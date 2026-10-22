@@ -4,7 +4,7 @@ description: "Generate a project-local skill that formally verifies the code whe
 disable-model-invocation: true
 ---
 
-> **In Orca** (`ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
 
 # Create a formal verification skill
 

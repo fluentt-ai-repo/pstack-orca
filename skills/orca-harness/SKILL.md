@@ -1,6 +1,6 @@
 ---
 name: orca-harness
-description: Maps pstack's Cursor names (Task, AskQuestion, model slugs, environment cloud, /loop, Automations, transcripts) to Orca and the agent it runs. Read before following any pstack skill when ORCA_CLI_COMMAND is set.
+description: Maps pstack's Cursor names (Task, AskQuestion, model slugs, environment cloud, /loop, Automations, transcripts) to Orca and the agent it runs. Read before following any pstack skill when ORCA_CLI_BIN_DIR or ORCA_CLI_COMMAND is set.
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 pstack skills use Cursor names. In [Orca](https://github.com/stablyai/orca), read this file once per session, then map each Cursor name in a skill with the tables below. Every Cursor-dependent line in pstack, with its handling, is listed in [`CURSOR-DEPENDENCIES.md`](https://github.com/ynginkim/pstack-orca/blob/main/CURSOR-DEPENDENCIES.md). This file is the rule set those rows apply.
 
-You are in Orca when the `ORCA_CLI_COMMAND` environment variable is set. Run every Orca command with that executable. Below, `orca` stands for it. Outside Orca, skip this file. In Claude Code outside Orca, use `docs/harness/claude-code.md`.
+You are in Orca when the `ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` environment variable is set. Orca terminals set only `ORCA_CLI_BIN_DIR`. Orca chat sessions set both. Run Orca commands with `$ORCA_CLI_COMMAND` when it is set, otherwise with `orca`, which is on PATH in Orca terminals (`$ORCA_CLI_BIN_DIR/orca` if it is not). Below, `orca` stands for that executable. Outside Orca, skip this file. In Claude Code outside Orca, use `docs/harness/claude-code.md`.
 
 `<pstack>` means the folder that holds this skill's folder, such as `~/.claude/skills/` or `~/.agents/skills/`. A pstack skill named `name` is at `<pstack>/name/SKILL.md`. `docs/` and `agents/` are not installed with the skills. Read them from `https://github.com/ynginkim/pstack-orca/blob/main/<path>`.
 

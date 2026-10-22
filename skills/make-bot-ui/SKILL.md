@@ -7,7 +7,7 @@ description: >-
 disable-model-invocation: true
 ---
 
-> **In Orca** (`ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
 # How to make a bot UI
 
 Build a page the user clicks. A server on this computer POSTs JSON to a webhook routine. The bot wakes with that JSON. Keep the sender key on the server. Do not put the sender key in the browser, in chat, or in this skill.

@@ -4,7 +4,7 @@ description: "Explain a body of work plainly so a person actually understands it
 disable-model-invocation: true
 ---
 
-> **In Orca** (`ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
 
 # Teach
 
