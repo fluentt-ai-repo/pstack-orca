@@ -4,6 +4,8 @@ description: "Draw what an app's user sees as a Mermaid statechart from a TLA+ m
 disable-model-invocation: true
 ---
 
+> **In Orca** (`ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+
 # Statechart
 
 The chart shows what an app's user sees. A PM reads it to decide whether that behavior is right. Label each state with what is on the screen, such as "Paying". Label each step with what the user does or sees happen, such as "tap Pay" or "the charge goes through". Keep variable and action names out of labels. The scripts call this user the reader, as in `readerActions` and reader steps.

@@ -2,7 +2,7 @@
 
 Every place where upstream pstack ([`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)) depends on Cursor, and how this fork handles it in Orca. The rules these rows apply live in [`skills/orca-harness/SKILL.md`](./skills/orca-harness/SKILL.md). This file is the checklist that proves nothing was missed.
 
-968 rows. Locations refer to the `upstream` branch.
+970 rows. Locations refer to the `upstream` branch.
 
 ## How this list stays complete
 
@@ -24,7 +24,7 @@ The grep only finds what it can name. Rows for implicit dependencies, such as "s
 | Handling | Rows |
 | --- | --- |
 | `orca` | 374 |
-| `agent-native` | 314 |
+| `agent-native` | 316 |
 | `keep` | 137 |
 | `fallback-only` | 87 |
 | `skip` | 56 |
@@ -35,9 +35,9 @@ The grep only finds what it can name. Rows for implicit dependencies, such as "s
 | `automation` | 128 |
 | `skill-path` | 89 |
 | `model-slug` | 81 |
-| `cursor-ui` | 70 |
+| `cursor-ui` | 71 |
 | `settings-path` | 69 |
-| `frontmatter` | 67 |
+| `frontmatter` | 68 |
 | `tool-name` | 54 |
 | `bugbot` | 52 |
 | `subagent-field` | 47 |
@@ -557,7 +557,7 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 
 ## Other skills
 
-201 rows.
+203 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -738,6 +738,8 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 | CD-641 | `skills/show-me-your-work/SKILL.md:67` | `spawn a subagent on a different model family` | model-slug | Assumes Cursor Task can pick any vendor's model; Claude Code `Agent` is Claude-only, and Grok may lock to xAI. | orca | Run `orca orchestration worker-start --spec "<review trail at abs path + transcript path>" --worktree current --agent codex --model <gpt id> --effort high`, or `--agent grok` when the run was Claude. Collect with `orca orchestration check --wait --types worker_done` and `worker-read`. Fallback outside Orca: headless `codex exec` or `grok -p`. | todo |
 | CD-642 | `skills/show-me-your-work/SKILL.md:74` | `reviewed by <model>` | model-slug | Expects a Cursor model slug name. | agent-native | Report the provider model id the worker ran on (from the Orca `worker-show` receipt or the CLI). | todo |
 | CD-643 | `skills/show-me-your-work/scripts/log.sh:1` | `#!/usr/bin/env bash` | script | I read the whole file: it is a plain bash TSV appender with no Cursor paths, APIs or assumptions. | keep | Works as-is in any harness. | n/a |
+| CD-969 | `skills/statechart/SKILL.md:3` | `Use for /statechart` | cursor-ui | Assumes Cursor's bare `/name` slash invocation of plugin skills. | agent-native | Claude Code `/statechart` (skills-CLI install), Codex `$statechart`, Grok `/statechart`. In an Orca worker, name the SKILL.md path in the spec. | todo |
+| CD-970 | `skills/statechart/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Relies on Cursor treating the field as slash-only. | agent-native | Claude Code and Grok honor it. Codex ignores it, so the skill may auto-trigger there. The skill's scripts (`node`, TLC, Mermaid) are harness-neutral. | todo |
 | CD-644 | `skills/tdd/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
 | CD-645 | `skills/tdd/SKILL.md:24` | `manual reproduction command, browser automation, snapshot comparison, log assertion,` | implicit | Not a dependency: "browser automation" is a generic verification technique. | keep | No action. In Orca, `orca goto`/`orca snapshot` can serve as the browser automation. | n/a |
 | CD-646 | `skills/teach/SKILL.md:3` | `` Runs the `how` and `why` skills `` | skill-path | Cursor's skill catalog resolves sibling skills by name. | agent-native | Claude Code `Read <pstack>/skills/how/SKILL.md` and `why/SKILL.md` (Skill tool refuses them); Codex `$how`/`$why` or read the path; Grok reads the path. | todo |
