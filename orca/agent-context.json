@@ -1,5 +1,5 @@
 {
-  "commandCount": 281,
+  "commandCount": 287,
   "commands": [
     {
       "aliases": [],
@@ -225,12 +225,14 @@
         "prompt",
         "model",
         "effort",
+        "surface",
         "focus",
         "retry-launch",
         "page"
       ],
       "notes": [
         "Starts the agent the way a new agent tab does: as a chat when your Chat UI setting is on and the agent and host support it, otherwise as a terminal. The result says which (`outcome.kind`) and why (`receipt.detail`).",
+        "--surface chat|terminal picks for this launch instead of your setting. --surface terminal always runs the agent CLI; --surface chat is refused when Orca can establish before starting anything that this agent cannot open as a chat there. If support cannot be checked, the launch can fall back to a terminal. If chat becomes unavailable after creating a workspace, Orca keeps the workspace, setup and default tabs, then opens a terminal; the receipt explains the fallback.",
         "--worktree defaults to the native folder workspace or worktree containing the current directory. For a new checkout with its agent, use `orca worktree create --agent`.",
         "--model takes a provider model id and --effort a reasoning effort for that model; --effort requires --model. They apply to either surface.",
         "The tab opens without switching focus; pass --focus to switch to it.",
@@ -241,8 +243,8 @@
         "launch"
       ],
       "positionalArgs": [],
-      "summary": "Start an agent in an existing workspace, as a chat or a terminal per your settings",
-      "usage": "orca agent launch --agent <id> [--worktree <selector>] [--prompt <text>] [--model <id>] [--effort <level>] [--focus] [--retry-launch <operationId>] [--json]"
+      "summary": "Start an agent in an existing workspace, as a chat or a terminal",
+      "usage": "orca agent launch --agent <id> [--worktree <selector>] [--prompt <text>] [--model <id>] [--effort <level>] [--surface chat|terminal] [--focus] [--retry-launch <operationId>] [--json]"
     },
     {
       "aliases": [],
@@ -436,8 +438,8 @@
       "notes": [
         "Trigger accepts hourly, daily, weekdays, weekly, a 5-field cron expression, or an RRULE string.",
         "When --repo is omitted, the CLI uses the enclosing Orca worktree when one can be resolved from cwd.",
-        "Use --project with --host, or --project-host-setup, to run on a specific project host setup.",
-        "--host runtime:<environment-id> targets that paired Orca server; use the id from `orca environment list`, not the environment name.",
+        "Use --project, or --project-host-setup, to run on a specific project host setup. --project takes the project id or the display name from `orca project list`, and --host is only needed when the project is set up on more than one host.",
+        "--host takes local, ssh:<target-id>, runtime:<environment-id>, or the bare host name `orca host list` prints for any of them.",
         "Use --source-context with a JSON TaskSourceContext when task/provider data should come from a specific host/account; pass null on edit to clear it.",
         "Use --workspace to run in an existing worktree; otherwise the automation creates a new worktree per run.",
         "Use --precheck to run a bounded command before scheduled runs; exit code 0 continues, anything else records a skipped run.",
@@ -450,7 +452,7 @@
       ],
       "positionalArgs": [],
       "summary": "Create a scheduled Orca automation",
-      "usage": "orca automations create --name <name> --trigger <preset|cron|rrule> --prompt <text> --provider <agent> [--precheck <command>] [--repo <selector>|--workspace <selector>|--project <id> [--host <id>]|--project-host-setup <id>] [--json]"
+      "usage": "orca automations create --name <name> --trigger <preset|cron|rrule> --prompt <text> --provider <agent> [--precheck <command>] [--repo <selector>|--workspace <selector>|--project <id-or-name> [--host <host>]|--project-host-setup <id>] [--json]"
     },
     {
       "aliases": [],
@@ -557,8 +559,8 @@
       "argumentMode": "parsed",
       "command": "automations run",
       "examples": [
-        "orca automations run 2f9e...",
-        "orca automations run --id 2f9e... --json"
+        "orca automations run 497bafa9-5a97-4f85-9e48-2b211b8f31fa",
+        "orca automations run --id 497bafa9-5a97-4f85-9e48-2b211b8f31fa --json"
       ],
       "flags": [
         "help",
@@ -567,7 +569,10 @@
         "environment",
         "id"
       ],
-      "notes": [],
+      "notes": [
+        "Use the full automation UUID from orca automations list; shortened prefixes are not accepted.",
+        "A queued or dispatching run has been accepted but may not have a workspace or terminal yet. Use orca automations runs --id <automation-id> to follow its progress."
+      ],
       "path": [
         "automations",
         "run"
@@ -1937,7 +1942,7 @@
       ],
       "notes": [
         "--environment names a managed Orca server this machine deployed over SSH (see `orca environment list`); it is a selector here, not a routing flag.",
-        "Runs on this machine’s Orca desktop app, the same action as Settings > Managed servers. A runtime without the SSH registry (headless `orca serve`) refuses it."
+        "Runs on this machine’s Orca desktop app, the same action as Settings > Orca on your SSH hosts. A runtime without the SSH registry (headless `orca serve`) refuses it."
       ],
       "path": [
         "environment",
@@ -1966,7 +1971,7 @@
         "Removes the server from this machine without contacting its host, so the SSH host can then be removed. Use it when the host was deleted or can never be reached again. Requires --yes.",
         "Nothing on the host is stopped: if it comes back, orcad may still be running there, and connecting to it again relinks it.",
         "--environment names a managed Orca server this machine deployed over SSH (see `orca environment list`); it is a selector here, not a routing flag.",
-        "Runs on this machine’s Orca desktop app, the same action as Settings > Managed servers. A runtime without the SSH registry (headless `orca serve`) refuses it."
+        "Runs on this machine’s Orca desktop app, the same action as Settings > Orca on your SSH hosts. A runtime without the SSH registry (headless `orca serve`) refuses it."
       ],
       "path": [
         "environment",
@@ -2017,9 +2022,9 @@
         "page"
       ],
       "notes": [
-        "When a rejected build changed profile state, recover refuses rather than restart the previous build over it. --accept-changed-state --yes restores the prelaunch snapshot instead, the same as Restore in Settings > Managed servers; what the rejected build changed is discarded.",
+        "When a rejected build changed profile state, recover refuses rather than restart the previous build over it. --accept-changed-state --yes restores the prelaunch snapshot instead, the same as Restore in Settings > Orca on your SSH hosts; what the rejected build changed is discarded.",
         "--environment names a managed Orca server this machine deployed over SSH (see `orca environment list`); it is a selector here, not a routing flag.",
-        "Runs on this machine’s Orca desktop app, the same action as Settings > Managed servers. A runtime without the SSH registry (headless `orca serve`) refuses it."
+        "Runs on this machine’s Orca desktop app, the same action as Settings > Orca on your SSH hosts. A runtime without the SSH registry (headless `orca serve`) refuses it."
       ],
       "path": [
         "environment",
@@ -2064,7 +2069,7 @@
       ],
       "notes": [
         "--environment names a managed Orca server this machine deployed over SSH (see `orca environment list`); it is a selector here, not a routing flag.",
-        "Runs on this machine’s Orca desktop app, the same action as Settings > Managed servers. A runtime without the SSH registry (headless `orca serve`) refuses it."
+        "Runs on this machine’s Orca desktop app, the same action as Settings > Orca on your SSH hosts. A runtime without the SSH registry (headless `orca serve`) refuses it."
       ],
       "path": [
         "environment",
@@ -2111,7 +2116,7 @@
       ],
       "notes": [
         "--environment names a managed Orca server this machine deployed over SSH (see `orca environment list`); it is a selector here, not a routing flag.",
-        "Runs on this machine’s Orca desktop app, the same action as Settings > Managed servers. A runtime without the SSH registry (headless `orca serve`) refuses it."
+        "Runs on this machine’s Orca desktop app, the same action as Settings > Orca on your SSH hosts. A runtime without the SSH registry (headless `orca serve`) refuses it."
       ],
       "path": [
         "environment",
@@ -2141,7 +2146,7 @@
         "If the host cannot prove orcad exited, the server stays linked and the refusal says why; nothing is removed on a guess. For a host that is gone for good, use `orca environment forget`.",
         "If this server is the default host for new projects, choose another one first. `orca environment cancel-stop` withdraws a stop orcad has not acted on yet.",
         "--environment names a managed Orca server this machine deployed over SSH (see `orca environment list`); it is a selector here, not a routing flag.",
-        "Runs on this machine’s Orca desktop app, the same action as Settings > Managed servers. A runtime without the SSH registry (headless `orca serve`) refuses it."
+        "Runs on this machine’s Orca desktop app, the same action as Settings > Orca on your SSH hosts. A runtime without the SSH registry (headless `orca serve`) refuses it."
       ],
       "path": [
         "environment",
@@ -2169,7 +2174,7 @@
       "notes": [
         "Without --force, an update that would restart over running terminals is deferred and reported, not applied.",
         "--environment names a managed Orca server this machine deployed over SSH (see `orca environment list`); it is a selector here, not a routing flag.",
-        "Runs on this machine’s Orca desktop app, the same action as Settings > Managed servers. A runtime without the SSH registry (headless `orca serve`) refuses it."
+        "Runs on this machine’s Orca desktop app, the same action as Settings > Orca on your SSH hosts. A runtime without the SSH registry (headless `orca serve`) refuses it."
       ],
       "path": [
         "environment",
@@ -2279,7 +2284,8 @@
       "notes": [
         "--line and --column use 1-based positions; --column requires --line. Without --focus, the position is applied when you select the file. Markdown opens in source view for positioning. Older hosts open the file without positioning.",
         "The file opens as a tab in that worktree without changing what you are looking at, even in the worktree on screen. --focus brings you to it; agents should pass --focus only when the user asked to see the file.",
-        "The path may be relative to the selected worktree or an absolute path inside that worktree. When --worktree is omitted, local CLI calls infer the current Orca worktree from cwd."
+        "The path may be relative to the selected worktree or an absolute path inside that worktree. When --worktree is omitted, local CLI calls infer the current Orca worktree from cwd.",
+        "A server with no app window (`orca serve`, orcad) cannot open tabs, so this fails with renderer_unavailable and opens nothing."
       ],
       "path": [
         "file",
@@ -2544,6 +2550,7 @@
       "notes": [
         "Answers \"what can I target and what do I pass\" in one place: this machine, the SSH targets registered on it, and the Orca servers paired with it.",
         "The three kinds are reached differently. A paired Orca server is a connection, selected with --environment <name>. An SSH target is a machine the connected Orca host reaches, selected with --host ssh:<id>. Passing one where the other belongs is the most common way to get an empty or missing-host answer.",
+        "Commands that take --host also accept any name this list prints, such as --host \"this machine\" or --host <ssh-target-name>. A name two hosts share is refused with the exact flag for each.",
         "SSH rows include the detected remote platform after that target has connected (linux, darwin, or win32); disconnected or older targets report platform unknown.",
         "SSH rows also include whether the target is currently connected and its lifecycle status when known.",
         "Paired-server rows come from the pairing store and report platform unknown; ask one server directly with `orca host name --environment <name>`.",
@@ -3443,6 +3450,74 @@
       ],
       "summary": "Add a comment to a Linear issue",
       "usage": "orca linear comment add [<id>] [--current] (--body <text> | --body-file <path|->) [--reply-to <commentId>] [--write-id <uuid>] [--workspace <id>] [--json]"
+    },
+    {
+      "aliases": [
+        [
+          "linear",
+          "comment",
+          "rm"
+        ]
+      ],
+      "argumentMode": "parsed",
+      "command": "linear comment delete",
+      "examples": [
+        "orca linear comment delete <commentId> --json"
+      ],
+      "flags": [
+        "help",
+        "json",
+        "pairing-code",
+        "environment",
+        "workspace",
+        "id"
+      ],
+      "notes": [
+        "Comment ids come from `comment add` output or `orca linear issue <id> --comments --json`."
+      ],
+      "path": [
+        "linear",
+        "comment",
+        "delete"
+      ],
+      "positionalArgs": [
+        "id"
+      ],
+      "summary": "Delete a Linear comment",
+      "usage": "orca linear comment delete <commentId> [--workspace <id>] [--json]"
+    },
+    {
+      "aliases": [],
+      "argumentMode": "parsed",
+      "command": "linear comment edit",
+      "examples": [
+        "orca linear comment edit <commentId> --body \"Updated: ready for review.\"",
+        "orca linear comment edit <commentId> --body-file - --json"
+      ],
+      "flags": [
+        "help",
+        "json",
+        "pairing-code",
+        "environment",
+        "body",
+        "body-file",
+        "workspace",
+        "id"
+      ],
+      "notes": [
+        "Comment ids come from `comment add` output or `orca linear issue <id> --comments --json`.",
+        "Linear only lets a comment be edited by its author."
+      ],
+      "path": [
+        "linear",
+        "comment",
+        "edit"
+      ],
+      "positionalArgs": [
+        "id"
+      ],
+      "summary": "Replace the body of a Linear comment",
+      "usage": "orca linear comment edit <commentId> (--body <text> | --body-file <path|->) [--workspace <id>] [--json]"
     },
     {
       "aliases": [],
@@ -5281,7 +5356,7 @@
       ],
       "notes": [
         "For remote runtimes, --destination must be an absolute parent directory on the remote server.",
-        "--host runtime:<environment-id> targets that paired Orca server; use the id from `orca environment list`, not the environment name.",
+        "--host takes local, ssh:<target-id>, runtime:<environment-id>, or the bare host name `orca host list` prints for any of them.",
         "SSH targets are cloned through the desktop UI because the desktop client owns SSH connections."
       ],
       "path": [
@@ -5290,7 +5365,7 @@
       ],
       "positionalArgs": [],
       "summary": "Make a project available on a host by cloning a repository",
-      "usage": "orca project setup-clone --project <id> --host <host-id> --url <clone-url> --destination <path> [--display-name <name>] [--json]"
+      "usage": "orca project setup-clone --project <id> --host <host> --url <clone-url> --destination <path> [--display-name <name>] [--json]"
     },
     {
       "aliases": [],
@@ -5317,7 +5392,7 @@
       ],
       "notes": [
         "Creates setup metadata without registering a repo compatibility record.",
-        "--host runtime:<environment-id> targets that paired Orca server; use the id from `orca environment list`, not the environment name.",
+        "--host takes local, ssh:<target-id>, runtime:<environment-id>, or the bare host name `orca host list` prints for any of them.",
         "Use setup-existing-folder when Orca should import and manage an actual checkout path now."
       ],
       "path": [
@@ -5326,7 +5401,7 @@
       ],
       "positionalArgs": [],
       "summary": "Create independent project host setup metadata",
-      "usage": "orca project setup-create --project <id> --host <host-id> [--setup-id <id>] [--path <path>] [--kind git|folder] [--display-name <name>] [--worktree-base-path <path>] [--git-username <name>] [--state ready|not-set-up|setting-up|error|unsupported] [--method imported-existing-folder|cloned|provisioned] [--json]"
+      "usage": "orca project setup-create --project <id> --host <host> [--setup-id <id>] [--path <path>] [--kind git|folder] [--display-name <name>] [--worktree-base-path <path>] [--git-username <name>] [--state ready|not-set-up|setting-up|error|unsupported] [--method imported-existing-folder|cloned|provisioned] [--json]"
     },
     {
       "aliases": [],
@@ -5341,6 +5416,7 @@
         "pairing-code",
         "environment",
         "setup",
+        "host",
         "force"
       ],
       "notes": [
@@ -5354,7 +5430,7 @@
       ],
       "positionalArgs": [],
       "summary": "Remove a project host setup",
-      "usage": "orca project setup-delete --setup <setup-id> [--force] [--json]"
+      "usage": "orca project setup-delete --setup <setup-id> [--host <host>] [--force] [--json]"
     },
     {
       "aliases": [],
@@ -5377,7 +5453,7 @@
       ],
       "notes": [
         "For remote runtimes, --path must be an absolute path on the remote server.",
-        "--host runtime:<environment-id> targets that paired Orca server; use the id from `orca environment list`, not the environment name.",
+        "--host takes local, ssh:<target-id>, runtime:<environment-id>, or the bare host name `orca host list` prints for any of them.",
         "SSH targets are set up through the desktop UI because the desktop client owns SSH connections."
       ],
       "path": [
@@ -5386,7 +5462,7 @@
       ],
       "positionalArgs": [],
       "summary": "Make a project available on a host by importing an existing folder",
-      "usage": "orca project setup-existing-folder --project <id> --host <host-id> --path <path> [--kind git|folder] [--display-name <name>] [--json]"
+      "usage": "orca project setup-existing-folder --project <id> --host <host> --path <path> [--kind git|folder] [--display-name <name>] [--json]"
     },
     {
       "aliases": [],
@@ -5402,6 +5478,7 @@
         "pairing-code",
         "environment",
         "setup",
+        "host",
         "display-name",
         "path",
         "worktree-base-path",
@@ -5412,6 +5489,7 @@
       ],
       "notes": [
         "Repo-backed setups mirror safe fields onto the repo record.",
+        "--host picks the setup when the project is set up on more than one host under the same setup id.",
         "Path and availability state changes are only supported for independent setup records."
       ],
       "path": [
@@ -5420,7 +5498,7 @@
       ],
       "positionalArgs": [],
       "summary": "Update project host setup metadata",
-      "usage": "orca project setup-update --setup <setup-id> [--display-name <name>] [--path <path>] [--worktree-base-path <path>] [--git-username <name>] [--kind git|folder] [--state ready|not-set-up|setting-up|error|unsupported] [--method legacy-repo|imported-existing-folder|cloned|provisioned] [--json]"
+      "usage": "orca project setup-update --setup <setup-id> [--host <host>] [--display-name <name>] [--path <path>] [--worktree-base-path <path>] [--git-username <name>] [--kind git|folder] [--state ready|not-set-up|setting-up|error|unsupported] [--method legacy-repo|imported-existing-folder|cloned|provisioned] [--json]"
     },
     {
       "aliases": [],
@@ -5452,7 +5530,7 @@
       ],
       "positionalArgs": [],
       "summary": "List project host setups",
-      "usage": "orca project setups [--project <id>] [--host <host-id>] [--json]"
+      "usage": "orca project setups [--project <id>] [--host <host>] [--json]"
     },
     {
       "aliases": [],
@@ -6413,6 +6491,79 @@
     {
       "aliases": [],
       "argumentMode": "parsed",
+      "command": "speech openai-key clear",
+      "examples": [
+        "orca speech openai-key clear"
+      ],
+      "flags": [
+        "help",
+        "json",
+        "pairing-code",
+        "environment"
+      ],
+      "notes": [],
+      "path": [
+        "speech",
+        "openai-key",
+        "clear"
+      ],
+      "positionalArgs": [],
+      "summary": "Remove the OpenAI key cloud voice dictation uses on this host",
+      "usage": "orca speech openai-key clear [--json]"
+    },
+    {
+      "aliases": [],
+      "argumentMode": "parsed",
+      "command": "speech openai-key set",
+      "examples": [
+        "printf %s \"$OPENAI_API_KEY\" | orca speech openai-key set",
+        "$env:OPENAI_API_KEY | orca speech openai-key set"
+      ],
+      "flags": [
+        "help",
+        "json",
+        "pairing-code",
+        "environment"
+      ],
+      "notes": [
+        "Reads the key from stdin so it never lands in shell history or a process list.",
+        "The host that runs dictation seals it, so a headless `orca serve` host can use it."
+      ],
+      "path": [
+        "speech",
+        "openai-key",
+        "set"
+      ],
+      "positionalArgs": [],
+      "summary": "Save the OpenAI key cloud voice dictation uses on this host, read from stdin",
+      "usage": "orca speech openai-key set [--json] < key-file"
+    },
+    {
+      "aliases": [],
+      "argumentMode": "parsed",
+      "command": "speech openai-key status",
+      "examples": [
+        "orca speech openai-key status --json"
+      ],
+      "flags": [
+        "help",
+        "json",
+        "pairing-code",
+        "environment"
+      ],
+      "notes": [],
+      "path": [
+        "speech",
+        "openai-key",
+        "status"
+      ],
+      "positionalArgs": [],
+      "summary": "Show whether this host has an OpenAI key for cloud voice dictation",
+      "usage": "orca speech openai-key status [--json]"
+    },
+    {
+      "aliases": [],
+      "argumentMode": "parsed",
       "command": "status",
       "examples": [
         "orca status",
@@ -7065,6 +7216,35 @@
     {
       "aliases": [],
       "argumentMode": "parsed",
+      "command": "terminal set-pane-title",
+      "examples": [
+        "orca terminal set-pane-title --terminal term_abc123 --title \"RUNNER\"",
+        "orca terminal set-pane-title --terminal term_abc123 --title \"\" --json"
+      ],
+      "flags": [
+        "help",
+        "json",
+        "pairing-code",
+        "environment",
+        "terminal",
+        "title"
+      ],
+      "notes": [
+        "Sets the title of ONE pane. Split panes share a tab, so terminal rename cannot address one of them; use this command for a single pane.",
+        "Requires the running Orca desktop; headless pane title changes are not supported.",
+        "Pass --title \"\" to clear the pane back to its automatic title."
+      ],
+      "path": [
+        "terminal",
+        "set-pane-title"
+      ],
+      "positionalArgs": [],
+      "summary": "Set or clear the title of one terminal pane",
+      "usage": "orca terminal set-pane-title [--terminal <handle>] --title <text> [--json]"
+    },
+    {
+      "aliases": [],
+      "argumentMode": "parsed",
       "command": "terminal show",
       "examples": [],
       "flags": [
@@ -7401,6 +7581,7 @@
         "prompt",
         "model",
         "effort",
+        "surface",
         "retry-launch",
         "base-branch",
         "reference",
@@ -7422,13 +7603,14 @@
         "This creates a new checkout. For a fresh agent in an existing worktree, use `orca agent launch` instead.",
         "By default, Orca records the new worktree as a child of the caller context when it can infer one from the Orca terminal or current directory.",
         "If --repo is omitted, Orca infers the repo from the current Orca-managed worktree.",
-        "Use --project with --host to create on a ready project host setup without spelling the backing repo id.",
-        "--host runtime:<environment-id> creates on that paired Orca server; use the id from `orca environment list`, not the environment name.",
+        "Use --project to create on a ready project host setup without spelling the backing repo id. --project takes the project id or the display name from `orca project list`.",
+        "--host is only needed when the project is set up on more than one host; with a single setup Orca uses it. When it is ambiguous the error names every host the project is set up on.",
+        "--host takes local, ssh:<target-id>, runtime:<environment-id>, or the bare host name `orca host list` prints for any of them.",
         "For related work, use the inferred parent or pass --parent-worktree active, folder:<id>, or worktree:<worktreeId> to make the relationship explicit. Worktree ids are the full <repo-id>::<path> values returned by `orca worktree list --json`.",
         "Use --no-parent when the new worktree should be independent of the current context.",
         "--no-parent only affects Orca lineage; omit --base-branch to use the repo default base, or pass the default base ref explicitly for independent top-level work.",
         "By default this creates the worktree and its first terminal without switching the active Orca view.",
-        "Pass --agent to start an agent with the worktree, as a chat or a terminal per your Chat UI setting, exactly as a new agent tab does; --prompt sends initial work to it. --model and --effort pick its model and reasoning effort.",
+        "Pass --agent to start an agent with the worktree, as a chat or a terminal per your Chat UI setting, exactly as a new agent tab does; --prompt sends initial work to it. --model and --effort pick its model and reasoning effort, and --surface chat|terminal picks chat or terminal for this launch instead of your setting.",
         "After a lost agent launch reply, re-issue the same command from the same directory on the same host with --retry-launch <operationId> from the error. Never retry as a fresh launch; older hosts require inspecting the workspace first.",
         "With --agent --json, result.launch says what started: launch.outcome.kind (structured chat or terminal), launch.outcome.handle, and launch.receipt.detail for why. An Orca host older than this returns the terminal agent handle in result.agentTerminalHandle instead.",
         "Repo-defined setup hooks follow the repository setup policy; pass --setup run to force them.",
@@ -7445,7 +7627,7 @@
         "reference"
       ],
       "summary": "Create a new Orca-managed worktree",
-      "usage": "orca worktree create --name <name> [--repo <selector>|--project <id> [--host <host-id>]|--project-host-setup <id>] [--agent <id>] [--prompt <text>] [--model <id>] [--effort <level>] [--setup run|skip|inherit] [--base-branch <ref>] [--reference <url-or-jira-key>...] [--reference-site <id>] [--issue <number>] [--pr <number>] [--linear-issue <identifier-or-url>] [--gitlab-issue <number-or-url>] [--gitlab-mr <number-or-url>] [--comment <text>] [--parent-worktree <selector>] [--no-parent] [--run-hooks] [--activate] [--retry-launch <operationId>] [--json]"
+      "usage": "orca worktree create --name <name> [--repo <selector>|--project <id-or-name> [--host <host>]|--project-host-setup <id>] [--agent <id>] [--prompt <text>] [--model <id>] [--effort <level>] [--surface chat|terminal] [--setup run|skip|inherit] [--base-branch <ref>] [--reference <url-or-jira-key>...] [--reference-site <id>] [--issue <number>] [--pr <number>] [--linear-issue <identifier-or-url>] [--gitlab-issue <number-or-url>] [--gitlab-mr <number-or-url>] [--comment <text>] [--parent-worktree <selector>] [--no-parent] [--run-hooks] [--activate] [--retry-launch <operationId>] [--json]"
     },
     {
       "aliases": [],
@@ -7487,7 +7669,7 @@
       ],
       "notes": [
         "Each row carries the execution host that owns it (`host=`), and the trailing `scope:` line names every host the page covers plus the ones it does not.",
-        "A host named under `not covered` may still have workspaces; an empty answer for it is not evidence that it has none. Each is annotated with the flag that reaches it, or marked not selectable from this machine.",
+        "A host named under `not covered` may still have workspaces; an empty answer for it is not evidence that it has none. A paired server is annotated with the `--environment` flag that reaches it; this machine and its SSH targets are reached through the same runtime, so no flag selects them.",
         "The row cap is shared across hosts, so a host whose rows sort last is not starved out of the page."
       ],
       "path": [
@@ -7512,7 +7694,7 @@
       ],
       "notes": [
         "Each row carries the execution host that owns it (`host=`), and the trailing `scope:` line names every host the page covers plus the ones it does not.",
-        "A host named under `not covered` may still have workspaces; an empty answer for it is not evidence that it has none. Each is annotated with the flag that reaches it, or marked not selectable from this machine.",
+        "A host named under `not covered` may still have workspaces; an empty answer for it is not evidence that it has none. A paired server is annotated with the `--environment` flag that reaches it; this machine and its SSH targets are reached through the same runtime, so no flag selects them.",
         "The row cap is shared across hosts, so a host whose rows sort last is not starved out of the page."
       ],
       "path": [
