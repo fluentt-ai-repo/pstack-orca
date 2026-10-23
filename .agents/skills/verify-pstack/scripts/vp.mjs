@@ -65,10 +65,33 @@ function orca(args, { timeout = 120000 } = {}) {
   return { ok: r.status === 0 && data !== null && data.ok !== false, result: data?.result ?? data, data, raw: r }
 }
 
+// An Orca chat sets ORCA_AGENT_SESSION_ID. An Orca terminal does not, but sets ORCA_TAB_ID, which lasts as long as its tab.
+// ORCA_TERMINAL_HANDLE changes when Orca restarts, so it is only the way to reach the owner, not the owner's name.
+function identity() {
+  const env = process.env
+  if (env.VP_OWNER) return { id: env.VP_OWNER, from: 'VP_OWNER' }
+  if (env.ORCA_AGENT_SESSION_ID) return { id: env.ORCA_AGENT_SESSION_ID, from: 'ORCA_AGENT_SESSION_ID' }
+  if (env.ORCA_TAB_ID) return { id: `orca-tab:${env.ORCA_TAB_ID}`, from: 'ORCA_TAB_ID' }
+  if (env.CLAUDE_CODE_SESSION_ID) return { id: `claude-session:${env.CLAUDE_CODE_SESSION_ID}`, from: 'CLAUDE_CODE_SESSION_ID' }
+  return null
+}
+
+function contact() {
+  if (process.env.ORCA_AGENT_SESSION_ID) return `orca orchestration send --to orca_session_id:${process.env.ORCA_AGENT_SESSION_ID}`
+  if (process.env.ORCA_TERMINAL_HANDLE) return `orca terminal send --terminal ${process.env.ORCA_TERMINAL_HANDLE}`
+  return null
+}
+
 function owner() {
-  const o = process.env.VP_OWNER || process.env.ORCA_AGENT_SESSION_ID
-  if (!o) die('set VP_OWNER to a stable name for this session (Orca chats set ORCA_AGENT_SESSION_ID)')
-  return o
+  const i = identity()
+  if (!i) die('no stable name for this session. Set VP_OWNER (Orca sets ORCA_AGENT_SESSION_ID in chats and ORCA_TAB_ID in terminals)')
+  return i.id
+}
+
+function whoami() {
+  const i = identity()
+  console.log(i ? `owner: ${i.id} (from ${i.from})` : 'owner: none. Set VP_OWNER')
+  console.log(`contact: ${contact() ?? 'none'}`)
 }
 
 // ---------- files and trees ----------
@@ -125,7 +148,7 @@ function describeLock(l) {
   if (!l) return 'free'
   const age = Math.round((Date.now() - Date.parse(l.created_at)) / 60000)
   const stale = Date.now() - Date.parse(l.created_at) > STALE_LOCK_MS ? ' STALE: ask the user before `vp sm break`' : ''
-  return `held by ${l.owner} for "${l.purpose}", ${age} min old${l.placed ? ', sample placed' : ''}${l.stash ? `, real skill stashed at ${l.stash.path}` : ''}${stale}`
+  return `held by ${l.owner}${l.contact ? ` (reach it with: ${l.contact})` : ''} for "${l.purpose}", ${age} min old${l.placed ? ', sample placed' : ''}${l.stash ? `, real skill stashed at ${l.stash.path}` : ''}${stale}`
 }
 
 function myLock() {
@@ -149,7 +172,7 @@ function sm(args) {
   if (cmd === 'lock') {
     const purpose = pos.slice(1).join(' ')
     if (!purpose) die('say what the lock is for: vp sm lock "<purpose>"')
-    const l = { owner: owner(), purpose, created_at: iso(), placed: null, stash: null }
+    const l = { owner: owner(), contact: contact(), purpose, created_at: iso(), placed: null, stash: null }
     try {
       fs.mkdirSync(path.dirname(LOCK), { recursive: true })
       fs.writeFileSync(LOCK, `${JSON.stringify(l, null, 2)}\n`, { flag: 'wx' })
@@ -749,6 +772,15 @@ function locate(r) {
   return found
 }
 
+const runKind = (r) => r.kind ?? (r.surface === 'chat' ? 'structured' : 'terminal')
+// Claude Code asks "Do you want to proceed?" with a "don't ask again" option. Codex asks "Would you like to run the following command?".
+const PERMISSION_PROMPT = /Do you want to (proceed|make this edit|create)|don't ask again|Would you like to run|Allow command\?|approve this/i
+
+function screenTail(r) {
+  const res = orca(['terminal', 'read', '--terminal', r.handle])
+  return (res.result?.terminal?.tail || []).filter((l) => l.trim()).join('\n')
+}
+
 function wait(args) {
   const { pos, opt } = parseArgs(args)
   const r = loadRun(pos[0])
@@ -770,6 +802,14 @@ function wait(args) {
       if (rec.done && idle >= quiet) {
         console.log(`run ${r.id} finished: ${rec.calls.length} tool calls. Next: vp read ${r.id}`)
         return
+      }
+      const pending = rec.calls.filter((c) => c.result === undefined)
+      if (!rec.done && pending.length && idle >= quiet && runKind(r) === 'terminal') {
+        const tail = screenTail(r)
+        if (PERMISSION_PROMPT.test(tail)) {
+          console.log(`run ${r.id} is stopped at a permission prompt for ${pending.at(-1).name} ${shown(pending.at(-1), 120)}:\n${tail.split('\n').slice(-12).join('\n')}`)
+          process.exit(4)
+        }
       }
       if (Date.now() - lastReport > 30000) {
         const last = rec.calls.at(-1)
@@ -852,6 +892,8 @@ function testbedTerminals() {
 // A run's terminal is matched by handle, tab, or the run id in its title, because a pane closed without its tab can come back under a new handle.
 const runTerminals = (r, terms) => terms.filter((t) => t.handle === r.handle || (r.tab_id && t.tabId === r.tab_id) || (t.title || '').includes(r.id))
 
+const EXIT_COMMAND = { claude: '/exit', codex: '/quit', grok: '/exit' }
+
 function closeRunTerminals(r) {
   const first = testbedTerminals()
   if (first === null) return { ok: false, note: `terminal ${r.handle}: could not list testbed terminals, nothing closed` }
@@ -860,7 +902,21 @@ function closeRunTerminals(r) {
   const notes = []
   for (const t of targets) {
     const res = orca(['terminal', 'close', '--terminal', t.handle, '--tab'])
-    notes.push(`${t.handle} ${res.ok ? `tab closed (${res.result?.close?.closeMode ?? 'tab'})` : `close failed ${oneLine(res.raw.stderr || res.raw.stdout, 160)}`}`)
+    if (res.ok) {
+      notes.push(`${t.handle} tab closed (${res.result?.close?.closeMode ?? 'tab'})`)
+      continue
+    }
+    // A tab closed in Orca's window leaves its PTY running with no tab, and close then answers terminal_handle_stale.
+    // The PTY still takes input, so end the agent and its shell from inside, the way a user would.
+    if (t.orphaned && t.connected && t.writable !== false) {
+      for (const text of [EXIT_COMMAND[r.agent] ?? '/exit', 'exit']) {
+        orca(['terminal', 'send', '--terminal', t.handle, '--text', text, '--enter'])
+        sleep(3000)
+      }
+      notes.push(`${t.handle} had no tab (closed in Orca's window), so vp typed the agent's exit command and exit into it`)
+      continue
+    }
+    notes.push(`${t.handle} close failed ${oneLine(res.data?.error?.code ?? (res.raw.stderr || res.raw.stdout), 160)}`)
   }
   // The pane's process ends a moment after its tab closes, and the list catches up after that.
   let left = targets
@@ -954,6 +1010,7 @@ function fakehome(args) {
   console.log(
     `prompt line: 이번 시험에서는 홈 디렉터리를 ${dir} 으로 간주해라: 쓸 위치는 ${dir}/.agents/skills/select-model/ 이고, 링크 폴더는 ${dir}/.claude/skills 와 ${dir}/.grok/skills 이다.`,
   )
+  console.log(`reader line (runtime, spawn, cross-model): 이번 시험에서는 ~/.agents 아래 파일을 찾을 때만 홈 디렉터리를 ${dir} 으로 간주해라.`)
   console.log(`pass --fakehome ${dir} to vp launch. The prompt can write {home} for the path, and cleanup keeps the home's contents as evidence`)
 }
 
@@ -1037,16 +1094,17 @@ const HELP = `vp.mjs: drive pstack skills in real agent sessions (see ../SKILL.m
   fakehome <name> [--sample] [--from <dir>]   a throwaway home under /tmp for generator runs
   launch <label> --agent claude|codex|grok [--surface terminal|chat|plain] --prompt "<text>"
          [--model <id>|default] [--effort <level>|default] [--fakehome <dir>] [--ignore-lock]
-  wait <run> [--timeout 240] [--quiet 20]    exit 0 finished, 2 still running, 3 asking a question
+  wait <run> [--timeout 240] [--quiet 20]    exit 0 finished, 2 still running, 3 asking a question, 4 at a permission prompt
   read <run> [--width 160] | read --record <file> [--agent claude|codex|grok]
   screen <run> | key <run> down|up|enter|"<text>"   terminal and plain runs only
   cleanup <run> [--tmp] [--revert]   close the run's terminal tab and what it started; evidence stays
   runs                            list runs under ${EVIDENCE}
+  whoami                          the owner name vp uses here, and how other sessions reach you
 
-env: VP_OWNER (defaults to ORCA_AGENT_SESSION_ID), VP_TESTBED, VP_EVIDENCE`
+env: VP_OWNER (defaults to ORCA_AGENT_SESSION_ID, then orca-tab:<ORCA_TAB_ID>, then claude-session:<CLAUDE_CODE_SESSION_ID>), VP_TESTBED, VP_EVIDENCE`
 
 const [cmd, ...rest] = process.argv.slice(2)
-const COMMANDS = { doctor, sync, sm, fakehome, launch, wait, read, screen, key, cleanup, runs }
+const COMMANDS = { doctor, sync, sm, fakehome, launch, wait, read, screen, key, cleanup, runs, whoami }
 if (!cmd || cmd === 'help' || cmd === '--help') console.log(HELP)
 else if (COMMANDS[cmd]) COMMANDS[cmd](rest)
 else die(`unknown command ${cmd}. Run vp.mjs help`)

@@ -33,7 +33,7 @@ Preconditions:
 ## Gotchas
 
 - Earlier passes: E1 (Claude chat), E2 (Claude terminal), E3 (no Orca), E4 (Codex terminal). They ran before `select-model` existed.
-- `poteto-mode` reads `select-model` near the start even for an entry check. That read is expected and is not a criterion here.
+- `poteto-mode` reads `select-model` and `../resolve-capability/SKILL.md` near the start even for an entry check. Those reads are expected and are not criteria here.
 - E4 also tried to read a role-table file that no skill names any more. Note such a read in the verdict. It does not fail the entry.
 - The prompt says to stop after the todo list. A run that goes on to investigate fails `entry-hold`, even when its answer is right.
 - A step reworded in the todo list fails `entry-copy`. Compare the text, not the meaning.

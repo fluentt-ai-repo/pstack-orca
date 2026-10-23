@@ -47,7 +47,7 @@ Rules for spending:
 ## Where things are
 
 - **Testbed.** `~/Documents/pstack-testbed`, a git repo outside this one. `calc.js` has a deliberate off-by-one and `calc.test.js` fails on it. `.agents/skills/<name>/` holds copies of this repo's skills and `.claude/skills/<name>` is a relative link to each copy. Codex reads the copies from `.agents/skills/`, Claude Code through the links. `.claude/settings.json` turns auto memory off so runs do not share memory.
-- **Helper.** `.agents/skills/verify-pstack/scripts/vp.mjs`. Every command below assumes `VP=.agents/skills/verify-pstack/scripts/vp.mjs` from the repo root. It names you by `ORCA_AGENT_SESSION_ID`. Set `VP_OWNER` to a stable name where that variable is missing (a Codex terminal, a plain shell).
+- **Helper.** `.agents/skills/verify-pstack/scripts/vp.mjs`. Every command below assumes `VP=.agents/skills/verify-pstack/scripts/vp.mjs` from the repo root. It names you, for locks and runs, by the first of these it finds: `VP_OWNER`, `ORCA_AGENT_SESSION_ID` (an Orca chat), `orca-tab:<ORCA_TAB_ID>` (an Orca terminal, which has no session id and keeps its tab id until the tab closes), and `claude-session:<CLAUDE_CODE_SESSION_ID>` (Claude Code anywhere). Set `VP_OWNER` when none is there. `$VP whoami` prints the name and how another session reaches you. The lock stores that contact.
 - **Evidence.** `~/Documents/pstack-testbed-evidence/<run id>/`. It sits outside this repo so no record gets committed, and outside the testbed so a driven agent never reads an earlier verdict.
 - **Sample `select-model`.** [`fixtures/select-model-sample/`](fixtures/select-model-sample/), the G1 output of 2026-10-23 (Claude, Codex, and Grok, Orca present). Its `SKILL.md` is stored as `SKILL.sample.md` so no agent finds it as a skill. `vp` renames it when it places the sample.
 
@@ -59,7 +59,7 @@ Rules for spending:
 
 - **Real or sample.** A sample carries a `.verify-pstack-sample` file naming its owner. Anything at that path without the file is the user's real skill. `vp` refuses to overwrite, remove, or move a real one except through the stash below.
 - **Runs that only read it** (entry, spawn, cross-model, and the runtime check with it present) use whatever is there. `vp launch` records its state, and `vp read` compares. A run whose state changed in between is marked `VOID`. Rerun it.
-- **Another session holds the lock.** `vp launch` refuses, because your run would read that session's sample. Wait, or message the owner (`orca orchestration send --to <owner> --subject "select-model lock" --type question --body "<when will you release it?>" --json`).
+- **Another session holds the lock.** `vp launch` refuses, because your run would read that session's sample. Wait, or message the owner with the contact the refusal prints: `orca orchestration send --to orca_session_id:<id> --subject "select-model lock" --type question --body "<when will you release it?>" --json` for a chat, or `orca terminal send --terminal <handle> --text "<message>" --enter --json` for a terminal.
 - **Runs that need it absent or set to the sample** take the lock first with `$VP sm lock "<purpose>"`. Then one of these.
   - It is absent and the run needs it absent. Run.
   - It is absent and the run needs the sample. `$VP sm place`, or `$VP sm place --from <dir>` for a freshly generated one.
@@ -98,6 +98,10 @@ Known limits:
 
 - No Orca command closes a chat. `orca terminal close --terminal <handle>` takes terminal handles only, and a chat handle (`structured-agent-session-...`) gets `terminal_handle_stale`. Every chat run stays in the testbed until the user closes it in Orca's window. That is why runs default to a terminal.
 - `orca terminal close --worktree path:/Users/fluentt/Documents/pstack-testbed --all --json` failed with `terminal_close_incomplete` and left orphaned terminal records that the CLI cannot remove. Do not use it for cleanup.
+- Orca starts a terminal Claude with `--dangerously-skip-permissions`, so a terminal run does not stop at a permission prompt. S-pair-154658 started an Orca worker from a terminal Claude without one. A run you start some other way can stop at one, and `vp wait` exits 4.
+- An Orca terminal sets `ORCA_CLI_BIN_DIR` but not `ORCA_CLI_COMMAND` or `ORCA_AGENT_SESSION_ID`. It sets `ORCA_TAB_ID`, `ORCA_TERMINAL_HANDLE`, and `ORCA_PANE_KEY`. An agent started in it inherits the same.
+- A tab closed in Orca's window while its agent is alive leaves the PTY running with no tab. `orca terminal close` then answers `terminal_handle_stale`. `vp cleanup` types the agent's exit command and then `exit` into that PTY, which ended it in S-pair-154658 for Claude (`/exit`). The Codex command (`/quit`) has not been tried.
+- Claude Code rewrites its process arguments soon after it starts, so a run's process cannot be found by the run id in its command line.
 - Closing a terminal without `--tab` left its tab in place. The tab came back under a new handle with the agent still running. `vp cleanup` closes with `--tab` and matches the run's terminal by handle, tab, or the run id in the tab title. The title alone is not enough, because Claude Code retitles its tab.
 
 ## Doctor
@@ -111,7 +115,7 @@ Known limits:
 3. Sync the skills your change touched: `$VP sync <name>...`. `$VP sync --check <name>...` only reports.
 4. Set the `select-model` state the feature names, by the rules in Shared state.
 5. Launch with the feature's prompt.
-6. `$VP wait <run id>`. Exit 0 means finished. Exit 2 means still running, so call it again. Exit 3 means the session is waiting on a question. Read it with `$VP screen <run id>`. The question is the finding. Answer it with `$VP key` only to let the run finish. Give the Bash tool a timeout above `--timeout` (240 seconds by default). A foreground `sleep` longer than about 45 seconds is blocked in Claude Code, and `vp wait` polls inside node instead.
+6. `$VP wait <run id>`. Exit 0 means finished. Exit 2 means still running, so call it again. Exit 3 means the session is waiting on a question. Read it with `$VP screen <run id>`. The question is the finding. Answer it with `$VP key` only to let the run finish. Exit 4 means a terminal run stopped at a permission prompt. `vp` prints the screen. Answer it with `$VP key`, and report it, because a driven agent should not need one. Give the Bash tool a timeout above `--timeout` (240 seconds by default). A foreground `sleep` longer than about 45 seconds is blocked in Claude Code, and `vp wait` polls inside node instead.
 7. `$VP read <run id>`. Judge each pass criterion in the feature file against `summary.txt`, and write `verdict.md` (shape below).
 8. `$VP cleanup <run id>`, then `$VP sm release` if you took the lock.
 9. Report each run id, its verdict, and the evidence path. A failure names the tool call number and the skill sentence it contradicts.
@@ -169,11 +173,12 @@ It never touches `select-model`. `$VP sm release` does that. It prints the evide
 | `sm lock "<purpose>"`, `sm place [--from <dir>]`, `sm remove`, `sm stash --approved "<words>"`, `sm restore`, `sm release`, `sm break --approved "<words>"` | The `select-model` rules above. |
 | `fakehome <name> [--sample] [--from <dir>]` | A home under `/tmp` and the prompt line that points the generator at it. `--sample` puts the fixture inside. |
 | `launch <label> --agent <a> [--surface terminal\|chat\|plain] --prompt "<p>" [--model <m>\|default] [--effort <e>\|default] [--fakehome <dir>] [--ignore-lock]` | Start one run, in a terminal unless `--surface` says otherwise. `default` leaves that flag off. `--ignore-lock` is only for a run that never reads `select-model`. |
-| `wait <run id> [--timeout 240] [--quiet 20]` | Poll the record until the turn ends and the record has been quiet for `--quiet` seconds. |
+| `wait <run id> [--timeout 240] [--quiet 20]` | Poll the record until the turn ends and the record has been quiet for `--quiet` seconds. Exit 0 finished, 2 still running, 3 a question, 4 a permission prompt. |
 | `read <run id> [--width 160]` | Write and print the summary. `read --record <file> [--agent <a>]` reads any record without a run. |
 | `screen <run id>`, `key <run id> down\|up\|enter\|"<text>"` | Read and type into a terminal or plain run. |
 | `cleanup <run id> [--tmp] [--revert]` | The cleanup above. Safe to run twice. |
 | `runs` | Every run in the evidence root, with its owner, state, and verdict line. |
+| `whoami` | The owner name `vp` uses in this session, and how another session reaches you. |
 
 Records, for reading by hand:
 
