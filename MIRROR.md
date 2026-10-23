@@ -10,11 +10,12 @@ This repo tracks two upstreams and adds Orca adaptations on top.
 
 Never copy Cursor's files or an Orca snapshot onto `main` directly. That erases the edits. Always merge, and merge with a merge commit, never a squash, so both upstream branches stay ancestors of `main`.
 
-Three checks guard `main` (`.github/workflows/check.yml`):
+Four checks guard `main` (`.github/workflows/check.yml`):
 
 - `node scripts/audit-cursor-deps.mjs` greps the `upstream` branch for Cursor-dependent lines and fails on any line that has no row in [`CURSOR-DEPENDENCIES.md`](./CURSOR-DEPENDENCIES.md). A row covers a line when it names the same file and its excerpt appears in that line. `--list` prints every hit.
 - `node scripts/check-orca-commands.mjs` fails when a doc or skill on `main` names an `orca` command or flag that `orca/agent-context.json` does not have.
-- `node scripts/apply-orca-pointer.mjs --check` fails when a skill with Orca handling lacks the pointer to `skills/orca-harness`.
+- `node scripts/lint-rewritten.mjs` fails when Cursor wording or a product name comes back into a rewritten skill or playbook.
+- `node scripts/prune-cursor-deps.mjs --check` fails when `CURSOR-DEPENDENCIES.md` keeps a row for a rewritten path or its counts are stale.
 
 ## Cursor upstream
 
@@ -30,7 +31,7 @@ To land the PR:
 1. If `check` fails on the audit, Cursor added a new dependency. Add a row to `CURSOR-DEPENDENCIES.md` with its Orca handling, apply that handling, and push to `main`. The PR's check reruns against the new `main`.
 2. If the merge conflicts, Cursor changed a line this mirror also changed. Merge locally (`git switch main && git merge upstream`), keep Cursor's new meaning, and reapply the Orca wording.
 3. Update stale `file:line` locations in `CURSOR-DEPENDENCIES.md`. The audit matches by file and excerpt, so line drift does not fail it, but readers use the numbers.
-4. Run `node scripts/apply-orca-pointer.mjs` so every skill with a non-`keep` row starts with the line that sends the agent to `skills/orca-harness`. CI runs it with `--check`.
+4. A skill that was rewritten by hand and is listed in `scripts/rewritten.json` takes the port, not the merge. Read what Cursor changed, and carry the meaning into the rewritten skill in capability names. Run `node scripts/prune-cursor-deps.mjs` after you add a rewritten path.
 
 ## Orca upstream
 

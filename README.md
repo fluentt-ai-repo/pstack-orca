@@ -20,7 +20,7 @@ Then run `/setup-pstack` (`$setup-pstack` in Codex) once. It surveys the agents 
 
 | File | What it is |
 | --- | --- |
-| [`skills/orca-harness/SKILL.md`](./skills/orca-harness/SKILL.md) | The adapter. Maps every Cursor name (`Task`, model slugs, `environment: "cloud"`, `/loop`, Automations, transcripts) to Orca or to the agent's own tool. Each skill that needs it starts with a one-line pointer to it. |
+| [`skills/resolve-capability/SKILL.md`](./skills/resolve-capability/SKILL.md) | The adapter. A step names what it needs by a capability (`spawn-worker`, `ask-user`, `wake-on-event`), and this skill says how each is done in Claude Code, Codex, Grok, and Orca, and what to do when it cannot be. `poteto-mode` reads it at the start of a task. |
 | [`CURSOR-DEPENDENCIES.md`](./CURSOR-DEPENDENCIES.md) | Every Cursor-dependent line in upstream pstack, with its Orca handling. CI fails when upstream adds one without a row. |
 | [`MIRROR.md`](./MIRROR.md) | How the `upstream` (Cursor) and `upstream-orca` (Orca's bundled skills) branches are synced into `main`. |
 | [`docs/removed-cursor-features.md`](./docs/removed-cursor-features.md) | The Cursor-only features this fork deleted (benny, `make-bot-ui`), with the Claude Code, Codex, and Orca equivalents checked and what to build on request. |
@@ -31,7 +31,7 @@ Then run `/setup-pstack` (`$setup-pstack` in Codex) once. It surveys the agents 
 
 ## Status
 
-The adapter and the inventory are done. This fork is now rewriting skills by hand so they carry no Cursor wording and run on Claude Code, Codex, and Grok on their own, with Orca adding cross-agent workers. Done so far: `setup-pstack`, which generates `select-model` through `create-model-selection-skill`, and the body of `poteto-mode`. The cross-model skills `arena`, `swarm`, `interrogate`, `reflect`, `architect`, `how`, and `why` are being changed to read `select-model` instead of a role table. [`docs/decursor-progress.md`](./docs/decursor-progress.md) lists the rewrite rules, the order, and how each unit was checked. The playbooks and every other skill still read as Cursor text and rely on the adapter's general mapping.
+Every skill and playbook is rewritten by hand to carry no Cursor wording. They run on Claude Code, Codex, and Grok on their own, in a terminal or in the Claude and ChatGPT desktop apps, and Orca adds supervised workers, durable runs, schedules, and remote environments. A step names what it needs by a capability, and the [`resolve-capability`](./skills/resolve-capability/SKILL.md) skill says how each is done where you are. `/setup-pstack` generates `select-model`, which records your products, models, and preferences. Still to do: the bundled scripts (`orch`, `watch-pr`), `docs/guide`, `docs/harness`, and the sections of this file that come from upstream. [`docs/decursor-progress.md`](./docs/decursor-progress.md) lists the rewrite rules, the order, and how each unit was checked.
 <!-- mirror:end -->
 
 ---

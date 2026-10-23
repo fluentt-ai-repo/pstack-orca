@@ -1,6 +1,6 @@
 # Cursor dependencies in pstack
 
-Every place where upstream pstack ([`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)) depends on Cursor, and how this fork handles it in Orca. The rules these rows apply live in [`skills/orca-harness/SKILL.md`](./skills/orca-harness/SKILL.md). This file is the checklist that proves nothing was missed.
+Every place where upstream pstack ([`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)) depends on Cursor, and how this fork handles it in Orca. The rules these rows apply live in [`skills/resolve-capability/SKILL.md`](./skills/resolve-capability/SKILL.md). This file is the checklist that proves nothing was missed.
 
 267 rows. Locations refer to the `upstream` branch.
 

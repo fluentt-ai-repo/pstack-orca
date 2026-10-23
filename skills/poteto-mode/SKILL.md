@@ -10,17 +10,6 @@ Bundled skills live at `../<name>/SKILL.md` from this file. Run one by reading t
 
 A step names what it needs from the environment by a capability name in backticks, such as `spawn-worker` or `ask-user`. At the start of a task, read `../resolve-capability/SKILL.md`. It says how each capability is done in this environment and what to do when it cannot be done.
 
-<!-- transition:start -->
-## While this fork finishes the rewrite
-
-Some playbooks and skills still use Cursor names. Read them like this until they are rewritten.
-
-- `Task` is your harness's subagent tool. `AskQuestion` is your question tool, or numbered options in plain text. `subagent_type: generalPurpose` is a general-purpose subagent.
-- A Cursor model slug such as `grok-4.7-xhigh-fast` or `claude-opus-5-5-xhigh` names a model. Choose it as the Subagents section says, from `select-model`.
-- A step that needs `.cursor/` paths, Cursor Automations, cloud agents, or Bugbot is skipped with one line in your reply: `Skipped: <step>. <reason>.` Then go on.
-- In Orca, `../orca-harness/SKILL.md` has the full table.
-<!-- transition:end -->
-
 ## Non-negotiables
 
 The Principles section below grounds every trigger. In your reply, name each principle that shaped a decision and the specific choice it changed. Cite only principles whose leaf SKILL.md you read this session.
@@ -38,7 +27,7 @@ Remaining triggers:
 - Docs, RFCs, readmes, PR descriptions, or commit messages → the **technical-writing** skill.
 - Before commit → reread the diff and cut slop with the **unslop** and **no-comments** skills.
 - Before review → the **no-comments** skill.
-- Shipping UI / IDE / CLI → drive the real thing with the tool your harness offers: a browser or app-control tool for web, Electron, and native UIs, and a terminal session you can type into and read for CLIs and TUIs. In Orca, `../orca-harness/SKILL.md` lists the commands. For bug fixes, reproduce first on the same surface yourself. Hand to the user only under the narrow Bug fix step 1 exception.
+- Shipping UI / IDE / CLI → drive the real thing with the tool your harness offers: a browser or app-control tool for web, Electron, and native UIs, and a terminal session you can type into and read for CLIs and TUIs. `drive-app` in `../resolve-capability/SKILL.md` lists the commands. For bug fixes, reproduce first on the same surface yourself. Hand to the user only under the narrow Bug fix step 1 exception.
 - Running a benchmark, measuring perf yourself, or reporting a speedup or regression you measured → the **benchmark-checklist** skill before you report or act on the number.
 - Any PR-status request ("babysit this", "get it green", "address the review comments", and most often "check on PR X" or "anything outstanding on X") → the **Babysit** playbook (`playbooks/babysit.md`). Never triggered by merely opening a PR. Declare its mode before polling. The playbook's step 1 owns the request-to-mode mapping. Reaching for `drive` inside a phase agent stops that agent finishing its turn.
 - Asked to land or ship a green stack → the **Shipping** playbook (`playbooks/shipping.md`). Green is not safe. Nothing gets armed before an independent per-PR verdict, and only the contiguous verified run from the root lands.

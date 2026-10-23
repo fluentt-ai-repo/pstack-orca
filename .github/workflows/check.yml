@@ -17,8 +17,6 @@ jobs:
         run: node scripts/audit-cursor-deps.mjs
       - name: Every orca command we reference exists in the snapshotted Orca
         run: node scripts/check-orca-commands.mjs
-      - name: Every skill that needs Orca handling points at orca-harness
-        run: node scripts/apply-orca-pointer.mjs --check
       - name: Hand-rewritten skills carry no Cursor wording
         run: node scripts/lint-rewritten.mjs
       - name: CURSOR-DEPENDENCIES.md holds no row for a rewritten path and its counts are current
