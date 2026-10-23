@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
+  issues: write
 
 jobs:
   sync:
@@ -20,6 +20,8 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin upstream:upstream
+      - id: before
+        run: echo "sha=$(git rev-parse upstream)" >> "$GITHUB_OUTPUT"
       - id: sync
         run: echo "commit=$(scripts/sync-upstream.sh)" >> "$GITHUB_OUTPUT"
       - if: steps.sync.outputs.commit != ''
@@ -27,7 +29,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           git push origin upstream
-          gh pr list --head upstream --base main --state open --json number --jq 'length' | grep -qx 0 || exit 0
-          gh pr create --head upstream --base main \
-            --title "Sync ${{ steps.sync.outputs.commit }}" \
-            --body "Merges the latest cursor/plugins/pstack into main. Follow MIRROR.md: if the audit check fails, add rows to CURSOR-DEPENDENCIES.md and the Orca handling before merging. Merge with a merge commit, never squash, so the upstream branch stays an ancestor of main."
+          node scripts/upstream-report.mjs "${{ steps.before.outputs.sha }}" upstream > report.md
+          gh label create upstream --description "Cursor changed pstack" --color 1d76db 2>/dev/null || true
+          gh issue create --label upstream \
+            --title "Cursor changed pstack: ${{ steps.sync.outputs.commit }}" \
+            --body-file report.md
