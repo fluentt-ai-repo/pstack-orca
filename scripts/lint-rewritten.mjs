@@ -10,12 +10,14 @@ const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: '
 const { paths } = JSON.parse(readFileSync(join(root, 'scripts/rewritten.json'), 'utf8'))
 
 const BANNED = [
-  [/cursor/i, 'the word Cursor'],
+  [/\bcursor/i, 'the word Cursor'],
   [/\.mdc\b/, '.mdc rule file'],
   [/\bAskQuestion\b/, 'AskQuestion'],
   [/`Task`|\bTask (tool|subagent|call)\b/, 'the Task tool'],
   [/agent-transcripts|cursor-team-kit|[Bb]ugbot/, 'a Cursor-only service'],
   [/environment: "cloud"|\bcloud agent/i, 'Cursor cloud agents'],
+  [/\bsubagent_type\b|\bgeneralPurpose\b|\brun_in_background\b|\bcloud_base_branch\b|\breadonly: (true|false)/, 'a Cursor Task field'],
+  [/\bcreate-skill\b|todolist/, 'a Cursor-only skill or tool name'],
   [/\bgrok-[\d.]+-(max|xhigh|high|medium|low)\b|\bclaude-(opus|sonnet|haiku|fable)-\d/, 'a Cursor model slug'],
 ]
 

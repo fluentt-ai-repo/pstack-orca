@@ -19,6 +19,15 @@ Each rule came from a unit that passed its check. Apply them to every later skil
 | Starting an agent with a model flag | Orca refuses `--model` and `--effort` for Grok (`Agent grok does not support launch-time model selection`). Start it with `--agent grok` alone and report the model that ran, taken from the Grok session record. | poteto-mode |
 | `Open a todolist` | A todo list with your plan tool (`TodoWrite` in Claude Code, `update_plan` in Codex), or the list in your reply when you have none. | poteto-mode |
 | Wording that belongs to skills not yet rewritten | Keep it inside `<!-- transition:start -->` and `<!-- transition:end -->`. The lint skips that block. Delete the block when the last skill it covers is rewritten. | poteto-mode |
+| A spawn step repeated in every cross-model skill (`Task` fields, model slugs, fallbacks for a rejected slug) | One sentence: "Start every runner as the Subagents section of `../poteto-mode/SKILL.md` says." The skill keeps only its role line and its default entries. A rejected entry runs on the same agent's default and the reply says so. | arena, how, swarm, interrogate, reflect, why |
+| `environment: "cloud"` workers, `cloud_base_branch` | Workers start on this machine, in the background when the subagent tool can. A worker that writes gets its own worktree, ports, and temp paths. A worker that verifies a commit uses its own checkout of the SHA. A worker that must start from another branch gets the branch name in its brief. | swarm |
+| "Use `readonly: false`, because readonly strips MCPs" | Pick an agent type that keeps your MCP tools, because some read-only agent types drop them, and tell the seat not to edit files. A seat that needs your MCP servers stays on your own harness (see the Subagents section). | reflect, why |
+| The `agent-transcripts/` directory the system prompt names | One table of where each agent keeps this workspace's transcripts. Claude Code: `<config dir>/projects/<workspace folder>/*.jsonl`. Codex: `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-*.jsonl`, filtered on `payload.cwd`. Grok: `~/.grok/sessions/<URL-encoded workspace path>/<session>/chat_history.jsonl`. Match the opening user prompt. | reflect |
+| `create-skill`, and the routing token `new skill via create-skill:` | The harness's skill-authoring skill (`skill-creator` in Claude Code, `$skill-creator` in Codex), or the Authoring a skill playbook when there is none. The token is `new skill: <name>`. | reflect |
+| Listing MCPs from the `mcps/` directory | The tool list, or `claude mcp list`, `codex mcp list`, `grok mcp list`. | why |
+| Tool names in a prompt (`Read, Grep, Glob`) | "your file-reading and search tools" | how, interrogate |
+| A reviewer label with a model slug | `<agent> <model> <effort>` | interrogate |
+| A skill that runs other bundled skills | One line near the top: bundled skills live at `../<name>/SKILL.md` and are run by reading that file. | architect |
 | A model the session cannot reach | Keep the entry as written and mark it `not reachable here`. Offer one bulk choice, `inherit-parent`, instead of a per-role replacement. Outside Orca the role runs on the session's own model. | setup-pstack |
 
 ## Units
@@ -28,8 +37,8 @@ Each rule came from a unit that passed its check. Apply them to every later skil
 | 1 | `setup-pstack` | Done, checked by the author | See below |
 | 2 | `poteto-mode` body | Done, checked by the author | See below |
 | 2b | `agents/` | Deferred, low priority | |
-| 3 | Cross-model skills: arena, swarm, interrogate, reflect, architect, how, why | Next | |
-| 4 | Playbooks, by remaining Cursor rows: orchestrate 33, multi-phase-plan 28, autopilot-full 12, babysit 10, opening-a-pr 8, worktree-cleanup 8, shipping 7, session-pickup 6 | | |
+| 3 | Cross-model skills: arena, swarm, interrogate, reflect, architect, how, why | Done, checked by the author | See below |
+| 4 | Playbooks, by remaining Cursor rows: orchestrate 33, multi-phase-plan 28, autopilot-full 12, babysit 10, opening-a-pr 8, worktree-cleanup 8, shipping 7, session-pickup 6 | Next | |
 | 5 | Remaining skills, then `docs/guide` and the README | | |
 
 ### Unit 1 checks
@@ -68,11 +77,38 @@ Facts these runs settled:
 - Orca refuses model and effort flags for Grok. A Grok worker runs the model in `~/.grok/config.toml`, and `worker-show` reports `launch.effective` as null. The model that ran appears only in the Grok session record. In these runs it was `grok-4.7` at `medium`, not the `grok-4.7-build-fast xhigh` on the role line.
 - The "match the model to the job" rule works as written. The agents lowered effort to `medium` for a trivial read and used the standard model id instead of the fast one.
 
+### Unit 3 checks
+
+Each run used a model file with the default roles, a two-file toy project, and a prompt that asks for the skill on a small read-only task. Where a run would be costly or unsafe (`why`, `architect`), the prompt asked for the plan table only. The checker lists every tool call, then judges the mechanical facts: which files were read, which native subagents and Orca workers started and with which flags, and whether any repo file changed.
+
+| Run | Skill | Environment | Result |
+| --- | --- | --- | --- |
+| U3-1 | `how`, complex path | Claude Code, Orca chat | Pass. Read the Subagents section. Two Grok explorers as Orca workers without model flags. The explainer ran as a native read-only `Explore` agent on `opus`. The answer names the model that ran (`grok-4.7`). |
+| U3-2 | `how`, complex path | Claude Code, every `ORCA_*` variable unset, no `orca` on `PATH`, the real `~/.claude` config | Pass. The explorers ran on its own model as read-only subagents, and the answer says why. |
+| U3-3 | `how`, complex path | Codex, Orca terminal | Pass. Grok explorers as Orca workers (`--agent grok`). The Claude explainer as an Orca worker (`--agent claude --model opus --effort medium`). |
+| U3-4 | `swarm`, two slices | Claude Code, Orca chat | Pass. Two Grok Orca workers, read-only, one report with `PASS` and `ISSUES`. |
+| U3-5 | `interrogate` | Claude Code, Orca chat | Pass. Reviewer A as a native read-only `Explore` agent on `opus xhigh`. Reviewer B as a Grok Orca worker. The Reviewers section prints `claude opus xhigh` and names the Grok model that ran. |
+| U3-6 | `arena`, two default runners | Claude Code, Orca chat | Pass. Runner A native, runner B and the read-only judge as Grok Orca workers (the judge's agent differs from its own, as the skill asks). The repo hashes were unchanged. |
+| U3-7 | `reflect`, steps 1 to 3 | Claude Code, Orca chat | Pass. Picked its own transcript among parallel sessions by the opening prompt. Two native reviewers and the synthesizer, and a Grok Orca worker for the tooling lens. |
+| U3-8 | `why`, plan only | Claude Code, Orca chat | Pass. The source control seat goes to a Grok Orca worker. The four MCP seats stay on its own harness and the reply says that costs diversity. Categories with no MCP are named as gaps. |
+| U3-9 | `architect`, plan only | Claude Code, Orca chat | Pass. Names the bundled skills it reads, splits the runners into a native Claude seat and a Grok Orca worker, and puts the cross-judge on a read-only Grok worker. |
+| U3-10 | `reflect`, step 1 only | Codex, Orca terminal | Pass. Found its own rollout file through `$CODEX_HOME` and the workspace path. |
+
+Facts these runs settled:
+
+- The seven skills carry no Orca pointer now. Every run that needed an Orca worker reached the Workers section through the Subagents section of `poteto-mode`. None failed for lack of the pointer.
+- A skill that runs on its own, without `poteto-mode` loaded, still reads the Subagents section first. All ten runs did.
+- The native runner and the Orca runner of `arena` started in the same message, so the fan-out is concurrent.
+- Models lower the effort for small jobs by the "match the model to the job" rule, such as `opus xhigh` to `high` or `medium`, and say so.
+
 ### Not yet checked (for the maintainer)
 
-- Claude Code started from a plain terminal, outside Orca, using the real `~/.claude` config. The runs above remove the `ORCA_*` variables but still use Orca's Claude profile.
+- Claude Code started from a terminal that Orca did not create. Run U3-2 used the real `~/.claude` config with no `ORCA_*` variable and no `orca` on `PATH`, but Orca opened the terminal.
+- A machine that has the `orca` binary on `PATH` but runs Claude Code or Codex outside Orca. The skills treat Orca as available only when `ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set, so such a session runs every role on its own model. Whether `orca status` should also count is the maintainer's call.
 - Codex started from a plain terminal, outside Orca, using the real `~/.codex` config with its plugins and hooks.
 - Codex's plain-text question flow. Run C gave the answers in the prompt, so no question was asked.
 - Grok started on its own, outside Orca.
 - Same-vendor spawn in Codex (a role line naming `codex`), and a Codex session with no Orca at all.
-- The playbooks that `poteto-mode` routes to still contain Cursor wording. The unit 2 runs stop before any of them is followed.
+- The playbooks that `poteto-mode` routes to still contain Cursor wording. The unit 2 and unit 3 runs stop before any of them is followed.
+- `why` and `architect` were checked as plans only. A full `why` run needs authenticated MCP servers, and a full `architect` run chains `how`, `arena`, and `interrogate`.
+- Codex running `arena`, `swarm`, `interrogate`, or `why`. Codex ran `how` and the first step of `reflect`. The spawn routing they share is the same text.

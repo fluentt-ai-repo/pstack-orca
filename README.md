@@ -29,7 +29,7 @@ Then run `/setup-pstack` (`$setup-pstack` in Codex) once to write `~/.agents/pst
 
 ## Status
 
-The adapter and the inventory are done. This fork is now rewriting skills by hand so they carry no Cursor wording and run on Claude Code, Codex, and Grok on their own, with Orca adding cross-agent workers. `setup-pstack` is the first one done. [`docs/decursor-progress.md`](./docs/decursor-progress.md) lists the rewrite rules, the order, and how each unit was checked. Every other skill still reads as Cursor text and relies on the adapter's general mapping.
+The adapter and the inventory are done. This fork is now rewriting skills by hand so they carry no Cursor wording and run on Claude Code, Codex, and Grok on their own, with Orca adding cross-agent workers. Done so far: `setup-pstack`, the body of `poteto-mode`, and the cross-model skills `arena`, `swarm`, `interrogate`, `reflect`, `architect`, `how`, and `why`. [`docs/decursor-progress.md`](./docs/decursor-progress.md) lists the rewrite rules, the order, and how each unit was checked. The playbooks and every other skill still read as Cursor text and rely on the adapter's general mapping.
 <!-- mirror:end -->
 
 ---
