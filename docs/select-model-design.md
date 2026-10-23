@@ -37,12 +37,11 @@ Verb first, like `create-verification-skill` and the `verify-<app>` skill it wri
 ```
 select-model/
   SKILL.md        preferences as sentences with reasons; the ways to use models on this machine; what to recheck before spawning
-  inventory.md    this machine: product, model, efforts, how to start it, when it was confirmed
-  references/     one file per environment found: orca, claude, codex, grok, plain-terminal, unknown-product
+  inventory.md    this machine: product, model, efforts, how to start it, which capabilities it has, when it was confirmed
   log.md          one line per change: date, what, why, who approved
 ```
 
-`references/` is copied from the generator with a pstack version stamp and overwritten on update. The user's own changes go in `SKILL.md` and `log.md`, which an update never overwrites.
+There is no `references/` folder. How each environment does things lives in the `resolve-capability` skill that ships next to `poteto-mode`, and `SKILL.md` points at it by `../resolve-capability/SKILL.md`. A re-run rewrites every section of `SKILL.md` except `## Preferences`, and only appends to `log.md`. (The first draft copied references into the user's folder. That could go stale, and the adapter replaced it.)
 
 ## Runtime
 
