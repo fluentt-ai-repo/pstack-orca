@@ -24,16 +24,11 @@ Before spawning reviewers, state the intent in one clear paragraph from the user
 
 ## Step 3, Spawn Reviewers
 
-Launch all reviewers at once, one per entry on the `interrogate reviewers` line in `~/.agents/pstack-models.md`, labeled Reviewer A, B, and so on to match the entry count. Each entry is `<agent> <model> <effort>`. If the file or that line is missing, use the table defaults.
+Read `~/.agents/skills/select-model/SKILL.md` and choose each reviewer's model and how to start it from it. Start every reviewer as the Subagents section of `../poteto-mode/SKILL.md` says, which also covers a missing `select-model`. The table says what a reviewer needs, not which model fills it.
 
-| Subagent | Default entry |
-|----------|---------------|
-| Reviewer A | `claude opus xhigh` |
-| Reviewer B | `grok grok-4.7-build-fast xhigh` |
-
-Every reviewer is read-only, and its brief says not to edit files. Start each one as the Subagents section of `../poteto-mode/SKILL.md` says. It covers your own agent, another agent through Orca, the fallback without Orca, and the `inherit-parent` and `auto` aliases, which run on your own model.
-
-If the harness rejects a table default, use the closest valid model of the same agent and reasoning tier, and tell the user the default table needs updating. Do not block the review on the model issue. Never treat an alias entry as a rejected entry.
+| Seat | Kind | Needs | Count and diversity |
+|---|---|---|---|
+| Reviewer | judgment | read-only, and its brief says not to edit files | at least two, on different models and from different vendors when the computer has them. More when the change is risky or costly to undo. Labeled Reviewer A, B, and so on. All start together. |
 
 Read `references/reviewer-prompt.md` and fill in the same template for every reviewer with the stated intent, the diff or file contents, the rubric from `references/rubric.md`, and the code-quality lens from `references/code-quality-review.md`. Pick each reviewer's reasoning level and speed for the job, per the Subagents section of the **poteto-mode** skill.
 

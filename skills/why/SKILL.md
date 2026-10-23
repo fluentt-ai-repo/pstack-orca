@@ -8,9 +8,14 @@ disable-model-invocation: true
 
 Investigate the motivation and intent behind code. The companion `how` skill answers what the code does and how it works. `why` answers what forces led to its shape.
 
-Each spawn below names a role line in `~/.agents/pstack-models.md` and a default entry of the form `<agent> <model> <effort>`. Use that line, or the default when the file or the line is missing. Start each one as the Subagents section of `../poteto-mode/SKILL.md` says. It covers your own agent, another agent through Orca, the fallback without Orca, the `inherit-parent` and `auto` aliases, and an entry that gets rejected. Pick each subagent's reasoning level and speed for the job, per that section.
+Read `~/.agents/skills/select-model/SKILL.md` and choose each seat's model and how to start it from it. Start every seat as the Subagents section of `../poteto-mode/SKILL.md` says, which also covers a missing `select-model`. The table says what each seat needs, not which model fills it. Pick each subagent's reasoning level and speed for the job, per that section.
 
-Every spawn is a general-purpose subagent with your MCP servers available. The MCP-backed investigators and the synthesizer's citation spot-checks need them, and some read-only agent types drop MCP tools. **Pick an agent type that keeps them.** An investigator that needs an MCP server stays on your own harness, per the Subagents section, even when the role names another agent. Investigators still shouldn't write anything, and each brief says so.
+| Seat | Kind | Needs | Count and diversity |
+|---|---|---|---|
+| Investigator | read | read-only. One tool or MCP each. A seat that needs an MCP server stays on your own harness. Source control needs only git and `gh`. | one per category with a matching MCP, all in one message. Source control always. |
+| Synthesizer | judgment | read-only. MCP, for citation spot-checks. | one |
+
+Every spawn is a general-purpose subagent with your MCP servers available. The MCP-backed investigators and the synthesizer's citation spot-checks need them, and some read-only agent types drop MCP tools. **Pick an agent type that keeps them.** An investigator that needs an MCP server stays on your own harness, per the Subagents section, even when `select-model` prefers another agent for that kind of work. Investigators still shouldn't write anything, and each brief says so.
 
 ## Operating Posture
 
@@ -46,7 +51,7 @@ Map each available MCP to one evidence category:
 
 Source control is always available through git and `gh`. For the other six, classify using the MCP name, server instructions, tool names, and resource descriptors. If an MCP could fit more than one category, choose the one matching its primary evidence. Record ambiguous cases in the coverage map.
 
-Spawn one investigator per category that has a matching MCP, all in a single message so they run concurrently, each owning exactly one tool or MCP. Don't ask one agent to cover multiple MCPs. Entry: the `why investigators` line, default `grok grok-4.7-build-fast xhigh`. The source control investigator needs only git and `gh`, so it can run on the role's agent.
+Spawn one investigator per category that has a matching MCP, all in a single message so they run concurrently, each owning exactly one tool or MCP. Don't ask one agent to cover multiple MCPs. Each is an Investigator seat. The source control investigator needs only git and `gh`, so it can run on any model `select-model` allows.
 
 Each investigator's prompt is `references/investigator-prompt.md` filled in, plus:
 - the category playbook `references/sources/<source>.md` for the selected MCP, adapted from the examples in `references/source-playbook.md`
@@ -76,7 +81,7 @@ If your scope assessment suggests a single-commit trivial target where the PR de
 
 ## Step 4. Synthesize
 
-Spawn one synthesizer. Entry: the `why synthesizer` line, default `claude opus xhigh`. It gets:
+Spawn one synthesizer on the Synthesizer seat. It gets:
 1. The investigator findings, including any null results and any categories skipped with justification
 2. The code anchor
 3. The user's original question

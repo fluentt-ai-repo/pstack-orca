@@ -14,7 +14,14 @@ Every candidate gets the same prompt, so the prompt is the contract.
 
 1. State the artifact each candidate is producing.
 2. Derive the rubric, 3-6 concrete gradeable criteria for what success looks like on *this* task. It is the picker's tool in Phase D. Candidates only see the task.
-3. Pick the runners. Read the `arena runners` line in `~/.agents/pstack-models.md`. Each entry is `<agent> <model> <effort>`, and one runner starts per entry. If the file or that line is missing, default to one runner each on `claude opus xhigh` and `grok grok-4.7-build-fast xhigh`. Start every runner as the Subagents section of `../poteto-mode/SKILL.md` says. It covers your own agent, another agent through Orca, the fallback without Orca, the `inherit-parent` and `auto` aliases, and an entry that gets rejected. Spawn more runners when the arena covers multiple design directions. Use the same model N times when the work is generation-bound rather than judgment-sensitive. Pick each runner's reasoning level and speed for the job, per that section.
+3. Pick the models. Read `~/.agents/skills/select-model/SKILL.md` and choose each seat's model and how to start it from it. Start every seat as the Subagents section of `../poteto-mode/SKILL.md` says, which also covers a missing `select-model`. The table says what each seat needs, not which model fills it.
+
+   | Seat | Kind | Needs | Count and diversity |
+   |---|---|---|---|
+   | Runner | code, or prose and judgment, by the task | writes only its own output location | one per distinct approach, at least two on different models, from different vendors when the computer has them. More runners when the arena covers multiple design directions. The same model N times only when the work is generation-bound rather than judgment-sensitive. All start together. |
+   | Cross-judge | judgment | read-only | one, on an agent other than your own when one is reachable. It starts after every candidate has finished. |
+
+   Pick each runner's reasoning level and speed for the job, per that section.
 4. Give each candidate its own output location (a git worktree where possible, otherwise `/tmp/arena-<slug>/candidate-<n>/`), per the **separate-before-serializing-shared-state** principle skill.
 
 ## Phase B: Fan out
@@ -25,7 +32,7 @@ If a candidate produces no output, proceed with N-1 and note the dropout.
 
 ## Phase C: Cross-judge
 
-After all Phase B candidates complete, choose one entry from the `arena cross-judge pool` line in `~/.agents/pstack-models.md`. If the file or that line is missing, choose from `claude opus xhigh` and `grok grok-4.7-build-fast xhigh`. Prefer an agent other than your own. Start one read-only judge on that entry, as in step 3. It sees the rubric and the candidates by path label, scores each criterion, and recommends a base with rationale. It runs in parallel with your reading in Phase D. Don't start it while candidates are still writing.
+After all Phase B candidates complete, start the Cross-judge seat from step 3, read-only, as step 3 says. It sees the rubric and the candidates by path label, scores each criterion, and recommends a base with rationale. It runs in parallel with your reading in Phase D. Don't start it while candidates are still writing.
 
 ## Phase D: Pick a base
 

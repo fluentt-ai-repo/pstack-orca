@@ -30,19 +30,20 @@ For each candidate, newest first, read the opening user prompt. In Claude Code i
 
 Start all three at once. Reviewers need MCP access to look up the tickets, chat threads, and observability traces the transcript references. Pick an agent type that keeps your MCP tools, because some read-only agent types drop them. Each brief says not to edit files, and you check `git status` afterward.
 
-Each reviewer and the synthesizer name a role line in `~/.agents/pstack-models.md` and a default entry of the form `<agent> <model> <effort>`. Use that line, or the default when the file or the line is missing. Start each one as the Subagents section of `../poteto-mode/SKILL.md` says. It covers your own agent, another agent through Orca, the fallback without Orca, the `inherit-parent` and `auto` aliases, and an entry that gets rejected. It also keeps a subagent that needs your MCP servers on your own harness, even when its role names another agent. Pick each subagent's reasoning level and speed for the job, per that section.
+Read `~/.agents/skills/select-model/SKILL.md` and choose each seat's model and how to start it from it. Start every seat as the Subagents section of `../poteto-mode/SKILL.md` says, which also covers a missing `select-model` and keeps a seat that needs your MCP servers on your own harness. The table says what each seat needs, not which model fills it. Pick each subagent's reasoning level and speed for the job, per that section.
 
-| Lens | Role line | Default entry | Prompt template |
+| Seat | Kind | Needs | Prompt template |
 |---|---|---|---|
-| Judgment | `reflect judgment, divergent, synthesizer` | `claude opus xhigh` | `references/judgment-reviewer.md` |
-| Tooling | `reflect tooling` | `grok grok-4.7-build-fast xhigh` | `references/tooling-reviewer.md` |
-| Divergent | `reflect judgment, divergent, synthesizer` | `claude opus xhigh` | `references/divergent-reviewer.md` |
+| Judgment reviewer | judgment | read-only, MCP lookups | `references/judgment-reviewer.md` |
+| Tooling reviewer | code or read | read-only, MCP lookups | `references/tooling-reviewer.md` |
+| Divergent reviewer | judgment | read-only, MCP lookups | `references/divergent-reviewer.md` |
+| Synthesizer | judgment | MCP, for the citation spot-checks | `references/synthesizer.md` |
 
 Pass each template verbatim, substituting the transcript path or digest where marked. Collect each reviewer's findings from its final result.
 
 ## 3. Synthesize
 
-Start one synthesizer on the `reflect judgment, divergent, synthesizer` line (default `claude opus xhigh`), the same way and with MCP access, because it spot-verifies citations through MCP. Pass `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. It returns an Accepted / Rejected / Backlog list.
+Start the Synthesizer seat once the three reviewers have returned, the same way and with MCP access, because it spot-verifies citations through MCP. Pass `references/synthesizer.md` verbatim, with each reviewer's full output inlined where marked. It returns an Accepted / Rejected / Backlog list.
 
 ## 4. Structural enforcement check
 

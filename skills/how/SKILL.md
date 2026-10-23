@@ -8,7 +8,12 @@ disable-model-invocation: true
 
 Explore the codebase to answer "how does X work?" questions. Produce architectural explanations at the level of a senior engineer onboarding onto a subsystem, enough to build a working mental model, not so much that it reads like annotated source code.
 
-Every spawn is a read-only subagent, and its brief says not to edit files. Explorers use the `how explorer` line in `~/.agents/pstack-models.md` (default `grok grok-4.7-build-fast xhigh`), and every explainer uses the `how explainer` line (default `claude opus xhigh`). Use the default when the file or the line is missing. Start each one as the Subagents section of `../poteto-mode/SKILL.md` says. It covers your own agent, another agent through Orca, the fallback without Orca, the `inherit-parent` and `auto` aliases, and an entry that gets rejected. Pick each subagent's reasoning level and speed for the job, per that section.
+Every spawn is a read-only subagent, and its brief says not to edit files. Read `~/.agents/skills/select-model/SKILL.md` and choose each seat's model and how to start it from it. Start every seat as the Subagents section of `../poteto-mode/SKILL.md` says, which also covers a missing `select-model`. The table says what each seat needs, not which model fills it. Pick each subagent's reasoning level and speed for the job, per that section.
+
+| Seat | Kind | Needs | Count and diversity |
+|---|---|---|---|
+| Explorer | read | read-only | two to four, one per angle, all together. None in the simple case. |
+| Explainer | prose and judgment | read-only | one. In the simple case it explores and explains alone. |
 
 ## 1. Assess complexity
 
