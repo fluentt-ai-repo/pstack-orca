@@ -1064,7 +1064,10 @@ function doctor() {
     console.log(`info  testbed terminals open: ${terms.length}${others.length ? `, ${others.length} of them from other sessions' runs (${[...new Set(others.map((t) => runOf(t).owner))].join(', ')})` : ''}`)
     if (open.length) console.log(`info  your runs still open: ${open.map((t) => runOf(t).id).join(', ')}`)
     if (mine.length) warn.push(`terminals of your cleaned runs are still open: ${mine.map((t) => runOf(t).id).join(', ')}. Run vp cleanup <run id> again, or orca terminal close --terminal <handle> --tab`)
-    if (stale.length) warn.push(`orphaned or disconnected terminal records in the testbed: ${stale.map((t) => t.handle).join(', ')}. The CLI cannot remove them. The user must close them in Orca's window`)
+    const live = stale.filter((t) => t.connected)
+    const dead = stale.filter((t) => !t.connected)
+    if (live.length) warn.push(`terminals still running with no tab (closed in Orca's window): ${live.map((t) => `${t.handle}${runOf(t) ? ` (run ${runOf(t).id})` : ''}`).join(', ')}. vp cleanup of the owning run ends one by typing exit into it. Leave others' to their owner`)
+    if (dead.length) warn.push(`disconnected terminal records in the testbed: ${dead.map((t) => t.handle).join(', ')}. The CLI cannot remove them. The user must close them in Orca's window`)
   }
   const ps = orca(['worktree', 'ps', '--limit', '500'])
   const chats = (ps.result?.worktrees?.find((w) => w.path === TESTBED)?.agents ?? []).filter((a) => (a.paneKey || '').startsWith('structured-agent-session-'))
