@@ -17,13 +17,14 @@ Every run spends usage, and an earlier session already hit its monthly limit. Ch
 | --- | --- | --- |
 | Wording only: a typo, a split sentence, a heading nothing links to | The four repo checks. No run. | |
 | An `orca` command or flag that a skill tells agents to run | `check-orca-commands`, then one run that reaches the command | the feature that runs it |
-| `poteto-mode` routing, the playbook list, or a playbook's steps | One entry check routed to that playbook, Claude chat | [entry](features/entry.md) |
+| `poteto-mode` routing, the playbook list, or a playbook's steps | One entry check routed to that playbook, Claude terminal | [entry](features/entry.md) |
 | The Subagents section of `poteto-mode` | One spawn check for each case the changed sentence covers (same agent, another agent with Orca, no Orca) | [spawn](features/spawn.md) |
 | How `select-model` is read, or the fallback when it is missing | One runtime check with `select-model` present. Add the fallback check only when the missing-skill sentence changed. | [runtime](features/runtime.md) |
-| `setup-pstack` or `create-model-selection-skill` | One generator run, Claude chat, fake home | [generator](features/generator.md) |
+| `setup-pstack` or `create-model-selection-skill` | One generator run, Claude terminal, fake home | [generator](features/generator.md) |
 | The generator's link question | One generator run that answers the link question, fake home | [generator](features/generator.md) |
-| A cross-model skill (`arena`, `swarm`, `interrogate`, `reflect`, `architect`, `how`, `why`) | One run of that skill on a small read-only task, Claude chat. `why` and `architect` stop at the plan. | [cross-model](features/cross-model.md) |
+| A cross-model skill (`arena`, `swarm`, `interrogate`, `reflect`, `architect`, `how`, `why`) | One run of that skill on a small read-only task, Claude terminal. `why` and `architect` stop at the plan. | [cross-model](features/cross-model.md) |
 | A line only Codex reads differently (`$name`, `update_plan`, `CODEX_HOME`, rollout paths) | The same check once more, Codex terminal | the same feature |
+| Behavior only an Orca chat shows | The same check once more, `--surface chat` | the same feature |
 | A rule for a session without Orca | The same check once more, plain surface | the same feature |
 
 The four repo checks run for every change, from the repo root:
@@ -38,8 +39,9 @@ node scripts/lint-rewritten.mjs
 Rules for spending:
 
 - A run is one environment and one prompt.
-- `vp launch` starts Claude on `sonnet` and Codex on `gpt-6.1-sol`, both at `low`. These are the models of the earlier recorded runs, at the lowest effort each offers. Orca starts Grok on its own config and refuses both flags.
-- A run that fails because the model skipped a step the skill states plainly may be rerun once with `--model default --effort default`, which leaves both flags off, to tell a weak model from unclear text. Report both runs. This happened in the first proof of this skill: `sonnet low` skipped the Orca check that the default effort made (see the runtime feature's Gotchas).
+- `vp launch` starts a terminal unless told otherwise, because the CLI can close a terminal and cannot close a chat.
+- It starts Claude on `sonnet` and Codex on `gpt-6.1-sol`, both at `low`. These are the models of the earlier recorded runs, at the lowest effort each offers. Orca starts Grok on its own config and refuses both flags.
+- A run that fails because the model skipped a step the skill states plainly may be rerun once with `--model default --effort default`, which leaves both flags off, to tell a weak model from unclear text. Report both runs. In a terminal that means the model and effort the user pinned in the product's settings (`opus` in `~/.claude/settings.json` today), so the rerun costs more than the first run. This happened in the first proof of this skill: `sonnet low` skipped the Orca check that the default effort made (see the runtime feature's Gotchas).
 - Never repeat a passing run to be sure. Never run the whole map. The map lists what can be proved, not what must be.
 
 ## Where things are
@@ -76,25 +78,31 @@ The lock is a JSON file at `~/.agents/verify-pstack-select-model.lock` (owner, p
 
 ## Launch
 
-`$VP launch <label> --agent claude|codex|grok --surface chat|terminal|plain --prompt "<prompt>"` starts one session. The run id is `<label>-<HHMMSS>`. It goes into the prompt as `[<run id>]`, at the end or wherever the prompt says `{marker}`. A prompt that needs the bare id, such as in a temp path, writes `{id}`. The launch output, the prompt, and the state before the run go to `run.json` in the run's evidence folder.
+`$VP launch <label> --agent claude|codex|grok [--surface terminal|chat|plain] --prompt "<prompt>"` starts one session, in a terminal unless `--surface` says otherwise. The run id is `<label>-<HHMMSS>`. It goes into the prompt as `[<run id>]`, at the end or wherever the prompt says `{marker}`. A prompt that needs the bare id, such as in a temp path, writes `{id}`. The launch output, the prompt, and the state before the run go to `run.json` in the run's evidence folder.
 
 What `vp` runs for each surface, so you can run it by hand:
 
-- **chat** (Claude). `orca agent launch --agent claude --worktree path:/Users/fluentt/Documents/pstack-testbed --surface chat --model sonnet --effort low --prompt "<prompt>" --json`. Ready when `prompt.outcome` is `journaled`. The result's `outcome.sessionId` is Orca's id for the chat, not the record's file name.
-- **terminal** (Claude or Codex). The same command with `--surface terminal`, and `--model gpt-6.1-sol` for Codex. Ready when `prompt.outcome` is `handed-to-terminal`. `outcome.handle` is the terminal to close later.
+- **terminal** (Claude or Codex), the default. `orca agent launch --agent claude --worktree path:/Users/fluentt/Documents/pstack-testbed --surface terminal --model sonnet --effort low --prompt "<prompt>" --json`, with `--agent codex --model gpt-6.1-sol` for Codex. Ready when `prompt.outcome` is `handed-to-terminal`. `outcome.handle` is the terminal, and `vp` records its tab for cleanup.
+- **chat** (Claude), only for a check about what an Orca chat alone does. The same command with `--surface chat`. Ready when `prompt.outcome` is `journaled`. The result's `outcome.sessionId` is Orca's id for the chat, not the record's file name. A chat outlives the run (see Known limits).
 - **plain** (Claude). `orca terminal create --worktree path:/Users/fluentt/Documents/pstack-testbed --title vp-<run id> --command "bash <evidence>/<run id>/plain.sh" --json`. The script unsets every `ORCA_*` variable, swaps each `PATH` folder that holds `orca` for a copy without it, and runs `claude --dangerously-skip-permissions --model sonnet --effort low`. Ready when `$VP screen <run id>` shows `ORCA vars left 0, orca on PATH: none` and the prompt is running. The first screen can be the folder trust prompt or the bypass-permissions warning. Read it, move to the accepting option with `$VP key <run id> down`, and confirm with `$VP key <run id> enter`. Codex has a plain recipe in the script that no run has used yet.
 - **Grok** as the driven session: `orca agent launch --agent grok --worktree path:/Users/fluentt/Documents/pstack-testbed --surface terminal --prompt "<prompt>" --json`, with no model or effort. No run has driven Grok this way yet. Grok so far ran as an Orca worker that a Claude or Codex session started.
 
 Prompts:
 
 - Claude takes `/name <args>`. Codex takes `$name <args>`. Quote a Codex prompt with single quotes so the shell keeps the `$`.
-- A prompt bounds the scope (read-only, plan only, stop after a step) and answers every question the skill will ask, because a chat cannot be answered from the command line.
+- A prompt bounds the scope (read-only, plan only, stop after a step) and answers every question the skill will ask, so the run never stops to wait. A terminal run that asks anyway can be answered with `$VP key`. A chat cannot be answered from the command line.
 - A prompt never tells the agent what the skill under test should make it do. "Read select-model first" in a prompt turns a check into a demonstration.
 - The feature files keep prompts that already ran. Use them verbatim so results compare across runs. They are in Korean because the user works in Korean.
 
+Known limits:
+
+- No Orca command closes a chat. `orca terminal close --terminal <handle>` takes terminal handles only, and a chat handle (`structured-agent-session-...`) gets `terminal_handle_stale`. Every chat run stays in the testbed until the user closes it in Orca's window. That is why runs default to a terminal.
+- `orca terminal close --worktree path:/Users/fluentt/Documents/pstack-testbed --all --json` failed with `terminal_close_incomplete` and left orphaned terminal records that the CLI cannot remove. Do not use it for cleanup.
+- Closing a terminal without `--tab` left its tab in place. The tab came back under a new handle with the agent still running. `vp cleanup` closes with `--tab` and matches the run's terminal by handle, tab, or the run id in the tab title. The title alone is not enough, because Claude Code retitles its tab.
+
 ## Doctor
 
-`$VP doctor` is read-only. It checks that Orca answers and matches the snapshot in `orca/VERSION`, that the testbed is clean, which testbed copies differ from the working tree, that each `.claude/skills/<name>` link is the relative one, the state of `select-model` and its lock, any stash or fake home left behind, that `claude`, `codex`, and `grok` run, and your runs that were never cleaned. Run it before the first launch and again after anything surprising. Fix every `FAIL` line before you launch. A `warn` line about a copy is a problem only when your run reads that skill.
+`$VP doctor` is read-only. It checks that Orca answers and matches the snapshot in `orca/VERSION`, that the testbed is clean, which testbed copies differ from the working tree, that each `.claude/skills/<name>` link is the relative one, the state of `select-model` and its lock, any stash or fake home left behind, that `claude`, `codex`, and `grok` run, and your runs that were never cleaned. It also counts the testbed's open terminals and chats. It warns about a terminal whose title carries a run id, about orphaned or disconnected terminal records, and about open chats, and says when only the user can close them in Orca's window. Run it before the first launch and again after anything surprising. Fix every `FAIL` line before you launch. A `warn` line about a copy is a problem only when your run reads that skill.
 
 ## Drive
 
@@ -103,7 +111,7 @@ Prompts:
 3. Sync the skills your change touched: `$VP sync <name>...`. `$VP sync --check <name>...` only reports.
 4. Set the `select-model` state the feature names, by the rules in Shared state.
 5. Launch with the feature's prompt.
-6. `$VP wait <run id>`. Exit 0 means finished. Exit 2 means still running, so call it again. Exit 3 means the session is waiting on a question. Give the Bash tool a timeout above `--timeout` (240 seconds by default). A foreground `sleep` longer than about 45 seconds is blocked in Claude Code, and `vp wait` polls inside node instead.
+6. `$VP wait <run id>`. Exit 0 means finished. Exit 2 means still running, so call it again. Exit 3 means the session is waiting on a question. Read it with `$VP screen <run id>`. The question is the finding. Answer it with `$VP key` only to let the run finish. Give the Bash tool a timeout above `--timeout` (240 seconds by default). A foreground `sleep` longer than about 45 seconds is blocked in Claude Code, and `vp wait` polls inside node instead.
 7. `$VP read <run id>`. Judge each pass criterion in the feature file against `summary.txt`, and write `verdict.md` (shape below).
 8. `$VP cleanup <run id>`, then `$VP sm release` if you took the lock.
 9. Report each run id, its verdict, and the evidence path. A failure names the tool call number and the skill sentence it contradicts.
@@ -140,7 +148,8 @@ Proof standards:
 
 `$VP cleanup <run id>` does these, and logs each to `cleanup.log`.
 
-- Closes the terminal the run opened. A chat tab stays open, because no Orca command closes it. Close those in Orca when they pile up.
+- Closes the run's terminal with `orca terminal close --terminal <handle> --tab --json`, then checks the testbed's terminal list until the run's handle, tab, and title are gone. A terminal still listed after that is reported as one the user must close in Orca's window.
+- Leaves a chat open, because no Orca command closes it, and says so.
 - Stops every Orca worker the run started with `worker-start` that has not settled.
 - Copies the fake home into the evidence and deletes it.
 - Lists temp folders the run created and named. Check that they are the run's, then rerun with `--tmp` to copy each into the evidence and delete it.
@@ -159,11 +168,11 @@ It never touches `select-model`. `$VP sm release` does that. It prints the evide
 | `sm status` | The state of `select-model`, the lock, and any stash. |
 | `sm lock "<purpose>"`, `sm place [--from <dir>]`, `sm remove`, `sm stash --approved "<words>"`, `sm restore`, `sm release`, `sm break --approved "<words>"` | The `select-model` rules above. |
 | `fakehome <name> [--sample] [--from <dir>]` | A home under `/tmp` and the prompt line that points the generator at it. `--sample` puts the fixture inside. |
-| `launch <label> --agent <a> --surface <s> --prompt "<p>" [--model <m>\|default] [--effort <e>\|default] [--fakehome <dir>] [--ignore-lock]` | Start one run. `default` leaves that flag off. `--ignore-lock` is only for a run that never reads `select-model`. |
+| `launch <label> --agent <a> [--surface terminal\|chat\|plain] --prompt "<p>" [--model <m>\|default] [--effort <e>\|default] [--fakehome <dir>] [--ignore-lock]` | Start one run, in a terminal unless `--surface` says otherwise. `default` leaves that flag off. `--ignore-lock` is only for a run that never reads `select-model`. |
 | `wait <run id> [--timeout 240] [--quiet 20]` | Poll the record until the turn ends and the record has been quiet for `--quiet` seconds. |
 | `read <run id> [--width 160]` | Write and print the summary. `read --record <file> [--agent <a>]` reads any record without a run. |
 | `screen <run id>`, `key <run id> down\|up\|enter\|"<text>"` | Read and type into a terminal or plain run. |
-| `cleanup <run id> [--tmp] [--revert]` | The cleanup above. |
+| `cleanup <run id> [--tmp] [--revert]` | The cleanup above. Safe to run twice. |
 | `runs` | Every run in the evidence root, with its owner, state, and verdict line. |
 
 Records, for reading by hand:

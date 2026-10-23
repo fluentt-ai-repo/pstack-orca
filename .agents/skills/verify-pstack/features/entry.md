@@ -22,12 +22,12 @@ Preconditions:
 - `poteto-mode` is synced into the testbed.
 - `select-model` may be in any state. The entry does not depend on it, and `vp` records it.
 
-- **Launch.** Run `$VP launch E --agent claude --surface chat --prompt "/poteto-mode calc.js의 sum()이 마지막 원소를 빼먹는지 조사해줘. 이번은 진입 확인용이다. 선택한 playbook의 단계를 todo(todo 도구가 없으면 답변 목록)로 옮기는 데까지만 하고 멈춰라. 조사·subagent·worker는 시작하지 마."`. The output names the run id and `prompt journaled`.
+- **Launch.** Run `$VP launch E --agent claude --prompt "/poteto-mode calc.js의 sum()이 마지막 원소를 빼먹는지 조사해줘. 이번은 진입 확인용이다. 선택한 playbook의 단계를 todo(todo 도구가 없으면 답변 목록)로 옮기는 데까지만 하고 멈춰라. 조사·subagent·worker는 시작하지 마."`. The output names the run id and `prompt handed-to-terminal`.
 - **Wait.** Run `$VP wait <run id>`. It exits 0 with the number of tool calls.
 - **Route.** Run `$VP read <run id>`. "skill files named in tool calls" lists `poteto-mode/playbooks/investigation.md`.
 - **Copy.** "last todo list" starts with the four numbered steps of `skills/poteto-mode/playbooks/investigation.md`, in order and in the playbook's words. Compare with `grep -n '^[0-9]\. ' skills/poteto-mode/playbooks/investigation.md`.
 - **Hold.** "native subagents" and "Orca workers" both say `none`, and the testbed line says `no new changes`.
-- **Codex.** Run `$VP launch E --agent codex --surface terminal --prompt '$poteto-mode calc.js의 sum()이 마지막 원소를 빼먹는지 조사해줘. 이번은 진입 확인용이다. 선택한 playbook의 단계를 todo(todo 도구가 없으면 답변 목록)로 옮기는 데까지만 하고 멈춰라. 조사·subagent·worker는 시작하지 마.'`. The todo list comes from `update_plan`. Close it with `$VP cleanup <run id>`.
+- **Codex.** Run `$VP launch E --agent codex --prompt '$poteto-mode calc.js의 sum()이 마지막 원소를 빼먹는지 조사해줘. 이번은 진입 확인용이다. 선택한 playbook의 단계를 todo(todo 도구가 없으면 답변 목록)로 옮기는 데까지만 하고 멈춰라. 조사·subagent·worker는 시작하지 마.'`. The todo list comes from `update_plan`. Close it with `$VP cleanup <run id>`.
 - **No Orca.** Run the Claude prompt with `--surface plain`, answer the first screen as `../SKILL.md` says, then wait and read. The criteria are the same.
 
 ## Gotchas

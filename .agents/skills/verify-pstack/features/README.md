@@ -11,7 +11,9 @@ This map is the maintained list of what verify-pstack can prove about pstack's s
 
 ## Driving conventions
 
-- One run is one environment and one prompt. `vp launch` adds the run id to the prompt as `[<run id>]`, or puts it where the prompt says `{marker}`. `{id}` becomes the bare run id.
+- One run is one environment and one prompt. Runs start in an Orca terminal. Add `--surface chat` only for behavior an Orca chat alone shows, because no Orca command closes a chat.
+- `vp launch` adds the run id to the prompt as `[<run id>]`, or puts it where the prompt says `{marker}`. `{id}` becomes the bare run id.
+- Every run ends with `$VP cleanup <run id>`, which closes the run's terminal tab and keeps the evidence.
 - Claude takes `/name <args>`. Codex takes `$name <args>`, quoted with single quotes in the shell.
 - The prompts here already ran, unless a line says otherwise. Use them verbatim so results compare. When a skill's scope changes and a prompt must change, say so in the verdict.
 - A prompt bounds the scope and answers the skill's questions. It never says what the skill under test should make the agent do.

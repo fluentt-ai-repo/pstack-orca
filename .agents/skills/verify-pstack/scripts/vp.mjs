@@ -668,9 +668,10 @@ ${exec}
 function launch(args) {
   const { pos, opt } = parseArgs(args, ['ignore-lock'])
   const label = pos[0]
-  if (!label || !/^[A-Za-z0-9-]+$/.test(label)) die('vp launch <label> --agent claude|codex|grok --surface chat|terminal|plain --prompt "<text>"')
+  if (!label || !/^[A-Za-z0-9-]+$/.test(label)) die('vp launch <label> --agent claude|codex|grok [--surface terminal|chat|plain] --prompt "<text>"')
   const agent = opt.agent
-  const surface = opt.surface || 'chat'
+  // Terminal by default: a terminal can be closed from the CLI, a chat cannot.
+  const surface = opt.surface || 'terminal'
   if (!DEFAULTS[agent]) die('--agent is claude, codex, or grok')
   if (!['chat', 'terminal', 'plain'].includes(surface)) die('--surface is chat, terminal, or plain')
   if (opt.effort && opt.effort !== 'default' && opt.model === 'default') die('Orca takes --effort only with --model')
@@ -726,6 +727,7 @@ function launch(args) {
     r.orca_session = res.result?.outcome?.sessionId ?? null
     r.prompt_outcome = res.result?.prompt?.outcome ?? null
   }
+  if (r.kind === 'terminal' && r.handle) r.tab_id = orca(['terminal', 'show', '--terminal', r.handle]).result?.terminal?.tabId ?? null
   saveRun(r)
   if (!r.handle) die(`launch failed, see ${path.join(runDir(id), 'run.json')}: ${oneLine(JSON.stringify(r.launch), 400)}`)
   console.log(`run ${id}: ${agent} ${surface} ${r.model ?? ''} ${r.effort ?? ''}, handle ${r.handle}${r.prompt_outcome ? `, prompt ${r.prompt_outcome}` : ''}`)
@@ -842,20 +844,47 @@ function key(args) {
   console.log(res.ok ? `sent ${what}` : `failed: ${oneLine(res.raw.stderr || res.raw.stdout, 300)}`)
 }
 
+function testbedTerminals() {
+  const res = orca(['terminal', 'list', '--worktree', `path:${TESTBED}`])
+  return res.ok ? (res.result?.terminals ?? []) : null
+}
+
+// A run's terminal is matched by handle, tab, or the run id in its title, because a pane closed without its tab can come back under a new handle.
+const runTerminals = (r, terms) => terms.filter((t) => t.handle === r.handle || (r.tab_id && t.tabId === r.tab_id) || (t.title || '').includes(r.id))
+
+function closeRunTerminals(r) {
+  const first = testbedTerminals()
+  if (first === null) return { ok: false, note: `terminal ${r.handle}: could not list testbed terminals, nothing closed` }
+  const targets = runTerminals(r, first)
+  if (!targets.length) return { ok: true, note: `terminal ${r.handle}: not open` }
+  const notes = []
+  for (const t of targets) {
+    const res = orca(['terminal', 'close', '--terminal', t.handle, '--tab'])
+    notes.push(`${t.handle} ${res.ok ? `tab closed (${res.result?.close?.closeMode ?? 'tab'})` : `close failed ${oneLine(res.raw.stderr || res.raw.stdout, 160)}`}`)
+  }
+  // The pane's process ends a moment after its tab closes, and the list catches up after that.
+  let left = targets
+  for (let i = 0; i < 8 && left.length; i++) {
+    sleep(2000)
+    left = runTerminals(r, testbedTerminals() ?? targets)
+  }
+  if (left.length)
+    return { ok: false, note: `terminal: ${notes.join('; ')}. Still listed: ${left.map((t) => `${t.handle} "${t.title}"`).join(', ')}. The user must close it in Orca's window` }
+  return { ok: true, note: `terminal: ${notes.join('; ')}. No longer listed in the testbed` }
+}
+
 function cleanup(args) {
   const { pos, opt } = parseArgs(args, ['revert', 'tmp'])
   const r = loadRun(pos[0])
   const dir = runDir(r.id)
   const since = Date.parse(r.started_at) - 5000
   const log = []
-  if (r.handle && (r.kind ?? (r.surface === 'chat' ? 'structured' : 'terminal')) === 'terminal' && !r.closed) {
-    const res = orca(['terminal', 'close', '--terminal', r.handle])
-    const gone = res.ok ? null : orca(['terminal', 'show', '--terminal', r.handle]).result?.terminal
-    if (res.ok) log.push(`terminal ${r.handle}: closed`)
-    else if (gone && gone.connected === false) log.push(`terminal ${r.handle}: already closed (${gone.exitCause?.kind ?? 'disconnected'})`)
-    else log.push(`terminal ${r.handle}: close failed ${oneLine(res.raw.stderr || res.raw.stdout, 200)}`)
-    r.closed = res.ok || gone?.connected === false
-  }
+  const kind = r.kind ?? (r.surface === 'chat' ? 'structured' : 'terminal')
+  if (r.handle && kind === 'terminal') {
+    const res = closeRunTerminals(r)
+    log.push(res.note)
+    r.closed = res.ok
+  } else if (kind === 'structured') log.push(`chat ${r.handle} stays open: no Orca command closes a chat. The user must close it in Orca's window`)
   const file = locate(r)
   const rec = file ? parseRecord(r.agent, file) : null
   if (rec)
@@ -964,6 +993,23 @@ function doctor() {
   console.log(`info  select-model: ${s.kind}${s.owner ? ` placed by ${s.owner}` : ''}. lock: ${describeLock(readLock())}`)
   if (s.kind === 'sample' && !readLock()) problems.push(`a sample select-model is installed with no lock (placed by ${s.owner}). Ask its owner or the user before removing it`)
   if (exists(STASH) && fs.readdirSync(STASH).some((n) => n.startsWith('select-model-') && !n.endsWith('.json'))) problems.push(`a real select-model is stashed under ${STASH}. Restore it (vp sm restore, or ${path.join(STASH, 'RESTORE.txt')})`)
+  const terms = testbedTerminals()
+  if (terms === null) warn.push('could not list the testbed terminals')
+  else {
+    // Agents retitle their tabs, so match recorded handles and tabs as well as the run id in the title.
+    const runsHere = exists(EVIDENCE) ? fs.readdirSync(EVIDENCE).filter((id) => exists(path.join(EVIDENCE, id, 'run.json'))).map((id) => readJson(path.join(EVIDENCE, id, 'run.json'))) : []
+    const fromRuns = terms.filter((t) => runsHere.some((r) => runTerminals(r, [t]).length))
+    const stale = terms.filter((t) => t.orphaned || t.connected === false)
+    console.log(`info  testbed terminals open: ${terms.length}`)
+    if (fromRuns.length) warn.push(`terminals from verify runs are still open: ${fromRuns.map((t) => `"${t.title}"`).join(', ')}. Run vp cleanup <run id>, or orca terminal close --terminal <handle> --tab`)
+    if (stale.length) warn.push(`orphaned or disconnected terminal records in the testbed: ${stale.map((t) => t.handle).join(', ')}. The CLI cannot remove them. The user must close them in Orca's window`)
+  }
+  const ps = orca(['worktree', 'ps', '--limit', '500'])
+  const chats = (ps.result?.worktrees?.find((w) => w.path === TESTBED)?.agents ?? []).filter((a) => (a.paneKey || '').startsWith('structured-agent-session-'))
+  if (chats.length) {
+    const running = chats.filter((a) => a.state !== 'done').length
+    warn.push(`${chats.length} chat sessions are open in the testbed (${running} not done). No CLI command closes a chat. The user must close them in Orca's window`)
+  }
   const homes = fs.readdirSync('/tmp').filter((n) => n.startsWith('vp-home-'))
   if (homes.length) warn.push(`fake homes left in /tmp: ${homes.join(', ')}`)
   for (const bin of ['claude', 'codex', 'grok']) {
@@ -989,12 +1035,12 @@ const HELP = `vp.mjs: drive pstack skills in real agent sessions (see ../SKILL.m
   sm status|lock "<purpose>"|place [--from <dir>]|remove|stash --approved "<words>"|restore|release|break --approved "<words>"
                                   the shared ~/.agents/skills/select-model and its lock
   fakehome <name> [--sample] [--from <dir>]   a throwaway home under /tmp for generator runs
-  launch <label> --agent claude|codex|grok --surface chat|terminal|plain --prompt "<text>"
+  launch <label> --agent claude|codex|grok [--surface terminal|chat|plain] --prompt "<text>"
          [--model <id>|default] [--effort <level>|default] [--fakehome <dir>] [--ignore-lock]
   wait <run> [--timeout 240] [--quiet 20]    exit 0 finished, 2 still running, 3 asking a question
   read <run> [--width 160] | read --record <file> [--agent claude|codex|grok]
   screen <run> | key <run> down|up|enter|"<text>"   terminal and plain runs only
-  cleanup <run> [--tmp] [--revert]   close what the run started; evidence stays
+  cleanup <run> [--tmp] [--revert]   close the run's terminal tab and what it started; evidence stays
   runs                            list runs under ${EVIDENCE}
 
 env: VP_OWNER (defaults to ORCA_AGENT_SESSION_ID), VP_TESTBED, VP_EVIDENCE`
