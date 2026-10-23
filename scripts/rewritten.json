@@ -43,6 +43,7 @@
     "skills/poteto-mode/scripts/orch/",
     "skills/poteto-mode/scripts/watch-pr/",
     "skills/poteto-mode/scripts/bootstrap.ts",
-    "skills/poteto-mode/scripts/package.json"
+    "skills/poteto-mode/scripts/package.json",
+    "skills/poteto-mode/scripts/check-plan.test.ts"
   ]
 }

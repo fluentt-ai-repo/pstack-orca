@@ -2,7 +2,7 @@
 
 Every place where upstream pstack ([`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)) depends on Cursor, and how this fork handles it in Orca. The rules these rows apply live in [`skills/resolve-capability/SKILL.md`](./skills/resolve-capability/SKILL.md). This file is the checklist that proves nothing was missed.
 
-193 rows. Locations refer to the `upstream` branch.
+192 rows. Locations refer to the `upstream` branch.
 
 ## How this list stays complete
 
@@ -28,7 +28,7 @@ Skills this fork rewrote by hand (`scripts/rewritten.json`) have no rows either,
 | Handling | Rows |
 | --- | --- |
 | `agent-native` | 75 |
-| `orca` | 61 |
+| `orca` | 60 |
 | `keep` | 30 |
 | `fallback-only` | 19 |
 | `skip` | 8 |
@@ -39,7 +39,7 @@ Skills this fork rewrote by hand (`scripts/rewritten.json`) have no rows either,
 | `implicit` | 21 |
 | `cursor-ui` | 20 |
 | `subagent-field` | 18 |
-| `automation` | 17 |
+| `automation` | 16 |
 | `bugbot` | 13 |
 | `settings-path` | 13 |
 | `transcript` | 13 |
@@ -87,11 +87,10 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 
 ## poteto-mode scripts
 
-1 rows.
+0 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CD-201 | `skills/poteto-mode/scripts/check-plan.test.ts:23` | `` \`git show origin/main:\` /loop 1h status message `` | automation | The test fixture hard-codes the Cursor `/loop 1h` marker. | orca | Update this together with check-plan.mjs:20 so the fixture uses the Orca marker and one test covers each accepted form. | todo |
 
 ## Cross-model skills (arena, swarm, interrogate, reflect, architect, how, why)
 
