@@ -633,10 +633,14 @@ const saveRun = (r) => writeJson(path.join(runDir(r.id), 'run.json'), r)
 function plainScript(r, prompt) {
   const promptFile = path.join(runDir(r.id), 'prompt.txt')
   fs.writeFileSync(promptFile, prompt)
+  const flags =
+    r.agent === 'claude'
+      ? `${r.model ? ` --model ${r.model}` : ''}${r.effort ? ` --effort ${r.effort}` : ''}`
+      : `${r.model ? ` -m ${r.model}` : ''}${r.effort ? ` -c model_reasoning_effort='"${r.effort}"'` : ''}`
   const exec =
     r.agent === 'claude'
-      ? `exec claude --dangerously-skip-permissions --model ${r.model} --effort ${r.effort} "$(cat '${promptFile}')"`
-      : `exec codex -m ${r.model} -c model_reasoning_effort='"${r.effort}"' --dangerously-bypass-approvals-and-sandbox "$(cat '${promptFile}')"`
+      ? `exec claude --dangerously-skip-permissions${flags} "$(cat '${promptFile}')"`
+      : `exec codex${flags} --dangerously-bypass-approvals-and-sandbox "$(cat '${promptFile}')"`
   const script = `#!/bin/bash
 # Starts ${r.agent} the way a terminal Orca did not open would: no ORCA_* variables and no orca binary on PATH.
 unset $(env | grep -o '^ORCA_[A-Za-z_]*')
@@ -669,6 +673,7 @@ function launch(args) {
   const surface = opt.surface || 'chat'
   if (!DEFAULTS[agent]) die('--agent is claude, codex, or grok')
   if (!['chat', 'terminal', 'plain'].includes(surface)) die('--surface is chat, terminal, or plain')
+  if (opt.effort && opt.effort !== 'default' && opt.model === 'default') die('Orca takes --effort only with --model')
   if (agent === 'grok' && (opt.model || opt.effort)) die('Orca refuses --model and --effort for grok. Launch without them and read the model from the record')
   if (surface === 'plain' && agent === 'grok') die('no plain recipe for grok yet')
   if (!opt.prompt) die('--prompt is required')
@@ -690,8 +695,9 @@ function launch(args) {
     owner: me,
     agent,
     surface,
-    model: opt.model ?? DEFAULTS[agent].model ?? null,
-    effort: opt.effort ?? DEFAULTS[agent].effort ?? null,
+    // `default` leaves the flag off, so the agent runs on its own setting.
+    model: opt.model === 'default' ? null : (opt.model ?? DEFAULTS[agent].model ?? null),
+    effort: opt.effort === 'default' ? null : (opt.effort ?? DEFAULTS[agent].effort ?? null),
     prompt,
     fakehome: opt.fakehome ?? null,
     testbed: TESTBED,
@@ -984,7 +990,7 @@ const HELP = `vp.mjs: drive pstack skills in real agent sessions (see ../SKILL.m
                                   the shared ~/.agents/skills/select-model and its lock
   fakehome <name> [--sample] [--from <dir>]   a throwaway home under /tmp for generator runs
   launch <label> --agent claude|codex|grok --surface chat|terminal|plain --prompt "<text>"
-         [--model <id>] [--effort <level>] [--fakehome <dir>] [--ignore-lock]
+         [--model <id>|default] [--effort <level>|default] [--fakehome <dir>] [--ignore-lock]
   wait <run> [--timeout 240] [--quiet 20]    exit 0 finished, 2 still running, 3 asking a question
   read <run> [--width 160] | read --record <file> [--agent claude|codex|grok]
   screen <run> | key <run> down|up|enter|"<text>"   terminal and plain runs only

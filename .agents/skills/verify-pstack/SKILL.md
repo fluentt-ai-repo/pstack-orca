@@ -39,7 +39,7 @@ Rules for spending:
 
 - A run is one environment and one prompt.
 - `vp launch` starts Claude on `sonnet` and Codex on `gpt-6.1-sol`, both at `low`. These are the models of the earlier recorded runs, at the lowest effort each offers. Orca starts Grok on its own config and refuses both flags.
-- A run that fails because the model skipped a step the skill states plainly may be rerun once at the default effort, to tell a weak model from unclear text. Report both runs.
+- A run that fails because the model skipped a step the skill states plainly may be rerun once with `--model default --effort default`, which leaves both flags off, to tell a weak model from unclear text. Report both runs. This happened in the first proof of this skill: `sonnet low` skipped the Orca check that the default effort made (see the runtime feature's Gotchas).
 - Never repeat a passing run to be sure. Never run the whole map. The map lists what can be proved, not what must be.
 
 ## Where things are
@@ -159,7 +159,7 @@ It never touches `select-model`. `$VP sm release` does that. It prints the evide
 | `sm status` | The state of `select-model`, the lock, and any stash. |
 | `sm lock "<purpose>"`, `sm place [--from <dir>]`, `sm remove`, `sm stash --approved "<words>"`, `sm restore`, `sm release`, `sm break --approved "<words>"` | The `select-model` rules above. |
 | `fakehome <name> [--sample] [--from <dir>]` | A home under `/tmp` and the prompt line that points the generator at it. `--sample` puts the fixture inside. |
-| `launch <label> --agent <a> --surface <s> --prompt "<p>" [--model <m>] [--effort <e>] [--fakehome <dir>] [--ignore-lock]` | Start one run. `--ignore-lock` is only for a run that never reads `select-model`. |
+| `launch <label> --agent <a> --surface <s> --prompt "<p>" [--model <m>\|default] [--effort <e>\|default] [--fakehome <dir>] [--ignore-lock]` | Start one run. `default` leaves that flag off. `--ignore-lock` is only for a run that never reads `select-model`. |
 | `wait <run id> [--timeout 240] [--quiet 20]` | Poll the record until the turn ends and the record has been quiet for `--quiet` seconds. |
 | `read <run id> [--width 160]` | Write and print the summary. `read --record <file> [--agent <a>]` reads any record without a run. |
 | `screen <run id>`, `key <run id> down\|up\|enter\|"<text>"` | Read and type into a terminal or plain run. |
