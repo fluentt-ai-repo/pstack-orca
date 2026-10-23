@@ -74,6 +74,7 @@ Each capability has one of four states in a given environment.
 | `inspect-runtime` | Node inspector or Chrome DevTools protocol through the shell ? | same ? | same ? | `orca eval` and the browser commands for a page ? | Say which attach method was missing |
 | `durable-store` | A place that outlives a session restart: decision trails, plan files, queue state | the agent store path the Cursor system prompt names | part of 21 |
 | `choose-model` | Which model and effort for a seat | Cursor model slugs, fast slugs | 31 |
+| `list-mcp-servers` | Which MCP servers this session has, for a step that must query them | the `mcps/` directory listing | part of 25 |
 
 What this does not cover, on purpose:
 
@@ -118,6 +119,7 @@ One line per capability and product. A cell marked `?` is not checked yet and mu
 | `author-skill` | `skill-creator` | `$skill-creator` | ? | none | The Authoring a skill playbook |
 | `drive-app` | a browser MCP, Playwright, or the shell | same ? | same ? | `orca goto`, `snapshot`, `click`, `screenshot`; `orca computer` | The shell and screenshots |
 | `locate` | `CLAUDE.md`, `.claude/skills/` | `AGENTS.md`, `.agents/skills/` | `AGENTS.md`, `~/.grok/skills/` | `orca worktree list --json` | Ask the user |
+| `list-mcp-servers` | the tool list, or `claude mcp list` | the tool list, or `codex mcp list` | the tool list, or `grok mcp list` | A worker has only its own agent's servers | Say which servers you could not see |
 | `choose-model` | `select-model` | `select-model` | `select-model` | `select-model` | The `poteto-mode` defaults |
 
 Two rules sit on top of the table.
@@ -190,6 +192,7 @@ Not seen, so left as `?`: Codex `spawn_agent` and `update_plan`, Grok `spawn_sub
 
 ## Open points
 
+0. `select-model` records what was true when it was generated. A sample generated under Orca said Grok starts only through Orca, and a plain-session run trusted that over the adapter. The adapter now says to read `cli-workers.md` before giving up on a product, and the sample is regenerated with the current generator.
 1. The names `find-sessions`, `locate`, `durable-store`, `inspect-runtime`, `control-agent`, and `drive-app`. Whether `control-agent` should be three verbs (probe, message, stop).
 2. The cells marked `?`, listed above. Each is checked before the adapter ships or the cell is removed.
 3. Whether Orca counts as present only through the two environment variables, or also when `orca` is on `PATH`.
