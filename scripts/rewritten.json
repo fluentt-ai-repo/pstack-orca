@@ -39,6 +39,10 @@
     "skills/poteto-mode/playbooks/",
     "skills/poteto-mode/references/review-bot-triage.md",
     "skills/poteto-mode/scripts/check-plan.mjs",
-    "skills/poteto-mode/scripts/worktree-audit.sh"
+    "skills/poteto-mode/scripts/worktree-audit.sh",
+    "skills/poteto-mode/scripts/orch/",
+    "skills/poteto-mode/scripts/watch-pr/",
+    "skills/poteto-mode/scripts/bootstrap.ts",
+    "skills/poteto-mode/scripts/package.json"
   ]
 }

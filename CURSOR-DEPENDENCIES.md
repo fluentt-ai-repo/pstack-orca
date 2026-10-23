@@ -2,7 +2,7 @@
 
 Every place where upstream pstack ([`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)) depends on Cursor, and how this fork handles it in Orca. The rules these rows apply live in [`skills/resolve-capability/SKILL.md`](./skills/resolve-capability/SKILL.md). This file is the checklist that proves nothing was missed.
 
-267 rows. Locations refer to the `upstream` branch.
+193 rows. Locations refer to the `upstream` branch.
 
 ## How this list stays complete
 
@@ -27,29 +27,29 @@ Skills this fork rewrote by hand (`scripts/rewritten.json`) have no rows either,
 
 | Handling | Rows |
 | --- | --- |
-| `agent-native` | 77 |
-| `orca` | 76 |
-| `keep` | 67 |
-| `fallback-only` | 32 |
-| `skip` | 15 |
+| `agent-native` | 75 |
+| `orca` | 61 |
+| `keep` | 30 |
+| `fallback-only` | 19 |
+| `skip` | 8 |
 
 | Category | Rows |
 | --- | --- |
-| `implicit` | 52 |
-| `bugbot` | 46 |
 | `frontmatter` | 25 |
+| `implicit` | 21 |
 | `cursor-ui` | 20 |
-| `automation` | 18 |
 | `subagent-field` | 18 |
+| `automation` | 17 |
+| `bugbot` | 13 |
 | `settings-path` | 13 |
 | `transcript` | 13 |
-| `cloud-agent` | 10 |
 | `model-slug` | 10 |
-| `pr-tool` | 10 |
 | `skill-path` | 10 |
+| `cloud-agent` | 9 |
 | `url` | 8 |
 | `tool-name` | 7 |
 | `team-kit` | 6 |
+| `pr-tool` | 2 |
 | `script` | 1 |
 
 ## What Orca cannot replace
@@ -87,85 +87,11 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 
 ## poteto-mode scripts
 
-75 rows.
+1 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CD-193 | `skills/poteto-mode/scripts/bootstrap.ts:35` | `const result = Bun.spawnSync(` | implicit | The first run does a networked `bun install --frozen-lockfile` into the skill's own `node_modules`. Cursor plugin dirs allow that, but Codex's default sandbox has no network, and the skill dir may be read-only once installed elsewhere. | agent-native | Claude Code: fine with Bash permission. Codex: run `bun install --frozen-lockfile` in `skills/poteto-mode/scripts` at `orca skills install` time, or launch with network allowed. Grok: same pre-install. | todo |
-| CD-194 | `skills/poteto-mode/scripts/bootstrap.ts:36` | `[process.execPath, "install", "--frozen-lockfile"],` | implicit | It assumes `bun` is on PATH and the skill directory is writable, as in a Cursor plugin checkout. | agent-native | Pre-install deps when installing the skill. If bun is missing, the scripts can't run: fall back to hand-editing the plain TSV/JSON store and calling `gh` directly. | todo |
 | CD-201 | `skills/poteto-mode/scripts/check-plan.test.ts:23` | `` \`git show origin/main:\` /loop 1h status message `` | automation | The test fixture hard-codes the Cursor `/loop 1h` marker. | orca | Update this together with check-plan.mjs:20 so the fixture uses the Orca marker and one test covers each accepted form. | todo |
-| CD-202 | `skills/poteto-mode/scripts/orch/orch.test.ts:139` | `origin: {` | pr-tool | The test fixture covers the Cursor-internal `origin` forge. | skip | Drop the `origin` fixtures together with the forge removal. | todo |
-| CD-203 | `skills/poteto-mode/scripts/orch/orch.test.ts:495` | `for (const forge of ["gh", "origin"] as const) {` | pr-tool | The tests are parameterized over the `origin` forge. | skip | Loop over `gh` only. | todo |
-| CD-204 | `skills/poteto-mode/scripts/orch/orch.test.ts:683` | `expect(badForge.stderr).toContain("Allowed choices are gh, origin");` | pr-tool | The assertion hard-codes the `origin` choice. | skip | Update it to the `gh`-only message. | todo |
-| CD-205 | `skills/poteto-mode/scripts/orch/orch.ts:1` | `#!/usr/bin/env bun` | implicit | Same bun prerequisite as above. | keep | Same as above. | n/a |
-| CD-206 | `skills/poteto-mode/scripts/orch/orch.ts:258` | `.description("Plain-file orchestrate bookkeeping")` | implicit | The whole orch store exists because Cursor's Task-tool coordinator has no durable task, inbox, or gate state. Orca orchestration provides most of it. | orca | Under Orca, bypass orch for units, inbox, gates and status (rows below). Keep orch only for `ledger` and `frontier`, plus `standing` if wanted, which Orca has no equivalent for. | todo |
-| CD-207 | `skills/poteto-mode/scripts/orch/orch.ts:285` | `leaf(unit, "add <id>", "add a unit")` | implicit | `units.tsv` duplicates Orca's Task list. | orca | `orca orchestration task-create --spec "<brief>" --task-title <id> --display-name <track> [--deps '[...]'] --json`. Without Orca: `orch unit add`. | todo |
-| CD-208 | `skills/poteto-mode/scripts/orch/orch.ts:301` | `leaf(unit, "set <id>", "update a unit")` | implicit | Unit state transitions duplicate Orca task status. | orca | `orca orchestration task-update --id <task> --status pending\|ready\|dispatched\|completed\|failed\|blocked --result "branch=… pr=… sha=…"`. Orca has no branch/PR/SHA fields, so carry them in `--result` or keep `orch unit set` for those columns. | todo |
-| CD-209 | `skills/poteto-mode/scripts/orch/orch.ts:324` | `leaf(unit, "list", "list units")` | implicit | Duplicates Orca task listing. | orca | `orca orchestration task-list [--status <s>] [--ready] --brief --json`. | todo |
-| CD-210 | `skills/poteto-mode/scripts/orch/orch.ts:343` | `leaf(ledger, "record", "record a verification verdict")` | implicit | The PR+SHA verification ledger has no Orca equivalent. | keep | Keep `orch ledger record/check`, which is harness-neutral. Optionally mirror the verdict into `orca orchestration task-update --result`. | n/a |
-| CD-211 | `skills/poteto-mode/scripts/orch/orch.ts:389` | `leaf(inbox, "push <agent> <unit> <status>", "push an inbox pointer")` | implicit | It exists because Cursor Task-tool completion notifications land in the coordinator chat and must be hand-recorded. | orca | Workers send `orca orchestration send --type worker_done --task-id <id> --outcome succeeded\|failed --report-path <p>`. That settles the Task automatically, so no push is needed. Outside Orca: `orch inbox push`. | todo |
-| CD-212 | `skills/poteto-mode/scripts/orch/orch.ts:413` | `leaf(inbox, "drain", "drain inbox pointers")` | implicit | Its batch-drain semantics duplicate Orca's FIFO delivery. | orca | `orca orchestration check --wait --types "worker_done,escalation,question" --timeout-ms 900000 --json`, then `--ack <delivery_id>` on the next check. `orca orchestration inbox` to peek. | todo |
-| CD-213 | `skills/poteto-mode/scripts/orch/orch.ts:424` | `leaf(inbox, "count", "count inbox pointers").action(() =>` | implicit | Duplicates Orca unread counts. | orca | `orca orchestration check --peek --json` and count the rows. | todo |
-| CD-214 | `skills/poteto-mode/scripts/orch/orch.ts:438` | `leaf(gate, "park <id>", "park a decision gate")` | implicit | `gates.md` duplicates Orca decision gates. | orca | `orca orchestration gate-create --task <task_id> --question "<q> (default: <d>)" --options '["a","b"]'`. Orca gates need a task and have no default field, so put the default in the question text. | todo |
-| CD-215 | `skills/poteto-mode/scripts/orch/orch.ts:456` | `leaf(gate, "list", "list open decision gates").action(() =>` | implicit | Duplicates Orca gate listing. | orca | `orca orchestration gate-list [--task <id>] [--status <s>] --json`. | todo |
-| CD-216 | `skills/poteto-mode/scripts/orch/orch.ts:464` | `leaf(gate, "resolve <id>", "resolve a decision gate")` | implicit | Duplicates Orca gate resolution. | orca | `orca orchestration gate-resolve --id <gate_id> --resolution "<answer>"`. | todo |
-| CD-217 | `skills/poteto-mode/scripts/orch/orch.ts:492` | `.choices(["gh", "origin"])` | pr-tool | The `--forge` option offers Cursor's internal `origin` forge CLI. | skip | Use only `gh` under Orca (the default). Drop the `origin` choice and its docs. | todo |
-| CD-218 | `skills/poteto-mode/scripts/orch/orch.ts:517` | `leaf(program, "status", "render status.md and print a summary").action(() =>` | implicit | `status.md` duplicates Orca run, task and worker state for units and gates. | orca | `orca orchestration run-show --id <run> --json`, `task-list --brief`, `gate-list`, `worker-list --json`. Keep `orch status` only for the ledger/frontier sections. | todo |
-| CD-219 | `skills/poteto-mode/scripts/orch/orch.ts:525` | `leaf(standing, "show", "show standing orders").action(() =>` | implicit | `preferences.md` is pasted into every Cursor spawn and resume because Task-tool directives decay. | keep | No Orca equivalent. Keep `orch standing`, and paste it into every `orca orchestration worker-start --spec`/`task-create --spec`, or into the `run-create --objective`. | n/a |
-| CD-220 | `skills/poteto-mode/scripts/orch/store.ts:17` | `const UNIT_HEADER = "id\ttrack\tstate\tbranch\tpr\tsha\tbrief";` | implicit | The units table is the Cursor-era stand-in for orchestration tasks. | orca | Same as orch.ts:285/301: Orca Tasks, with branch/PR/SHA kept in `--result` or in units.tsv. | todo |
-| CD-221 | `skills/poteto-mode/scripts/orch/store.ts:19` | `const LOCK_FILE = ".orch.lock";` | cloud-agent | The PID lock assumes one local coordinator process. Cursor cloud workers can't reach the store at all (orchestrate.md:17). | keep | Under Orca all workers are local or `--on <environment>`, and only the coordinator writes the store, so the lock is fine. | n/a |
-| CD-222 | `skills/poteto-mode/scripts/orch/store.ts:971` | `export type Forge = "gh" \| "origin";` | pr-tool | The forge type includes Cursor's internal `origin` CLI. | skip | Collapse to `gh` only. | todo |
-| CD-223 | `skills/poteto-mode/scripts/orch/store.ts:993` | `origin: {` | pr-tool | Field mapping for `origin pr list` (status/headRef/baseRef). | skip | Remove lines 993-1003. | todo |
-| CD-224 | `skills/poteto-mode/scripts/orch/store.ts:1007` | `if (value === "gh" \|\| value === "origin") {` | pr-tool | `parseForge` accepts `origin`. | skip | Accept `gh` only. | todo |
-| CD-225 | `skills/poteto-mode/scripts/orch/store.ts:1462` | `const inbox = join(store, "inbox");` | implicit | The file-pointer inbox duplicates Orca messaging. | orca | Use `orca orchestration check --wait`/`--ack` (see orch.ts:413). | todo |
-| CD-226 | `skills/poteto-mode/scripts/orch/store.ts:1502` | `park: async (params) => {` | implicit | The `gates.md` writer duplicates Orca gates. | orca | `orca orchestration gate-create`/`gate-resolve` (see orch.ts:438/464). | todo |
-| CD-227 | `skills/poteto-mode/scripts/orch/store.ts:1553` | `set: async (params) => {` | pr-tool | The frontier walks the PR base chain via `gh`/`origin`, with no Orca equivalent. | keep | Keep `orch frontier set --repo <dir>` with the default `gh`. It works in any harness. | n/a |
-| CD-228 | `skills/poteto-mode/scripts/package.json:2` | `"name": "@cursor-skill/poteto-mode-tools",` | implicit | The package name uses the Cursor plugin namespace, but it is a private, unpublished name and nothing resolves it. | keep | Not a runtime dependency. Rename to something like `@pstack/poteto-mode-tools` only for tidiness. | n/a |
-| CD-229 | `skills/poteto-mode/scripts/watch-pr/cli.ts:110` | `.option("--interval <seconds>", "poll interval", positiveNumber, 60)` | automation | watch-pr polls internally until a terminal verdict, but the playbooks still wrap it in Cursor `/loop` for wakeups. | orca | Run it in an Orca terminal (`orca terminal create --worktree <sel> --command "<skill>/scripts/watch-pr/watch-pr --queued-stack --stack-prs …"`), then `orca terminal wait --terminal <h> --for exit`. Claude Code: Bash `run_in_background`/Monitor. Codex/Grok: run it in the foreground (it blocks). | todo |
-| CD-230 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:107` | `it("classifies an in-progress Code Review Gate from the rollup as the gate", () => {` | implicit | Tests cover the Cursor-monorepo gate name. | keep | Tests stay valid. No harness dependency. | n/a |
-| CD-231 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:229` | `it("annotates Bugbot threads with distinct review-pass counts", () => {` | bugbot | Bugbot fixtures with a `bugbot` author. | keep | Pure unit tests. Extend them if new bot logins are added. | n/a |
-| CD-232 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:247` | `author: { login: "bugbot" },` | bugbot | Not a dependency: this is a TypeScript test fixture for Bugbot thread detection. | keep | The test runs anywhere with no Cursor service involved. | n/a |
-| CD-233 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:258` | `body: "CURSOR_AUTOMATION_ID: run-2 severity high",` | bugbot | Fixture with a Cursor automation ID. | keep | Pure fixture with no runtime dependency. | n/a |
-| CD-234 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:262` | `author: { login: "cursor" },` | bugbot | Fixture with the Cursor bot login. | keep | Pure fixture. | n/a |
-| CD-235 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:277` | `author: { login: "bugbot" },` | bugbot | Not a dependency: this is a test fixture. | keep | No action. | n/a |
-| CD-236 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:290` | `expect(threads.map((thread) => thread.isBugbot)).toEqual([true, true]);` | bugbot | Not a dependency: this is a test assertion on fixture data. | keep | No action. | n/a |
-| CD-237 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:291` | `expect(threads.map((thread) => thread.bugbotReviewPasses)).toEqual([3, 3]);` | bugbot | Not a dependency: this is a test assertion on fixture data. | keep | No action. | n/a |
-| CD-238 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:343` | `it("counts Bugbot review passes across every page", async () => {` | bugbot | Bugbot pagination test. | keep | Pure unit test. | n/a |
-| CD-239 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:344` | `const bugbot = (id: string, runId: string) => ({` | bugbot | Not a dependency: this is a test fixture factory. | keep | No action. | n/a |
-| CD-240 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:347` | `authorLogin: "bugbot",` | bugbot | Not a dependency: this is a test fixture field. | keep | No action. | n/a |
-| CD-241 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:357` | `{ threads: [bugbot("one", "run-1")], endCursor: "next" },` | bugbot | Not a dependency: this is a test fixture page, and `endCursor` is GraphQL pagination. | keep | No action. | n/a |
-| CD-242 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:358` | `{ threads: [bugbot("two", "run-2")], endCursor: null },` | bugbot | Not a dependency: this is a test fixture page. | keep | No action. | n/a |
-| CD-243 | `skills/poteto-mode/scripts/watch-pr/github.test.ts:362` | `expect(threads.map((item) => item.bugbotReviewPasses)).toEqual([2, 2]);` | bugbot | Not a dependency: this is a test assertion. | keep | No action. | n/a |
-| CD-244 | `skills/poteto-mode/scripts/watch-pr/github.ts:263` | `return details.name === "Code Review Gate"` | implicit | It special-cases a required check named "Code Review Gate" (a Cursor-monorepo owner-approval gate). | keep | It only triggers if a repo has a check by that exact name, so it is harmless elsewhere. | n/a |
-| CD-245 | `skills/poteto-mode/scripts/watch-pr/github.ts:329` | `function isBugbot(comment: T.ReviewComment \| null): boolean {` | bugbot | It identifies Cursor Bugbot review threads by author or body. | fallback-only | It doesn't depend on the harness (Bugbot is a GitHub App), and all unresolved threads block regardless. Without Bugbot, `isBugbot` is always false. Optionally also match `claude[bot]` and `chatgpt-codex-connector[bot]`. | todo |
-| CD-246 | `skills/poteto-mode/scripts/watch-pr/github.ts:334` | `author.includes("bugbot") \|\|` | bugbot | Not a dependency: it detects Bugbot by GitHub author login in data fetched through `gh`, with no Cursor API. | keep | It returns false when no Bugbot comments exist, so watch-pr works unchanged under `orca terminal create --command`. | n/a |
-| CD-247 | `skills/poteto-mode/scripts/watch-pr/github.ts:335` | `(author === "cursor" &&` | bugbot | It matches the `cursor` GitHub login for Cursor automation comments. | fallback-only | Never matches without Cursor's GitHub App. The annotation degrades to false and merge gating is unaffected. | todo |
-| CD-248 | `skills/poteto-mode/scripts/watch-pr/github.ts:337` | `"bugbot",` | bugbot | Not a dependency: this is a body-token match for comments authored by `cursor` on GitHub. | keep | It is harmless when absent. | n/a |
-| CD-249 | `skills/poteto-mode/scripts/watch-pr/github.ts:338` | `"cursor_automation_id",` | bugbot | Body token from Cursor Automations and Bugbot comments. | fallback-only | Same as above. | todo |
-| CD-250 | `skills/poteto-mode/scripts/watch-pr/github.ts:339` | `"agentic security review",` | bugbot | Body token from Cursor's agentic security review bot. | fallback-only | Same as above. | todo |
-| CD-251 | `skills/poteto-mode/scripts/watch-pr/github.ts:349` | `/CURSOR_AUTOMATION_ID:\s*([a-zA-Z0-9_.:-]+)/,` | bugbot | Counts Bugbot or Cursor-automation review passes from the run IDs embedded in comments. | fallback-only | Without Cursor bots, `bugbotReviewPasses` is 0. Display only. | todo |
-| CD-252 | `skills/poteto-mode/scripts/watch-pr/github.ts:380` | `const cursor = optionalString(` | implicit | Not a dependency: `cursor` is a GitHub GraphQL pagination cursor. | keep | No action. | n/a |
-| CD-253 | `skills/poteto-mode/scripts/watch-pr/github.ts:384` | `return { threads, endCursor: page.hasNextPage && cursor ? cursor : null };` | implicit | Not a dependency: this is GraphQL pagination. | keep | No action. | n/a |
-| CD-254 | `skills/poteto-mode/scripts/watch-pr/github.ts:392` | `if (!isBugbot(thread.firstComment)) continue;` | bugbot | `buildReviewThreads` derives a pass count only from Bugbot threads. | fallback-only | Count is 0 without Bugbot. Thread blocking is unaffected. | todo |
-| CD-255 | `skills/poteto-mode/scripts/watch-pr/github.ts:403` | `isBugbot: isBugbot(firstComment),` | bugbot | Not a dependency: it is a derived flag from GitHub comment data. | keep | No action. | n/a |
-| CD-256 | `skills/poteto-mode/scripts/watch-pr/github.ts:404` | `bugbotReviewPasses: passes,` | bugbot | Not a dependency: it is a derived count from GitHub data. | keep | No action. | n/a |
-| CD-257 | `skills/poteto-mode/scripts/watch-pr/github.ts:570` | `const cursor = optionalString(` | implicit | Not a dependency: this is a GraphQL pagination cursor. | keep | No action. | n/a |
-| CD-258 | `skills/poteto-mode/scripts/watch-pr/github.ts:574` | `return { checks, endCursor: page.hasNextPage && cursor ? cursor : null };` | implicit | Not a dependency: this is GraphQL pagination. | keep | No action. | n/a |
-| CD-259 | `skills/poteto-mode/scripts/watch-pr/policy.test.ts:289` | `if (sleeps === 2) throw new Error("stop after resume proof");` | implicit | Not a dependency: "resume" is a test error string. | keep | No action. | n/a |
-| CD-260 | `skills/poteto-mode/scripts/watch-pr/policy.test.ts:299` | `await expect(running).rejects.toThrow("stop after resume proof");` | implicit | Not a dependency: this is a test assertion string. | keep | No action. | n/a |
-| CD-261 | `skills/poteto-mode/scripts/watch-pr/policy.ts:54` | `"bugbot",` | bugbot | `AUTOMATION_TOKENS` detects pending Bugbot checks to report "review automation running". | fallback-only | Display only (`reviewAutomationRunning`). Optionally add tokens for `claude`/`codex` review Actions. | todo |
-| CD-262 | `skills/poteto-mode/scripts/watch-pr/policy.ts:55` | `"security review",` | bugbot | Token for Cursor's security-review check run. | fallback-only | Never matches without it, so it degrades to false. | todo |
-| CD-263 | `skills/poteto-mode/scripts/watch-pr/policy.ts:56` | `"pr review automation",` | bugbot | Not a dependency: it is a token for matching GitHub check names to detect running review bots. | keep | Harmless when no such checks exist. | n/a |
-| CD-264 | `skills/poteto-mode/scripts/watch-pr/policy.ts:57` | `"review automation",` | bugbot | Not a dependency: it is a GitHub check-name match token. | keep | No action. | n/a |
-| CD-265 | `skills/poteto-mode/scripts/watch-pr/policy.ts:132` | `reviewAutomationRunning: checks.checks.some(` | bugbot | The flag exists to surface Cursor review automation in progress. | fallback-only | Display only. Not used in merge decisions. | todo |
-| CD-266 | `skills/poteto-mode/scripts/watch-pr/render.ts:25` | `return row.reviewAutomationRunning` | bugbot | Renders the Bugbot/automation-running cell. | fallback-only | Always shows the non-automation branch without Cursor bots. | todo |
-| CD-267 | `skills/poteto-mode/scripts/watch-pr/render.ts:62` | `` `isBugBot=${thread.isBugbot}`, `` | bugbot | Blocker output prints Bugbot fields. | fallback-only | Prints `isBugBot=false bugbotReviewPasses=0` without Bugbot. Harmless. | todo |
-| CD-268 | `skills/poteto-mode/scripts/watch-pr/render.ts:63` | `` `bugbotReviewPasses=${thread.bugbotReviewPasses}`, `` | bugbot | Not a dependency: this is an output field for watch-pr status lines. | keep | No action. | n/a |
-| CD-269 | `skills/poteto-mode/scripts/watch-pr/types.ts:68` | `readonly isBugbot: boolean;` | bugbot | The thread type carries a Bugbot-specific flag. | fallback-only | Keep the field (false without Bugbot), or generalize it to `isReviewBot`. | todo |
-| CD-270 | `skills/poteto-mode/scripts/watch-pr/types.ts:69` | `readonly bugbotReviewPasses: number;` | bugbot | The thread type carries a Bugbot pass count. | fallback-only | 0 without Bugbot. | todo |
-| CD-271 | `skills/poteto-mode/scripts/watch-pr/types.ts:84` | `readonly kind: "code-review-gate";` | implicit | Check kind for the Cursor-monorepo "Code Review Gate". | keep | Inert unless a check by that name exists. | n/a |
-| CD-272 | `skills/poteto-mode/scripts/watch-pr/types.ts:157` | `readonly reviewAutomationRunning: boolean;` | implicit | Not a dependency: `readonly` is a TypeScript modifier, not the Task `readonly` field. | keep | No action. | n/a |
-| CD-273 | `skills/poteto-mode/scripts/watch-pr/watch-pr:1` | `#!/usr/bin/env bun` | implicit | It needs the bun runtime, which is not Cursor-specific but is not guaranteed in an Orca agent's environment. | keep | Works in any harness that has bun. Document `bun` as a prerequisite next to `gh`. | n/a |
 
 ## Cross-model skills (arena, swarm, interrogate, reflect, architect, how, why)
 
