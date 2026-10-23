@@ -1,6 +1,6 @@
 # resolve-capability design
 
-Status: draft for review. Nothing here is implemented yet.
+Status: implemented. `skills/resolve-capability/` holds the index and references, every skill and playbook names capabilities, `scripts/lint-rewritten.mjs` keeps product names out of them, and `orca-harness` is gone. The tables below are the first draft: where a skill or a reference file differs, that file is right. Cells marked `?` are not checked yet.
 
 ## Problem
 
@@ -169,13 +169,13 @@ A step names the capability in backticks and states what it needs, not how:
 
 A lint keeps product names out of layer 1: no `Task`, `AskUserQuestion`, `TodoWrite`, `update_plan`, `orca <command>`, or `gh` command in a rewritten skill outside the adapter and the generator's references. The existing `check-orca-commands` check covers the adapter's `orca` lines against the Orca snapshot.
 
-## What changes in what exists
+## What changed
 
-- **New:** `skills/resolve-capability/` (index and references). The rows in `CURSOR-DEPENDENCIES.md` become the source for its mappings, and each row's status turns to `done` when its capability is in the adapter.
-- **Replaced:** `skills/orca-harness/`. Its content is regrouped by capability. It stays until the last skill stops pointing at it.
-- **Smaller:** the `poteto-mode` Subagents section keeps the choosing rules and hands the mechanics to the adapter. The rewritten cross-model skills swap `Agent`, `spawn_agent`, and `orca` lines for capability names.
-- **Generator:** stops copying `references/`. Adds a capability survey to `inventory.md`: whether `gh` is logged in, whether a saved Orca environment exists, whether Orca automations are available, and which review bots a repository uses.
-- **Later:** the playbooks (Unit 4) and the remaining skills (Unit 5) are rewritten in this vocabulary. Playbook work is on hold until this design is settled.
+- **New:** `skills/resolve-capability/` (the index, and references for Orca workers, waiting and schedules, exact steps, CLI workers, and each harness).
+- **Gone:** `skills/orca-harness/`, the pointer line every skill carried, and `scripts/apply-orca-pointer.mjs`.
+- **Smaller:** the `poteto-mode` Subagents section keeps the choosing rules and hands the mechanics to the adapter.
+- **Generator:** copies no references, points at the adapter, and surveys `gh`, `bun`, saved Orca environments, and each other product's headless CLI.
+- **Playbooks and the rest:** rewritten in this vocabulary. `scripts/rewritten.json` lists the paths, and `CURSOR-DEPENDENCIES.md` keeps only rows nobody needs to act on.
 
 ## Checks
 

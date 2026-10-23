@@ -1,6 +1,6 @@
 # select-model design
 
-Status: draft for review. Nothing here is implemented yet.
+Status: implemented. `setup-pstack`, `create-model-selection-skill`, and the `poteto-mode` Subagents section follow this design. The results of the checks are at the end. Where the design and a skill differ, the skill is right.
 
 ## Problem
 
