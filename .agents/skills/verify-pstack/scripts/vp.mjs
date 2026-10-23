@@ -309,7 +309,18 @@ function globalDrift() {
     const same = local.size === files.size && [...files].every(([f, id]) => local.get(f) === id)
     if (!same) drift.push(name)
   }
-  return { installed, total: head.size, drift }
+  return { installed, total: head.size, drift, orphans: globalOrphans(head), headNames: new Set(head.keys()) }
+}
+
+// Global skills the skills CLI installed from this repo (or its HEAD export) that HEAD no longer has.
+// `npx skills add` never removes them, so they stay visible until the user runs `npx skills remove -g <name>`.
+function globalOrphans(head) {
+  const lockFile = path.join(HOME, '.agents/.skill-lock.json')
+  if (!exists(lockFile)) return []
+  const skills = readJson(lockFile).skills ?? {}
+  return Object.entries(skills)
+    .filter(([name, entry]) => [REPO, HEAD_EXPORT].includes(entry.source) && !head.has(name) && exists(path.join(GLOBAL_SKILLS, name)))
+    .map(([name]) => name)
 }
 
 function syncGlobal(opt) {
@@ -325,6 +336,7 @@ function syncGlobal(opt) {
   if (r.status !== 0) die(`npx skills add exited ${r.status}`)
   const after = globalDrift()
   console.log(after.drift.length ? `still different from HEAD: ${after.drift.join(', ')}` : `global copies match ${head}`)
+  if (after.orphans.length) console.log(`orphans (installed from this repo, gone from HEAD, left in place): ${after.orphans.join(', ')}. The user removes them with npx skills remove -g <name>`)
 }
 
 function sync(args) {
@@ -1153,6 +1165,11 @@ function doctor() {
   if (!g.installed) ok('no global pstack install under ~/.agents/skills')
   else if (g.drift.length) warn.push(`global copies differ from HEAD: ${g.drift.join(', ')}. Claude Code prefers them over the testbed's copies. Run vp sync --global to install HEAD`)
   else ok(`global pstack copies (${g.installed} of ${g.total}) match HEAD`)
+  if (g.orphans.length) warn.push(`orphan global skills (installed from this repo, no longer in it): ${g.orphans.join(', ')}. Agents can still load them. Only the user removes them: npx skills remove -g <name>`)
+  const testbedOrphans = exists(path.join(TESTBED, '.agents/skills'))
+    ? fs.readdirSync(path.join(TESTBED, '.agents/skills')).filter((n) => exists(path.join(TESTBED, '.agents/skills', n, 'SKILL.md')) && !g.headNames.has(n))
+    : []
+  if (testbedOrphans.length) warn.push(`testbed copies of skills the repo no longer has: ${testbedOrphans.join(', ')}. Codex in the testbed can still list them`)
   const s = smState()
   console.log(`info  select-model: ${s.kind}${s.owner ? ` placed by ${s.owner}` : ''}. lock: ${describeLock(readLock())}`)
   if (s.kind === 'sample' && !readLock()) problems.push(`a sample select-model is installed with no lock (placed by ${s.owner}). Ask its owner or the user before removing it`)

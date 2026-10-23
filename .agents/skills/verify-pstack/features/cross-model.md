@@ -25,7 +25,7 @@ Seven skills put several models on one job: `how`, `swarm`, `interrogate`, `aren
 
 Preconditions:
 
-- The changed skill and `poteto-mode` are synced. `orca-harness` too when a seat may become an Orca worker.
+- The changed skill, `poteto-mode`, and `resolve-capability` are synced.
 - `select-model` is present (the user's real one, or the fixture under the lock), except for `xm-missing`, which needs it absent under the lock.
 - Expected seats below assume the fixture. Workers spend usage at the effort the skill picks.
 

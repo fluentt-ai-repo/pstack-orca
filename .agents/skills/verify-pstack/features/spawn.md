@@ -21,7 +21,7 @@ When a task needs a helper, the agent reads `select-model` and the capability ad
 
 Preconditions:
 
-- `poteto-mode` and `orca-harness` are synced.
+- `poteto-mode` and `resolve-capability` are synced.
 - `select-model` is present: the user's real one, or the fixture placed under the lock (`$VP sm lock "spawn check"`, then `$VP sm place`).
 - With the fixture, reading goes to Grok and judgment goes to `claude opus`.
 

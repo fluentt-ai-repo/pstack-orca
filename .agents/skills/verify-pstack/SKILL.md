@@ -32,8 +32,8 @@ The four repo checks run for every change, from the repo root:
 ```bash
 node scripts/audit-cursor-deps.mjs
 node scripts/check-orca-commands.mjs
-node scripts/apply-orca-pointer.mjs --check
 node scripts/lint-rewritten.mjs
+node scripts/prune-cursor-deps.mjs --check
 ```
 
 Rules for spending:
@@ -77,7 +77,8 @@ The user installed pstack globally (`npx skills add <repo> -g -a claude-code -a 
 
 - A Claude run tests the global copies. `vp sync` still fills the testbed from the working tree, but Claude Code does not read those copies while a global one exists. An uncommitted change never reaches a Claude run.
 - To prove a change in a Claude run, commit it, then run `$VP sync --global`. It exports `skills/` at git HEAD to `~/.cache/verify-pstack/head-export` and runs `npx skills add <that folder> -g -a claude-code -a codex -a grok -s '*' -y`. It never installs uncommitted work into the user's real skills. `--dry-run` only exports and prints the command.
-- `sync --global` changes the install source the `skills` CLI records in `~/.agents/.skill-lock.json` from the repo path to the export folder. That is why the folder is kept. Say so when you run it.
+- `sync --global` changes the install source the `skills` CLI records in `~/.agents/.skill-lock.json` from the repo path to the export folder. That is why the folder is kept. Say so when you run it. On 2026-10-23 the lock already named the export folder as the source of all 59 pstack skills, so never delete it.
+- `npx skills add` never removes a skill. One the repo dropped (`orca-harness` on 2026-10-23) stays in the global folders and agents can still load it. `vp doctor` lists such orphans, and testbed copies the repo no longer has. Only the user removes a global one, with `npx skills remove -g <name>`.
 - `vp doctor` lists the skills whose global copy differs from HEAD. `vp read` names the copy each pstack skill came from (testbed, global, or fake home) and prints a warning when it is not the testbed's.
 - Codex docs say it may list both copies without merging. No run has checked which one Codex uses.
 - The `select-model` rules above do not change. A global install puts no `select-model` in place.
@@ -119,7 +120,7 @@ Known limits:
 
 ## Doctor
 
-`$VP doctor` is read-only. It checks that Orca answers and matches the snapshot in `orca/VERSION`, that the testbed is clean, which testbed copies differ from the working tree, that each `.claude/skills/<name>` link is the relative one, the state of `select-model` and its lock, any stash or fake home left behind, that `claude`, `codex`, and `grok` run, and your runs that were never cleaned. It compares each global copy under `~/.agents/skills` with git HEAD. It also counts the testbed's open terminals and chats. It warns about a terminal whose title carries a run id, about orphaned or disconnected terminal records, and about open chats, and says when only the user can close them in Orca's window. Run it before the first launch and again after anything surprising. Fix every `FAIL` line before you launch. A `warn` line about a copy is a problem only when your run reads that skill.
+`$VP doctor` is read-only. It checks that Orca answers and matches the snapshot in `orca/VERSION`, that the testbed is clean, which testbed copies differ from the working tree, that each `.claude/skills/<name>` link is the relative one, the state of `select-model` and its lock, any stash or fake home left behind, that `claude`, `codex`, and `grok` run, and your runs that were never cleaned. It compares each global copy under `~/.agents/skills` with git HEAD and lists orphans. It also counts the testbed's open terminals and chats. It warns about a terminal whose title carries a run id, about orphaned or disconnected terminal records, and about open chats, and says when only the user can close them in Orca's window. Run it before the first launch and again after anything surprising. Fix every `FAIL` line before you launch. A `warn` line about a copy is a problem only when your run reads that skill.
 
 ## Drive
 
