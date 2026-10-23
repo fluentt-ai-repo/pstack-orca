@@ -41,7 +41,7 @@ Preconditions:
 
 ## Gotchas
 
-- Earlier passes: Unit 1 runs A to D and C (the retired role table), G1 on 2026-10-23 (the first `select-model`, written to `/tmp/select-model-test`), and G4 (this link prompt, fake home `/tmp/fakehome`).
+- Earlier passes: Unit 1 runs A to D and C (the retired role table), G1 on 2026-10-23 (the first `select-model`, written to `/tmp/select-model-test`), G4 (this link prompt, fake home `/tmp/fakehome`), and G-161153 (links and proof skipped, `sonnet low`, five tool calls), whose output is now the fixture. Its inventory gives Grok both start methods. Its reply said Codex could not be started from the session, against its own `codex exec` line.
 - The generator surveys the real computer (`~/.claude/settings.json`, `~/.codex/config.toml`, `~/.grok/config.toml`, Orca's catalog) even with a fake home. Only the write target and the link folders move. That is intended.
 - The fake home is a stand-in. It does not prove the real `~` resolves, and the prompt names the target, which a user's run would not do.
 - If the generator asks a question anyway, the run fails `gen-noask` and `vp wait` exits 3. `$VP screen <run id>` shows the question. Answer it with `$VP key` only to let the run finish, then clean up as usual.

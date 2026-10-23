@@ -1,4 +1,4 @@
-<!-- from pstack 0.15.29, overwritten on update -->
+<!-- from pstack unknown (no plugin.json found), overwritten on update -->
 # Orca
 
 Facts checked on Orca 1.4.237.

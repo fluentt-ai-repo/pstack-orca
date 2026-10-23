@@ -1,4 +1,4 @@
-<!-- from pstack 0.15.29, overwritten on update -->
+<!-- from pstack unknown (no plugin.json found), overwritten on update -->
 # Claude Code
 
 ## Your own subagents
@@ -20,3 +20,7 @@ No command or file read on this computer reports remaining Claude usage. `/usage
 ## Transcripts
 
 `<config dir>/projects/<workspace folder>/*.jsonl`.
+
+## Skill folder
+
+`~/.claude/skills/`. The `skills` CLI links a skill there as `<name> -> ../../.agents/skills/<name>`. Orca's Claude profile links its `skills` folder to `~/.claude/skills`, so one link covers a Claude Code started by Orca too.

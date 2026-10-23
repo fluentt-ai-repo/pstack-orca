@@ -1,4 +1,4 @@
-<!-- from pstack 0.15.29, overwritten on update -->
+<!-- from pstack unknown (no plugin.json found), overwritten on update -->
 # Codex
 
 ## Your own subagents
@@ -20,3 +20,7 @@ A Codex session with no Orca, and Codex starting its own models with `spawn_agen
 ## Transcripts
 
 `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-*.jsonl`, filtered on `payload.cwd`.
+
+## Skill folder
+
+No link is needed. The `skills` CLI installs a skill for Codex into `~/.agents/skills/` itself, with nothing in `~/.codex/skills/`, so Codex reads `~/.agents/skills/` directly.
