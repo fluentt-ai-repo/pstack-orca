@@ -2,6 +2,14 @@
 
 Copy these as written. Each one is hard to undo. Do not rebuild them from memory, and reread only the section you are about to run.
 
+## Opening a pull request and building a stack
+
+- Open it ready for review: `gh pr create` without `--draft`. If it was opened as a draft, run `gh pr ready <pr>`.
+- Read its state with `gh pr view <pr> --json state,isDraft,baseRefName`. A pull request is open and ready when `state` is `OPEN` and `isDraft` is `false`.
+- A child in a stack is created against its parent's branch: `gh pr create --base <parent branch>`. Point an existing one somewhere else with `gh pr edit <pr> --base <branch>`.
+- Under Orca, link the pull request to the workspace afterwards: `orca reference add <pr-url> --worktree active`.
+- Use `gh` and nothing else. The ban on `gt` stands.
+
 ## Merging a pull request
 
 - `gh pr merge <pr> --squash`, one at a time, starting from the bottom of a stack. Never merge two at once.

@@ -62,6 +62,10 @@ jq -r '.entries[] | .agent as $a | (.live // .discovered).models[]? | "\($a) \(.
 - Stop or abandon only on positive proof the agent stopped, with the exact recovery receipt: `orca orchestration worker-stop` or `worker-abandon`. Never substitute `terminal close` for a release.
 - `orca orchestration reset` is destructive. Do not call it on your own.
 
+## A worker that starts workers
+
+A worker can run its own loop: it creates a Run, starts workers, and waits, as a sub-coordinator would. Nesting is limited. `worker-start` fails with `nested_worker_depth_exceeded` when it goes too deep, and creating another Run does not reset the depth. The guide does not state the limit and this was not run. Treat the error as the limit: when it fires, stop nesting and have the coordinator above start those workers itself. Prefer a wide wave to a deep chain.
+
 ## What a worker cannot do
 
 - Nothing but the brief stops a worker from editing. Orca starts Claude Code in a terminal with `--dangerously-skip-permissions` (seen in the process command line), so a worker is never held at a permission screen and a read-only seat is read-only only if its brief says so and you check `git status`.
