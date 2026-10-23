@@ -112,9 +112,18 @@ function walk(dir, base = dir, out = []) {
 
 const fileHash = (p) => createHash('sha256').update(fs.readFileSync(p)).digest('hex').slice(0, 12)
 
-function compareTrees(src, dst) {
-  if (!exists(dst)) return { missing: true, changed: [], added: walk(src), removed: [] }
-  const a = new Set(walk(src))
+// The files of skills/<name> that git tracks or would track, so ignored build output such as node_modules stays out.
+function skillFiles(name) {
+  const prefix = `skills/${name}/`
+  return sh('git', ['-C', REPO, 'ls-files', '--cached', '--others', '--exclude-standard', '--', prefix])
+    .stdout.split('\n')
+    .filter((f) => f && exists(path.join(REPO, f)))
+    .map((f) => f.slice(prefix.length))
+}
+
+function compareTrees(src, dst, srcFiles = walk(src)) {
+  if (!exists(dst)) return { missing: true, changed: [], added: srcFiles, removed: [] }
+  const a = new Set(srcFiles)
   const b = new Set(walk(dst))
   const changed = [...a].filter((f) => b.has(f) && fileHash(path.join(src, f)) !== fileHash(path.join(dst, f)))
   return { missing: false, changed, added: [...a].filter((f) => !b.has(f)), removed: [...b].filter((f) => !a.has(f)) }
@@ -344,18 +353,38 @@ function sync(args) {
   if (opt.global) return syncGlobal(opt)
   const names = opt.all ? repoSkills() : pos
   if (!names.length) die('name the skills your change touched, or pass --all')
+  if (opt.all && !opt.check) {
+    const kept = new Set(names)
+    const dir = path.join(TESTBED, '.agents/skills')
+    for (const n of exists(dir) ? fs.readdirSync(dir) : []) {
+      if (kept.has(n) || !exists(path.join(dir, n, 'SKILL.md'))) continue
+      fs.rmSync(path.join(dir, n), { recursive: true })
+      const link = path.join(TESTBED, '.claude/skills', n)
+      let target = null
+      try {
+        target = fs.readlinkSync(link)
+      } catch {}
+      if (target === `../../.agents/skills/${n}`) fs.rmSync(link)
+      console.log(`removed ${n} from the testbed: the repo no longer has it`)
+    }
+  }
   for (const name of names) {
     const src = path.join(REPO, 'skills', name)
     const dst = path.join(TESTBED, '.agents/skills', name)
     if (!exists(path.join(src, 'SKILL.md'))) die(`no skill ${src}`)
-    const d = compareTrees(src, dst)
+    const files = skillFiles(name)
+    const d = compareTrees(src, dst, files)
     const summary = d.missing ? 'not in the testbed' : `${d.changed.length} changed, ${d.added.length} added, ${d.removed.length} removed`
     if (opt.check) {
       if (d.missing || d.changed.length || d.added.length || d.removed.length) console.log(`stale ${name}: ${summary}`)
       continue
     }
-    const r = sh('rsync', ['-a', '--delete', `${src}/`, `${dst}/`])
-    if (r.status !== 0) die(`rsync ${name}: ${r.stderr}`)
+    if (exists(dst)) fs.rmSync(dst, { recursive: true })
+    for (const f of files) {
+      fs.mkdirSync(path.dirname(path.join(dst, f)), { recursive: true })
+      fs.copyFileSync(path.join(src, f), path.join(dst, f))
+      fs.chmodSync(path.join(dst, f), fs.statSync(path.join(src, f)).mode)
+    }
     const link = path.join(TESTBED, '.claude/skills', name)
     const target = `../../.agents/skills/${name}`
     let linkNote = ''
@@ -1149,7 +1178,7 @@ function doctor() {
     if (exists(settings) && readJson(settings).autoMemoryEnabled !== false) warn.push('testbed .claude/settings.json no longer sets autoMemoryEnabled false, so runs can share memory')
     const stale = []
     for (const name of repoSkills()) {
-      const d = compareTrees(path.join(REPO, 'skills', name), path.join(TESTBED, '.agents/skills', name))
+      const d = compareTrees(path.join(REPO, 'skills', name), path.join(TESTBED, '.agents/skills', name), skillFiles(name))
       if (d.missing || d.changed.length || d.added.length || d.removed.length) stale.push(name)
       const link = path.join(TESTBED, '.claude/skills', name)
       let target = null
