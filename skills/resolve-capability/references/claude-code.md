@@ -2,7 +2,7 @@
 
 ## Tools
 
-- **Subagents.** The `Agent` tool. Its schema has `model`, `effort`, `subagent_type`, `isolation` (`"worktree"` gives the subagent its own checkout, unverified), and `run_in_background`. Read the accepted model and effort values from the schema you have now, because they change with the version. Read the subagent types and their tools from the same place. Some read-only types drop tools that others keep, MCP tools among them.
+- **Subagents.** The `Agent` tool. Its schema has `model`, `effort`, `subagent_type`, `isolation` (`"worktree"` gives the subagent its own checkout, unverified), and `run_in_background`. Read the accepted model and effort values from the schema you have now, because they change with the version. Read the subagent types and their tools from the same place. A read-only job takes a type whose tool list has no edit or write tool (`Explore` and `Plan` at the time of writing, so check the list you have). The general-purpose types have every tool, so a brief that says not to edit does not make them read-only. Some read-only types drop tools that others keep, MCP tools among them.
 - **Questions.** `AskUserQuestion`.
 - **Plan.** Use the plan or todo tool if your tool list has one. Otherwise keep the list in the reply.
 - **Waking.** A command started with `run_in_background` wakes the session when it ends. `/loop`, `CronCreate`, `ScheduleWakeup`, `Monitor`, `SendMessage`, and `TaskStop` exist in some versions. They are unverified here, so look at your tool list.
