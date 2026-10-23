@@ -42,6 +42,7 @@ Preconditions:
 ## Gotchas
 
 - Since commit 1780317 the Subagents section names capabilities (`spawn-worker`, `spawn-subagent`), so a run is expected to read `../resolve-capability/SKILL.md` and its `orca-workers.md` before the first worker. No cross-model run has checked that yet.
+- Final pass before release: F8-interrogate-171911 read the adapter in its first call, ran Reviewer A as a read-only `Explore` on opus and Reviewer B as `grok -p -m grok-4.7 --reasoning-effort xhigh` in the same message, and kept two vendors. Its reply called A "opus xhigh" though the call set no effort. It ran about fifteen minutes.
 - Earlier passes with `select-model`: V1 to V9 on 2026-10-23, in the same order as above (V8 is the Codex `how`). Unit 3 runs U3-1 to U3-10 used the retired role table.
 - `arena`, `interrogate`, and `how` start several workers. They are the most expensive checks in the map. `why` and `architect` stop at the plan, so they are cheap.
 - V5 stopped after starting the synthesizer, so its output was never collected. A reflect check that needs the synthesizer must wait for it.

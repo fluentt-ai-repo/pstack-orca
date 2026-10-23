@@ -42,6 +42,7 @@ Preconditions:
 ## Gotchas
 
 - Earlier passes: Unit 1 runs A to D and C (the retired role table), G1 on 2026-10-23 (the first `select-model`, written to `/tmp/select-model-test`), G4 (this link prompt, fake home `/tmp/fakehome`), and G-161153 (links and proof skipped, `sonnet low`, five tool calls), whose output was the fixture until G-161639. Its inventory gives Grok both start methods. Its reply said Codex could not be started from the session, against its own `codex exec` line.
+- Final pass before release: F3-gen-171632 linked Claude, kept a pre-made real folder at the Grok link name and said so, wrote no `references/`, named two adapter paths (the sibling, then the testbed copy) before the poteto-mode fallback, and filled Environment.
 - G-161639 (after bdbba26) wrote no `references/`, pointed at the adapter, and filled Environment with `gh`, `bun`, the two saved Orca environments, and the CLIs. Its output is now the fixture. Its reply still said only Claude could be started from the session, while also naming `grok -p` as the direct way.
 - The generator surveys the real computer (`~/.claude/settings.json`, `~/.codex/config.toml`, `~/.grok/config.toml`, Orca's catalog) even with a fake home. Only the write target and the link folders move. That is intended.
 - The fake home is a stand-in. It does not prove the real `~` resolves, and the prompt names the target, which a user's run would not do.

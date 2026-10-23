@@ -669,7 +669,19 @@ function workers(rec, sinceMs) {
 // Another product's CLI started headless from a shell (resolve-capability/references/cli-workers.md). No Orca record exists for these.
 const CLI_WORKER = /\b(grok\s+(-p|--single)\b|codex\s+exec\b|claude\s+(-p|--print|--bg)\b)/
 
-function cliWorkers(rec, width) {
+// A headless grok -p leaves a session record like any Grok session. Match it by the brief it was given,
+// or, when the brief came from a file, by being the only non-worker Grok session started during the run.
+function grokCliRecord(command, cwd, sinceMs) {
+  const sessions = candidates('grok', cwd || TESTBED, sinceMs).filter((dir) => !parseGrok(dir).firstPrompt.startsWith(WORKER_PREAMBLE))
+  const brief = command.match(/grok\s+(?:-p|--single)\s+"([^"$]{20,})/)?.[1]?.slice(0, 60)
+  const history = (dir) => fs.readFileSync(path.join(dir, 'chat_history.jsonl'), 'utf8')
+  const hit = brief ? sessions.find((dir) => history(dir).includes(JSON.stringify(brief).slice(1, -1))) : sessions.length === 1 ? sessions[0] : null
+  if (!hit) return null
+  const summary = exists(path.join(hit, 'summary.json')) ? readJson(path.join(hit, 'summary.json')) : {}
+  return `${summary.current_model_id ?? '?'} effort ${summary.reasoning_effort ?? '?'} (${hit})`
+}
+
+function cliWorkers(rec, width, sinceMs = 0) {
   return rec.calls
     .map((c, i) => ({ c, n: i + 1 }))
     .filter(({ c }) => CLI_WORKER.test(callText(c)))
@@ -677,7 +689,9 @@ function cliWorkers(rec, width) {
       const out = String(c.result ?? '')
       const usage = out.match(/"modelUsage"\s*:\s*\{\s*"([^"]+)"/)
       const model = out.match(/"(?:model|model_id|current_model_id)"\s*:\s*"([^"]+)"/)
-      return { n, shown: shown(c, width), ran: usage?.[1] ?? model?.[1] ?? null, output: oneLine(out, 300) }
+      const command = typeof c.input === 'object' && c.input !== null ? String(c.input.command ?? c.input.cmd ?? '') : String(c.input ?? '')
+      const record = /\bgrok\s+(-p|--single)\b/.test(command) ? grokCliRecord(command, rec.cwd, sinceMs) : null
+      return { n, shown: shown(c, width), ran: record ?? usage?.[1] ?? model?.[1] ?? null, output: oneLine(out, 300) }
     })
 }
 
@@ -708,7 +722,9 @@ function skillSources(rec) {
     ...rec.calls.flatMap((c) => [...callText(c).matchAll(/[\w./~@-]*\/skills\/[\w.-]+\/[\w./-]*/g)].map((m) => m[0])),
   ]
   const where = (p) => {
-    const abs = p.replace(/^~(?=\/)/, HOME)
+    // Codex names files relative to the session's folder.
+    const home = p.replace(/^~(?=\/)/, HOME)
+    const abs = path.isAbsolute(home) ? home : path.resolve(rec.cwd || TESTBED, home)
     if (abs.startsWith(TESTBED)) return 'testbed'
     if (abs.startsWith('/tmp/vp-home-') || abs.startsWith('/private/tmp/vp-home-')) return 'fake home'
     if (GLOBAL_LINK_DIRS.some((d) => abs.startsWith(`${d}/`))) return 'global'
@@ -745,7 +761,7 @@ function facts(rec, sinceMs, width) {
       ...rec.subagents.map((s) => ({ from: 'subagent meta', shown: `type=${s.agentType} model=${s.model ?? 'unset'} effort=${s.effort ?? 'unset'} finished=${s.finished} "${s.description ?? ''}"` })),
     ],
     workers: workers(rec, sinceMs),
-    cli_workers: cliWorkers(rec, width),
+    cli_workers: cliWorkers(rec, width, sinceMs),
     skill_sources: skillSources(rec),
     tmp_dirs: tmpDirs(rec, sinceMs),
     final_reply: finalText.join('\n\n'),
