@@ -819,7 +819,7 @@ function launch(args) {
   const marker = `[${id}]`
   if (opt.prompt.includes('{home}') && !opt.fakehome) die('the prompt uses {home}, so pass --fakehome <dir> (make one with vp fakehome)')
   if (opt.fakehome && !exists(opt.fakehome)) die(`no fake home at ${opt.fakehome}`)
-  const withId = opt.prompt.replaceAll('{id}', id).replaceAll('{home}', opt.fakehome ?? '{home}')
+  const withId = opt.prompt.replaceAll('{id}', id).replaceAll('{home}', opt.fakehome ?? '{home}').replaceAll('{testbed}', TESTBED)
   const prompt = withId.includes('{marker}') ? withId.replaceAll('{marker}', marker) : `${withId} ${marker}`
   fs.mkdirSync(runDir(id), { recursive: true })
   const r = {

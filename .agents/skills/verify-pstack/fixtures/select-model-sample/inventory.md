@@ -5,8 +5,8 @@ Confirmed 2026-10-23 from Claude Code 2.1.309. Orca: yes, 1.4.237. This is a sna
 ## Environment
 
 - Harness: Claude Code (Sonnet 5.5 session), started inside Orca.
-- `gh`: logged in (ynginkim). `bun`: 1.3.11.
-- Orca environments: grok (ws://100.106.114.19:6768), littleboy (ws://100.84.169.117:6768).
+- `gh`: logged in. `bun`: 1.3.11.
+- Orca environments: grok (ws://<tailnet address>:6768), littleboy (ws://<tailnet address>:6768).
 - Pins: `~/.claude/settings.json` `model` = opus. `~/.codex/config.toml` `model` = gpt-6.1-sol, effort xhigh. `~/.grok/config.toml` `[models] default` = grok-4.7, `default_reasoning_effort` = high.
 - Headless CLIs found on `PATH`: codex 0.160.1, claude 2.1.309, grok 1.0.67. Not run: `not verified here`.
 
