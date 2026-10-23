@@ -10,10 +10,11 @@ A pstack step names what it needs by a capability name in backticks, such as `sp
 
 ## 1. Which environment is this
 
-- **Your harness.** Claude Code, Codex, or Grok. Your own tool list tells you.
-- **Orca.** `ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set. An Orca terminal sets only the first and an Orca chat sets both. Run Orca commands with `$ORCA_CLI_COMMAND` when it is set, otherwise with `orca`. Below, `orca` means that executable. Orca adds workers, durable run state, schedules, remote environments, and session search.
-- **Neither.** A plain session. Read [`references/plain.md`](references/plain.md).
-- **This computer and this user.** `~/.agents/skills/select-model/SKILL.md` records which products and models are installed, which Orca environments exist, and what the user prefers. Read it too. When it is missing, say so once and use the defaults in `../poteto-mode/SKILL.md`.
+Answer these as separate questions. They are not alternatives. Orca runs on top of a harness, so you can be in Claude Code and in Orca at the same time.
+
+1. **Which harness are you?** Claude Code, Codex, or Grok. Your own tool list tells you.
+2. **Is Orca here?** Run `env | grep '^ORCA_CLI_'`. Any output means yes. Do not decide this from the harness you are, from `which`, or from memory. An Orca terminal sets only `ORCA_CLI_BIN_DIR` and an Orca chat sets both. Run Orca commands with `$ORCA_CLI_COMMAND` when it is set, otherwise with `orca`. Below, `orca` means that executable. Orca adds workers, durable run state, schedules, remote environments, and session search. No output means a plain session: read [`references/plain.md`](references/plain.md).
+3. **This computer and this user.** `~/.agents/skills/select-model/SKILL.md` records which products and models are installed, which Orca environments exist, and what the user prefers. Read it too. When it is missing, say so once and use the defaults in `../poteto-mode/SKILL.md`.
 
 Read the file for your harness once, and the Orca files when Orca is here: [`claude-code.md`](references/claude-code.md), [`codex.md`](references/codex.md), [`grok.md`](references/grok.md).
 
