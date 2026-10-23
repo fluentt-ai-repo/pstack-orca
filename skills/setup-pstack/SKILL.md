@@ -74,7 +74,7 @@ interrogate reviewers: claude opus xhigh, grok grok-4.7-build-fast xhigh
 
 ### 6. Confirm
 
-Tell the user the file was written, give its path, and say that the next task picks it up. Re-running this skill updates it. Also say how a role that names another agent runs: as an Orca worker when Orca is available, and otherwise on the current session's model, because a plain Claude Code or Codex session can only start its own models.
+Tell the user the file was written, give its path, and say that the next task picks it up. Re-running this skill updates it. Also say how a role that names another agent runs: as an Orca worker when Orca is available, and otherwise on the current session's model, because a plain Claude Code or Codex session can only start its own models. When a role names Grok, add that Orca starts Grok on the `[models] default` in `~/.grok/config.toml` and refuses model and effort flags, so the model on the role's line is a request Orca cannot apply. To change the Grok model, edit that file.
 
 ### 7. Offer a verification skill (optional)
 
