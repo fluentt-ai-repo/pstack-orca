@@ -66,6 +66,7 @@ Rules for spending:
   - A real one is there. Ask the user before anything else. Offer a fake home, which is a stand-in that primes the model with the path, or a stash. On their yes to a stash, run `$VP sm stash --approved "<their words>"`. It moves the real skill to `~/.agents/verify-pstack-stash/select-model-<time>/`, writes a file manifest and a `RESTORE.txt` with the manual steps, and records the stash in the lock. `$VP sm restore` moves it back and checks every file against the manifest.
 - **Always finish with `$VP sm release`.** It removes your sample, restores your stash, and frees the lock, in that order. Never end a session holding the lock, whether the runs passed, failed, or were abandoned.
 - **Stale lock.** A lock older than two hours, or one whose owner is gone, is the user's call. On their yes, `$VP sm break --approved "<their words>"` removes it and logs the old lock to `lock-breaks.log` in the evidence root. A sample or stash it guarded stays where it was. `$VP sm status` shows both.
+- **A fake home sidesteps the lock.** When another session holds the lock and your check only needs `select-model` absent or set to the fixture, run it from a fake home (`$VP fakehome <name>`, with `--sample` for the fixture) and launch with `--fakehome <dir> --ignore-lock`. Add the reader line `vp fakehome` prints to the prompt. Confirm in "select-model touches" that the run read only fake-home paths, and name the fake home as a stand-in in the verdict.
 - **Generator runs use a fake home**, never the real path. `$VP fakehome <name>` makes `/tmp/vp-home-<name>/` and prints the prompt line that points the generator there. It needs no lock. Pass `--fakehome` to `vp launch` so cleanup keeps what the generator wrote.
 
 The lock is a JSON file at `~/.agents/verify-pstack-select-model.lock` (owner, purpose, time, placed sample, stash). Without `vp`, create it only when absent (`set -o noclobber`) and delete it only when it is yours.
@@ -102,7 +103,7 @@ Known limits:
 - An Orca terminal sets `ORCA_CLI_BIN_DIR` but not `ORCA_CLI_COMMAND` or `ORCA_AGENT_SESSION_ID`. It sets `ORCA_TAB_ID`, `ORCA_TERMINAL_HANDLE`, and `ORCA_PANE_KEY`. An agent started in it inherits the same.
 - A tab closed in Orca's window while its agent is alive leaves the PTY running with no tab. `orca terminal close` then answers `terminal_handle_stale`. `vp cleanup` types the agent's exit command and then `exit` into that PTY. It ended Claude (`/exit`) this way in S-ro-155230 and R-missing-155347, where the tab was already gone at cleanup. The Codex command (`/quit`) has not been tried.
 - Claude Code rewrites its process arguments soon after it starts, so a run's process cannot be found by the run id in its command line.
-- Closing a terminal without `--tab` left its tab in place. The tab came back under a new handle with the agent still running. `vp cleanup` closes with `--tab` and matches the run's terminal by handle, tab, or the run id in the tab title. The title alone is not enough, because Claude Code retitles its tab.
+- Closing a terminal without `--tab` left its tab in place. The tab came back under a new handle with the agent still running. `vp cleanup` closes with `--tab` and matches the run's terminal by its handle or by the `[<run id>]` marker in the tab title. The title alone is not enough, because Claude Code retitles its tab. It never matches by tab id, because Orca gave the id of a tab closed in its window to another session's terminal.
 
 ## Doctor
 
@@ -152,7 +153,7 @@ Proof standards:
 
 `$VP cleanup <run id>` does these, and logs each to `cleanup.log`.
 
-- Closes the run's terminal with `orca terminal close --terminal <handle> --tab --json`, then checks the testbed's terminal list until the run's handle, tab, and title are gone. A terminal still listed after that is reported as one the user must close in Orca's window.
+- Closes the run's terminal with `orca terminal close --terminal <handle> --tab --json`, then checks the testbed's terminal list until the run's handle and marker are gone. A terminal still listed after that is reported as one the user must close in Orca's window.
 - Leaves a chat open, because no Orca command closes it, and says so.
 - Stops every Orca worker the run started with `worker-start` that has not settled.
 - Copies the fake home into the evidence and deletes it.

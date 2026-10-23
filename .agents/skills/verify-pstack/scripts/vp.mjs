@@ -889,8 +889,8 @@ function testbedTerminals() {
   return res.ok ? (res.result?.terminals ?? []) : null
 }
 
-// A run's terminal is matched by handle, tab, or the run id in its title, because a pane closed without its tab can come back under a new handle.
-const runTerminals = (r, terms) => terms.filter((t) => t.handle === r.handle || (r.tab_id && t.tabId === r.tab_id) || (t.title || '').includes(r.id))
+// A run's terminal is matched by its handle or by its marker in the tab title. Never by tab id: Orca gave a closed tab's id to another session's terminal.
+const runTerminals = (r, terms) => terms.filter((t) => t.handle === r.handle || (t.title || '').includes(r.marker ?? `[${r.id}]`))
 
 const EXIT_COMMAND = { claude: '/exit', codex: '/quit', grok: '/exit' }
 
@@ -1053,12 +1053,17 @@ function doctor() {
   const terms = testbedTerminals()
   if (terms === null) warn.push('could not list the testbed terminals')
   else {
-    // Agents retitle their tabs, so match recorded handles and tabs as well as the run id in the title.
+    // Agents retitle their tabs, so match recorded handles as well as the marker in the title.
     const runsHere = exists(EVIDENCE) ? fs.readdirSync(EVIDENCE).filter((id) => exists(path.join(EVIDENCE, id, 'run.json'))).map((id) => readJson(path.join(EVIDENCE, id, 'run.json'))) : []
-    const fromRuns = terms.filter((t) => runsHere.some((r) => runTerminals(r, [t]).length))
+    const me = identity()?.id
+    const runOf = (t) => runsHere.find((r) => runTerminals(r, [t]).length)
+    const mine = terms.filter((t) => runOf(t)?.owner === me && runOf(t)?.cleaned_at)
+    const open = terms.filter((t) => runOf(t)?.owner === me && !runOf(t)?.cleaned_at)
+    const others = terms.filter((t) => runOf(t) && runOf(t).owner !== me)
     const stale = terms.filter((t) => t.orphaned || t.connected === false)
-    console.log(`info  testbed terminals open: ${terms.length}`)
-    if (fromRuns.length) warn.push(`terminals from verify runs are still open: ${fromRuns.map((t) => `"${t.title}"`).join(', ')}. Run vp cleanup <run id>, or orca terminal close --terminal <handle> --tab`)
+    console.log(`info  testbed terminals open: ${terms.length}${others.length ? `, ${others.length} of them from other sessions' runs (${[...new Set(others.map((t) => runOf(t).owner))].join(', ')})` : ''}`)
+    if (open.length) console.log(`info  your runs still open: ${open.map((t) => runOf(t).id).join(', ')}`)
+    if (mine.length) warn.push(`terminals of your cleaned runs are still open: ${mine.map((t) => runOf(t).id).join(', ')}. Run vp cleanup <run id> again, or orca terminal close --terminal <handle> --tab`)
     if (stale.length) warn.push(`orphaned or disconnected terminal records in the testbed: ${stale.map((t) => t.handle).join(', ')}. The CLI cannot remove them. The user must close them in Orca's window`)
   }
   const ps = orca(['worktree', 'ps', '--limit', '500'])
