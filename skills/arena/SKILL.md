@@ -20,7 +20,7 @@ Every candidate gets the same prompt, so the prompt is the contract.
 
    | Seat | Kind | Needs | Count and diversity |
    |---|---|---|---|
-   | Runner | code, or prose and judgment, by the task | writes only its own output location | one per distinct approach, at least two on different models, from different vendors when the computer has them. More runners when the arena covers multiple design directions. The same model N times only when the work is generation-bound rather than judgment-sensitive. All start together. |
+   | Runner | code, or prose and judgment, by the task | writes only its own output location | one per distinct approach, at least two on different models, from different vendors when the computer has them. More runners when the arena covers multiple design directions. The same model N times only when the work is generation-bound rather than judgment-sensitive. All start together. A request to keep the run small narrows the scope, not the number of vendors. Only the user asking for fewer vendors does. |
    | Cross-judge | judgment | read-only | one, on an agent other than your own when one is reachable. It starts after every candidate has finished. |
 
    Pick each runner's reasoning level and speed for the job, per that section.

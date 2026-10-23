@@ -39,7 +39,7 @@ Before spawning investigators, build the seed context inline: file paths and lin
 
 ### Discovery
 
-Before spawning investigators, list the MCP servers your session has. Use your tool list when it names them, including tools that load on demand. Otherwise use your harness's own listing command.
+Before spawning investigators, list the MCP servers your session has with `list-mcp-servers`.
 
 Map each available MCP to one evidence category:
 

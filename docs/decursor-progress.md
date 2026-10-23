@@ -24,7 +24,7 @@ Each rule came from a unit that passed its check. Apply them to every later skil
 | "Use `readonly: false`, because readonly strips MCPs" | Pick a seat type that keeps your MCP tools, because some read-only types drop them (`spawn-subagent` says where the types are listed), and tell the seat not to edit files. A seat that needs your MCP servers stays on your own harness (see the Subagents section). | reflect, why |
 | The `agent-transcripts/` directory the system prompt names | Write `find-sessions`, list the workspace's sessions newest first, and match the opening user prompt. The per-product paths live in the adapter. | reflect |
 | `create-skill`, and the routing token `new skill via create-skill:` | Write `author-skill`. The token is `new skill: <name>`. | reflect |
-| Listing MCPs from the `mcps/` directory | "Use your tool list when it names them, including tools that load on demand. Otherwise use your harness's own listing command." The adapter has no capability for this yet. | why |
+| Listing MCPs from the `mcps/` directory | Write `list-mcp-servers`. | why |
 | Tool names in a prompt (`Read, Grep, Glob`) | "your file-reading and search tools" | how, interrogate |
 | A reviewer label with a model slug | `<agent> <model> <effort>` | interrogate |
 | A skill that runs other bundled skills | Write `run-skill`, and say once that bundled skills live at `../<name>/SKILL.md`. | architect |

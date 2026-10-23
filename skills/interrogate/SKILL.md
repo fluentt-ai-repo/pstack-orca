@@ -30,7 +30,7 @@ Read `~/.agents/skills/select-model/SKILL.md` and choose each reviewer's model a
 
 | Seat | Kind | Needs | Count and diversity |
 |---|---|---|---|
-| Reviewer | judgment | read-only, and its brief says not to edit files | at least two, on different models and from different vendors when the computer has them. More when the change is risky or costly to undo. Labeled Reviewer A, B, and so on. All start together. |
+| Reviewer | judgment | read-only, and its brief says not to edit files | at least two, on different models and from different vendors when the computer has them. More when the change is risky or costly to undo. Labeled Reviewer A, B, and so on. All start together. A request to keep the run small narrows the scope, not the number of vendors. Only the user asking for fewer vendors does. |
 
 Read `references/reviewer-prompt.md` and fill in the same template for every reviewer with the stated intent, the diff or file contents, the rubric from `references/rubric.md`, and the code-quality lens from `references/code-quality-review.md`. Pick each reviewer's reasoning level and speed for the job, per the Subagents section of the **poteto-mode** skill.
 

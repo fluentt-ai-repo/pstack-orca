@@ -28,7 +28,7 @@ When in doubt, take the simple path.
 
 ## 2. Explore (complex only)
 
-Decompose the question into 2 to 4 angles, each a distinct slice of the subsystem. Start all explorers at once, each with `references/explorer-prompt.md` and its angle filled in.
+Decompose the question into 2 to 4 angles, each a distinct slice of the subsystem. Start all explorers at once, each with `references/explorer-prompt.md` and its angle filled in. A report a worker writes to a file goes under a scratch path, not `durable-store`.
 
 ## 3. Synthesize (complex only)
 
