@@ -21,3 +21,5 @@ jobs:
         run: node scripts/apply-orca-pointer.mjs --check
       - name: Hand-rewritten skills carry no Cursor wording
         run: node scripts/lint-rewritten.mjs
+      - name: CURSOR-DEPENDENCIES.md holds no row for a rewritten path and its counts are current
+        run: node scripts/prune-cursor-deps.mjs --check

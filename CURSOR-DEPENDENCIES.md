@@ -2,7 +2,7 @@
 
 Every place where upstream pstack ([`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)) depends on Cursor, and how this fork handles it in Orca. The rules these rows apply live in [`skills/orca-harness/SKILL.md`](./skills/orca-harness/SKILL.md). This file is the checklist that proves nothing was missed.
 
-612 rows. Locations refer to the `upstream` branch.
+432 rows. Locations refer to the `upstream` branch.
 
 ## How this list stays complete
 
@@ -27,30 +27,30 @@ Skills this fork rewrote by hand (`scripts/rewritten.json`) have no rows either,
 
 | Handling | Rows |
 | --- | --- |
-| `orca` | 374 |
-| `agent-native` | 316 |
-| `keep` | 137 |
-| `fallback-only` | 87 |
-| `skip` | 56 |
+| `orca` | 174 |
+| `keep` | 95 |
+| `agent-native` | 94 |
+| `fallback-only` | 46 |
+| `skip` | 23 |
 
 | Category | Rows |
 | --- | --- |
-| `implicit` | 154 |
-| `automation` | 128 |
-| `skill-path` | 89 |
-| `model-slug` | 81 |
-| `cursor-ui` | 71 |
-| `settings-path` | 69 |
-| `frontmatter` | 68 |
-| `tool-name` | 54 |
-| `bugbot` | 52 |
-| `subagent-field` | 47 |
-| `cloud-agent` | 36 |
-| `transcript` | 34 |
-| `team-kit` | 34 |
-| `pr-tool` | 34 |
-| `url` | 12 |
-| `script` | 7 |
+| `implicit` | 92 |
+| `bugbot` | 50 |
+| `automation` | 32 |
+| `pr-tool` | 28 |
+| `cloud-agent` | 25 |
+| `frontmatter` | 25 |
+| `cursor-ui` | 24 |
+| `model-slug` | 24 |
+| `team-kit` | 24 |
+| `subagent-field` | 23 |
+| `transcript` | 23 |
+| `skill-path` | 20 |
+| `settings-path` | 19 |
+| `tool-name` | 11 |
+| `url` | 8 |
+| `script` | 4 |
 
 ## What Orca cannot replace
 
@@ -334,150 +334,27 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 
 ## Cross-model skills (arena, swarm, interrogate, reflect, architect, how, why)
 
-118 rows.
+0 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Setup and help (poteto-help; setup-pstack was rewritten by hand)
 
-30 rows.
+0 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CD-401 | `skills/poteto-help/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Cursor slash-only field. | agent-native | Same as arena:4. | todo |
-| CD-402 | `skills/poteto-help/SKILL.md:11` | `mention once that a Custom Mode keeps it on` | cursor-ui | Cursor Custom Modes. | skip | No Orca or CLI equivalent. Tell the user to start each task with `/poteto-mode` (Claude `/pstack:poteto-mode`). | todo |
-| CD-403 | `skills/poteto-help/SKILL.md:13` | `` `https://github.com/cursor/plugins/blob/main/pstack/` followed by its path `` | url | Links to Cursor's plugin repo. | keep | The public URL works anywhere. Read the local copy and give the URL only as a link. | n/a |
-| CD-404 | `skills/poteto-help/SKILL.md:27` | `` No `~/.cursor/rules/pstack-models.mdc` means `/setup-pstack` hasn't run `` | settings-path | Cursor rule path check. | agent-native | Check `~/.agents/skills/select-model/SKILL.md`. | done |
-| CD-405 | `skills/poteto-help/SKILL.md:38` | `` Install with `/add-plugin pstack` in chat, or from Customize `` | cursor-ui | Cursor plugin install UI. | agent-native | Claude `/plugin marketplace add cursor/plugins` then `/plugin install pstack@cursor-plugins`. Orca `orca skills install` for skill dirs (verify flags). | todo |
-| CD-406 | `skills/poteto-help/SKILL.md:39` | `writes a rule. The rule applies to new chats` | implicit | Cursor rule load timing. | agent-native | Setup writes the `select-model` skill, which every skill reads by path at the start of a task. No new chat is needed. | done |
-| CD-407 | `skills/poteto-help/SKILL.md:42` | `` Only `/setup-pstack` loads from the user's words `` | implicit | Relies on Cursor honoring `disable-model-invocation` on every other skill. | agent-native | True in Claude Code. Codex and Grok may auto-load any skill. | todo |
-| CD-408 | `skills/poteto-help/SKILL.md:44` | `` A role set to `auto` or `inherit-parent` runs on the chat's model `` | model-slug | Cursor Auto alias cost advice. | orca | A preference to follow the session's model keeps subagents on the chat's model. | done |
-| CD-409 | `skills/poteto-help/SKILL.md:46` | `` `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins` `` | url | Install path through Cursor's GitHub marketplace. | keep | Valid Claude Code commands. Add an Orca/Codex install line. | n/a |
-| CD-410 | `skills/poteto-help/SKILL.md:48` | `` spawn Cursor subagents with per-role models, and Custom Modes and `/loop` `` | implicit | States that workflow skills need Cursor subagents, Modes and `/loop`. | orca | Per-role models via `orca orchestration worker-start --agent --model --effort`. `/loop` via `orca automations create --name <n> --trigger <cron> --prompt <text> --provider <agent>`. Custom Modes are skipped. | todo |
-| CD-411 | `skills/poteto-help/SKILL.md:56` | `` Enter on `/poteto-mode` attaches the skill to one message `` | cursor-ui | Cursor composer behavior. | skip | Not applicable. The skill stays in context in Claude/Codex until compaction. | todo |
-| CD-412 | `skills/poteto-help/SKILL.md:57` | `Option+Enter on Mac or Alt+Enter on Windows` | cursor-ui | Cursor keyboard shortcut and Custom Mode. | skip | No equivalent. | todo |
-| CD-413 | `skills/poteto-help/SKILL.md:58` | `Cursor's docs list Custom Modes in the Agents Window and the CLI` | cursor-ui | Cursor Agents Window and CLI. | skip | Drop it. | todo |
-| CD-414 | `skills/poteto-help/SKILL.md:60` | `Link [Cursor's skills docs](https://cursor.com/docs/skills)` | url | Cursor docs link. | agent-native | Link the Claude Code skills docs or Codex skills docs for the user's harness. | todo |
-| CD-415 | `skills/poteto-help/SKILL.md:60` | `` spawn it with `subagent_type: "poteto-agent"` `` | subagent-field | Cursor plugin subagent type. | agent-native | Claude `pstack:poteto-agent`. In Orca, worker-start has no agent persona flag, so prepend poteto-agent's body to `--spec`. | todo |
-| CD-416 | `skills/poteto-help/SKILL.md:79` | `Run parallel checks over slices, or race workers, as cloud agents` | cloud-agent | Describes swarm as Cursor cloud agents. | orca | "as Orca workers in their own worktrees" (`worker-start --worktree new-child`, or `--on <env>` for remote). | todo |
-| CD-417 | `skills/poteto-help/SKILL.md:98` | `Build a page whose buttons wake a Grok Bot over a webhook` | automation | make-bot-ui relies on a Cursor/Grok bot webhook. | fallback-only | Not in this assignment. Orca could stand in with `orca automations create` plus a precheck, otherwise skip with a note. | todo |
-| CD-418 | `skills/poteto-help/SKILL.md:114` | `` `/deslop`, `control-cli`, and `control-ui` ship in the `cursor-team-kit` plugin `` | team-kit | References the Cursor team-kit plugin. | skip | Say these are unavailable outside Cursor. | todo |
-| CD-419 | `skills/poteto-help/SKILL.md:115` | `` `/loop` and `/create-skill` are Cursor built-ins `` | implicit | Cursor built-in commands. | agent-native | `/loop` maps to `orca automations create ... --provider <agent>` or Claude `/loop`. `/create-skill` maps to Claude skill-creator or Codex `$skill-creator`. | todo |
-| CD-420 | `skills/poteto-help/SKILL.md:116` | `` If the slash menu shows `/orchestrate`, another plugin provides it `` | cursor-ui | Cursor slash menu. | keep | Harmless guidance. In Orca, the `orchestration` skill is Orca's, not pstack's. | n/a |
-| CD-421 | `skills/poteto-help/SKILL.md:129` | `can start Cursor's own skill for the same job instead` | implicit | Cursor built-in babysit skill collision. | skip | Not applicable outside Cursor. | todo |
-| CD-422 | `skills/poteto-help/SKILL.md:131` | `Cursor's Plan Mode works alongside it` | cursor-ui | Cursor Plan Mode. | agent-native | Claude plan mode (Shift+Tab) or Codex `/plan`. Otherwise use the Multi-phase plan playbook. | todo |
-| CD-423 | `skills/poteto-help/SKILL.md:139` | `` Start it as a Custom Mode, or start each task with `/poteto-mode` `` | cursor-ui | Cursor Custom Mode fix. | fallback-only | Only "start each task with `/poteto-mode`" applies. | todo |
-| CD-424 | `skills/poteto-help/SKILL.md:141` | `` The rule from `/setup-pstack` applies to new chats `` | implicit | Cursor rule load timing. | agent-native | Skills read `select-model` at the start of a task. Edit its `## Preferences`, or rerun `/setup-pstack`. | done |
-| CD-425 | `skills/poteto-help/SKILL.md:143` | `` Only `/setup-pstack` loads from the user's words `` | implicit | Cursor model-invocation semantics. | agent-native | Same as poteto-help:42. | todo |
-| CD-426 | `skills/poteto-help/SKILL.md:144` | `or run them as cloud agents, which each get their own machine` | cloud-agent | Cursor cloud agents. | orca | `worker-start --worktree new-child`, or `--on <saved-environment> --worktree new-top-level --repo <sel>` for a separate machine. | todo |
-| CD-427 | `skills/poteto-help/SKILL.md:145` | `` `/loop` needs a check that can pass or fail `` | automation | Cursor `/loop`. | orca | `orca automations create --name <n> --trigger <cron\|rrule> --prompt "<goal + done check>" --provider claude --precheck "<check cmd>"`. Claude `/loop` is the native alternative. | todo |
-| CD-428 | `skills/poteto-help/references/prompting.md:41` | `` Write done as checks every iteration can run, and give `/loop` `` | automation | Cursor `/loop`. | orca | Same as poteto-help:145. | todo |
-| CD-429 | `skills/poteto-help/references/recipes.md:7` | `/poteto-mode read <thread>. restate the underlying issue` | skill-path | Cursor slash-command skill invocation, used throughout the file. | agent-native | Claude `/pstack:<name>`, Codex `$<name>`, Grok its skill invocation. | todo |
-| CD-430 | `skills/poteto-help/references/recipes.md:45` | `/loop until done` | automation | Cursor `/loop`. | orca | Same as poteto-help:145. | todo |
 
 ## Other skills
 
-176 rows.
+26 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CD-467 | `skills/automate-me/SKILL.md:3` | `Drafts or revises a personal -mode skill via create-skill + unslop` | skill-path | Depends on Cursor's built-in `create-skill` skill. | agent-native | Claude Code: `skill-creator`/`writing-for-agents` if installed. Grok: built-in skill creation (08-skills "Writes SKILL.md"). Codex: built-in `$skill-creator`. Fallback: write the frontmatter (name, description) by hand. | todo |
-| CD-468 | `skills/automate-me/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-469 | `skills/automate-me/SKILL.md:11` | `` Cursor's built-in `create-skill` (authoring) `` | skill-path | Cursor-bundled skill. | agent-native | Same mapping as line 3. | todo |
-| CD-470 | `skills/automate-me/SKILL.md:11` | `the **unslop** skill (prose discipline)` | skill-path | Name-only reference. | agent-native | Read `<pstack>/skills/unslop/SKILL.md`. | todo |
-| CD-471 | `skills/automate-me/SKILL.md:17` | `` Look recursively for `.cursor/skills/**/*-mode/SKILL.md` and `~/.cursor/skills/*-mode/SKILL.md` `` | settings-path | Cursor skill directories. | agent-native | Search `.claude/skills`, `~/.claude/skills` (Claude Code), `.agents/skills`, `~/.agents/skills`, `~/.codex/skills` (Codex), and `.grok/skills`, `~/.grok/skills` (Grok also reads `.claude/` and `.cursor/` roots). | todo |
-| CD-472 | `skills/automate-me/SKILL.md:17` | `` confirm intent with `AskQuestion` `` | tool-name | Cursor's AskQuestion tool. | agent-native | Claude Code `AskUserQuestion` (plain text in `-p`), Grok `ask_user_question`, Codex plain-text question. As an Orca worker, use `orca orchestration ask --question <q> --options <csv>`. | todo |
-| CD-473 | `skills/automate-me/SKILL.md:29` | `` Don't glob across `~/.cursor/projects/*/`. `` | transcript | Cursor transcript root. | agent-native | Same rule for `~/.claude/projects/*`, `~/.codex/sessions`, and `~/.grok/sessions`: read only the current cwd's folder, or use `orca search --path`. | todo |
-| CD-474 | `skills/automate-me/SKILL.md:29` | `` The system prompt names the workspace's `agent-transcripts/` directory. `` | transcript | Only Cursor's system prompt names an `agent-transcripts/` path. | orca | `orca search "<phrase>" --path <abs workspace> --since <iso> --json` (after `--index-status`). Fallback: the per-agent paths in the recall:15 row, derived from cwd. | todo |
-| CD-475 | `skills/automate-me/SKILL.md:31` | `Pick each subagent's reasoning level and fast or standard speed` | model-slug | Cursor fast/standard slug variants via poteto-mode. | agent-native | Claude Code `Agent` `model`/`effort`; Orca `worker-start --model --effort`; Grok `[subagents.models]`. | todo |
-| CD-476 | `skills/automate-me/SKILL.md:44` | `` Use the `AskQuestion` tool (structured multi-choice) `` | tool-name | Cursor AskQuestion. | agent-native | `AskUserQuestion` (Claude Code), `ask_user_question` (Grok), plain text (Codex); `orca orchestration ask --options` when running as a worker. | todo |
-| CD-477 | `skills/automate-me/SKILL.md:46` | `` `allow_multiple: true` for category questions `` | tool-name | A Cursor AskQuestion parameter. | agent-native | Claude Code `AskUserQuestion` `multiSelect: true`. For Grok, check the `ask_user_question` schema. `orca orchestration ask` has single-choice `--options` only, so ask for a comma list. | todo |
-| CD-478 | `skills/automate-me/SKILL.md:63` | `The **poteto-mode** skill shows the shape.` | skill-path | Name-only reference. | agent-native | Read `<pstack>/skills/poteto-mode/SKILL.md`. | todo |
-| CD-479 | `skills/automate-me/SKILL.md:67` | `` Use Cursor's built-in `create-skill` skill to author `` | skill-path | Cursor-bundled skill. | agent-native | Same mapping as line 3. | todo |
-| CD-480 | `skills/automate-me/SKILL.md:69` | `` use `.cursor/skills/<handle>/<handle>-mode/SKILL.md` `` | settings-path | Writes the new skill to a Cursor skill directory. | agent-native | Write to `.agents/skills/<handle>-mode/` (read by Codex and Grok) and symlink `.claude/skills/<handle>-mode` (Claude Code). Personal: `~/.claude/skills`, `~/.agents/skills`, `~/.grok/skills`. | todo |
-| CD-481 | `skills/automate-me/SKILL.md:72` | `` follow `create-skill`'s YAML rules `` | skill-path | Cursor create-skill conventions. | agent-native | Use the target harness's documented fields (name, description); see 08-skills.md for Grok. | todo |
-| CD-482 | `skills/automate-me/SKILL.md:73` | `` Frontmatter `disable-model-invocation: true` by default. `` | frontmatter | Emits a field Codex ignores. | agent-native | Claude Code and Grok honor it; for Codex also write `agents/openai.yaml` `policy.allow_implicit_invocation: false`. | todo |
-| CD-483 | `skills/automate-me/SKILL.md:77` | `` `create-skill`'s writing guidelines `` | skill-path | Cursor-bundled skill. | agent-native | Same mapping as line 3. | todo |
-| CD-484 | `skills/automate-me/SKILL.md:83` | `Work in a worktree off main. Commit and open a PR.` | pr-tool | Cursor worktree/PR tooling. | orca | `orca worktree create --name <handle>-mode --base-branch main`, then `gh pr create`. | todo |
-| CD-485 | `skills/automate-me/SKILL.md:96` | `` A `create-skill`-style test/iterate benchmark loop isn't useful here. `` | skill-path | Cursor-bundled skill reference. | keep | Only used as a contrast; nothing is invoked. | n/a |
-| CD-486 | `skills/automate-me/SKILL.md:102` | `` `create-skill` alone, no mining required. `` | skill-path | Routes to a Cursor-bundled skill. | agent-native | Same mapping as line 3. | todo |
-| CD-487 | `skills/benchmark-checklist/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-488 | `skills/benchmark-checklist/SKILL.md:17` | `` the core count with `nproc` `` | implicit | Assumes a Linux machine (a Cursor cloud agent VM); `nproc` is missing on macOS hosts where Orca often runs. | fallback-only | Use `sysctl -n hw.ncpu` on macOS and `nproc` on Linux. | todo |
-| CD-489 | `skills/benchmark-checklist/SKILL.md:21` | `` syscall counts (`strace -c` on Linux) `` | implicit | Linux-first tooling. | keep | Already scoped "on Linux"; macOS can use `dtruss`. Not a Cursor API. | n/a |
-| CD-490 | `skills/benchmark-checklist/SKILL.md:34` | `per the **Opening a PR** playbook` | skill-path | Playbook inside poteto-mode, resolved through the Cursor catalog. | agent-native | Read the playbook from `<pstack>/skills/poteto-mode/SKILL.md`. | todo |
-| CD-491 | `skills/benchmark-checklist/SKILL.md:38` | `Vet the **Perf issue** playbook's baseline` | skill-path | Same. | agent-native | Same. | todo |
-| CD-492 | `skills/benchmark-checklist/SKILL.md:39` | `Vet the **Hillclimb** playbook's harness` | skill-path | Same. | agent-native | Same. | todo |
-| CD-493 | `skills/blast-radius/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-494 | `skills/blast-radius/SKILL.md:11` | `` Companion to `how` and `why`. `` | skill-path | Name-only skill references. | agent-native | Read `<pstack>/skills/how/` and `why/` SKILL.md. | todo |
-| CD-495 | `skills/blast-radius/SKILL.md:33` | `` Use `why` step 2 to pull the PR and commits. `` | skill-path | Name-only reference. | agent-native | Read `<pstack>/skills/why/SKILL.md` step 2. | todo |
-| CD-496 | `skills/blast-radius/SKILL.md:36` | `` Same rules as `why`. `` | skill-path | Name-only reference. | agent-native | Same. | todo |
-| CD-497 | `skills/blast-radius/SKILL.md:38` | `` run it as an `arena`. Ask more than one model `` | model-slug | Arena relies on Cursor Task spawning different model vendors. | orca | `orca orchestration worker-start --spec "<blast-radius question>" --agent claude --model opus`, plus `--agent codex --model <gpt id>` and `--agent grok`; merge after `orca orchestration check --wait --types worker_done`. Fallback: a single-model `Agent`. | todo |
-| CD-498 | `skills/blast-radius/SKILL.md:48` | `` Write it through `unslop` `` | skill-path | Name-only reference. | agent-native | Read `<pstack>/skills/unslop/SKILL.md`. | todo |
 | CD-499 | `skills/bro/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-500 | `skills/correct/SKILL.md:3` | `Repeat this each time the operator corrects you. Use for /correct.` | cursor-ui | Cursor slash invocation. | agent-native | `/pstack:correct`, `$correct`, `/correct`. | todo |
-| CD-501 | `skills/correct/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-502 | `skills/create-formal-verification-skill/SKILL.md:3` | `Use for /create-formal-verification-skill` | cursor-ui | Cursor slash invocation. | agent-native | `/pstack:create-formal-verification-skill`, `$create-formal-verification-skill`, `/create-formal-verification-skill`. | todo |
-| CD-503 | `skills/create-formal-verification-skill/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-504 | `skills/create-formal-verification-skill/SKILL.md:33` | `Write a project-local skill with frontmatter` | skill-path | The location is implicit; in Cursor it defaults to `.cursor/skills/`. | agent-native | State the location explicitly: `.agents/skills/<name>/` plus a `.claude/skills` symlink. | todo |
-| CD-505 | `skills/create-formal-verification-skill/SKILL.md:41` | `` Point the user at `/maintain-formal-verification-skill` `` | cursor-ui | Cursor slash name shown to the user. | agent-native | Print the harness form of the name. | todo |
-| CD-506 | `skills/create-verification-skill/SKILL.md:3` | `Use for /create-verification-skill` | cursor-ui | Cursor slash invocation. | agent-native | `/pstack:create-verification-skill`, `$create-verification-skill`, `/create-verification-skill`. | todo |
-| CD-507 | `skills/create-verification-skill/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-508 | `skills/create-verification-skill/SKILL.md:9` | `` as a project-local skill (`.cursor/skills/verify-<app>/`) `` | skill-path | Generates the project skill into Cursor's skill directory. | agent-native | Write to `.agents/skills/verify-<app>/` (Codex and Grok) and symlink `.claude/skills/verify-<app>` (Claude Code). Grok also reads `.cursor/skills`. | todo |
-| CD-509 | `skills/create-verification-skill/SKILL.md:25` | `` Write `.cursor/skills/verify-<app>/SKILL.md` with YAML frontmatter `` | skill-path | Same Cursor path. | agent-native | Same mapping. | todo |
-| CD-510 | `skills/create-verification-skill/SKILL.md:36` | `` Create `.cursor/skills/verify-<app>/features/README.md` `` | skill-path | Same Cursor path. | agent-native | Same mapping. | todo |
-| CD-511 | `skills/create-verification-skill/SKILL.md:44` | `` Point the user at `/maintain-verification-skill` `` | cursor-ui | Tells the user a Cursor slash name. | agent-native | Print the harness form: `/pstack:maintain-verification-skill` (Claude Code), `$maintain-verification-skill` (Codex), `/maintain-verification-skill` (Grok). | todo |
-| CD-512 | `skills/figure-it-out/SKILL.md:3` | `Use for /figure-it-out or 'figure it out'.` | cursor-ui | Cursor slash invocation. | agent-native | `/pstack:figure-it-out`, `$figure-it-out`, `/figure-it-out`. | todo |
-| CD-513 | `skills/figure-it-out/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-514 | `skills/figure-it-out/SKILL.md:13` | `Open a todolist whose first item is to read` | tool-name | Cursor's todolist tool. | agent-native | Claude Code `TodoWrite`/`TaskCreate`, Grok `todo_write`, Codex `update_plan`. Fallback: keep the list in the reply. | todo |
-| CD-515 | `skills/figure-it-out/SKILL.md:13` | `read the Principles section of the **poteto-mode** skill` | skill-path | Name-only skill reference resolved by the Cursor catalog. | agent-native | Read `<pstack>/skills/poteto-mode/SKILL.md`. | todo |
-| CD-516 | `skills/figure-it-out/SKILL.md:19` | `(the **prove-it-works** principle skill)` | skill-path | Short name maps to `principle-prove-it-works` only through Cursor's catalog. | agent-native | Read `<pstack>/skills/principle-prove-it-works/SKILL.md`. | todo |
-| CD-517 | `skills/figure-it-out/SKILL.md:23` | `(the **never-block-on-the-human** principle skill)` | skill-path | Same short-name resolution. | agent-native | Read `<pstack>/skills/principle-never-block-on-the-human/SKILL.md`. | todo |
-| CD-518 | `skills/figure-it-out/SKILL.md:27` | `(the **foundational-thinking** principle skill)` | skill-path | Same. | agent-native | Read `<pstack>/skills/principle-foundational-thinking/SKILL.md`. | todo |
-| CD-519 | `skills/figure-it-out/SKILL.md:30` | `(the **laziness-protocol** principle skill)` | skill-path | Short-name resolution. | agent-native | Read `<pstack>/skills/principle-laziness-protocol/SKILL.md`. | todo |
-| CD-520 | `skills/figure-it-out/SKILL.md:30` | `run the **architect** skill (it runs **arena**)` | skill-path | Cross-skill invocation; arena relies on Cursor multi-model Task spawns. | orca | Read `<pstack>/skills/architect/SKILL.md`. Run arena contestants as `orca orchestration worker-start --spec ... --agent claude\|codex\|grok` (with `--model/--effort` for claude and codex; grok uses its own config). | todo |
-| CD-521 | `skills/figure-it-out/SKILL.md:31` | `(the **separate-before-serializing-shared-state** principle skill)` | skill-path | Short-name resolution. | agent-native | Read `<pstack>/skills/principle-separate-before-serializing-shared-state/SKILL.md`. | todo |
-| CD-522 | `skills/figure-it-out/SKILL.md:31` | `Pick each subagent's reasoning level and fast or standard speed` | model-slug | Depends on Cursor `-fast` model variants and poteto-mode's slug table. | agent-native | Claude Code `Agent` `model` + `effort` (drop fast); Orca `--model/--effort`; Grok uses `[subagents.models]`. | todo |
-| CD-523 | `skills/figure-it-out/SKILL.md:31` | `give each worker its own worktree or branch` | cloud-agent | In Cursor this maps to cloud agents or `environment: "cloud"` workers. | orca | `orca orchestration worker-start --spec "<unit>" --worktree new-child --agent <id> --base-branch <ref>`, or `orca worktree create --name <n> --agent <id> --prompt <text>`. Fallback: Claude Code `isolation: "worktree"`, Grok `isolation: worktree`. | todo |
-| CD-524 | `skills/figure-it-out/SKILL.md:34` | `Add its steps to the todolist as concrete items` | tool-name | Cursor's todolist tool. | agent-native | `TodoWrite` / `todo_write` / `update_plan`. | todo |
-| CD-525 | `skills/figure-it-out/SKILL.md:38` | `Apply the **sequence-verifiable-units** principle skill` | skill-path | Short-name resolution. | agent-native | Read `<pstack>/skills/principle-sequence-verifiable-units/SKILL.md`. | todo |
-| CD-526 | `skills/figure-it-out/SKILL.md:41` | `Pair delegated work with a judge.` | implicit | Assumes a Cursor Task judge that can run on another model. | orca | Spawn the judge with `orca orchestration worker-start --spec "<judge brief>" --agent codex` and collect it with `orca orchestration check --wait --types worker_done`. Fallback: an `Agent`/`spawn_subagent` judge. | todo |
-| CD-527 | `skills/figure-it-out/SKILL.md:46` | `Log the run via the **show-me-your-work** skill.` | skill-path | Name-only reference. | agent-native | Read `<pstack>/skills/show-me-your-work/SKILL.md`. | todo |
-| CD-528 | `skills/figure-it-out/SKILL.md:50` | `(the **encode-lessons-in-structure** principle skill)` | skill-path | Short-name resolution. | agent-native | Read `<pstack>/skills/principle-encode-lessons-in-structure/SKILL.md`. | todo |
-| CD-529 | `skills/in-your-own-words/SKILL.md:3` | `Use for /in-your-own-words.` | cursor-ui | Assumes Cursor's bare `/name` slash invocation of plugin skills. | agent-native | Claude Code `/pstack:in-your-own-words`, Codex `$in-your-own-words`, Grok `/in-your-own-words`. In an Orca worker, put the instruction text in `--prompt`/`--spec`. | todo |
-| CD-530 | `skills/in-your-own-words/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-531 | `skills/ketchup/SKILL.md:3` | `Use for /ketchup.` | cursor-ui | Same Cursor slash invocation. | agent-native | `/pstack:ketchup`, `$ketchup`, `/ketchup`. | todo |
-| CD-532 | `skills/ketchup/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-533 | `skills/ketchup/SKILL.md:9` | `` the last message they wrote before `/ketchup` `` | cursor-ui | Uses the slash command as a turn marker. | agent-native | Use the per-harness invocation; in Codex the marker is the `$ketchup` mention. | todo |
-| CD-534 | `skills/ketchup/SKILL.md:11` | `` Use [`/bro`](../bro/SKILL.md)'s voice, not its task `` | skill-path | Slash-styled reference to a sibling skill. | keep | The relative link resolves in any harness that has the pstack tree on disk. | n/a |
-| CD-535 | `skills/ketchup/SKILL.md:15` | `Check the current state of each PR, CI run, or agent` | cloud-agent | "Agent this chat touched" assumes Cursor background/cloud agents with dashboard state. | orca | `orca orchestration worker-list --json`, `orca worktree ps --json`, and `orca orchestration worker-show`/`worker-read --dispatch <id>`. Outside Orca, check only PRs and CI with `gh`. | todo |
-| CD-536 | `skills/ketchup/SKILL.md:27` | `Embed inline the screenshots and videos the work produced` | cursor-ui | Assumes the Cursor chat pane renders images and videos inline. | fallback-only | Terminal Claude Code, Codex, and Grok cannot render inline, so give file paths. In Orca chat, use the chat-visuals scratch dir; or `orca artifacts share`; capture browser views with `orca screenshot`. | todo |
-| CD-537 | `skills/ketchup/SKILL.md:37` | `` a chart or diagram from `/visualize`, or a generated image `` | cursor-ui | `/visualize` is a Cursor canvas/visualization feature, and "generated image" is Cursor's image tool. | fallback-only | Use the Orca chat-visuals HTML when `ORCA_CHAT_SCRATCH_DIR` is set, else `orca artifacts share <chart.html>`, else a Mermaid block in the reply. | todo |
-| CD-538 | `skills/ketchup/SKILL.md:43` | `Embed screenshots and videos inline when the change is visible` | cursor-ui | Same inline rendering assumption. | fallback-only | Same as line 27. | todo |
-| CD-539 | `skills/ketchup/SKILL.md:43` | `` a `/visualize` chart for numbers `` | cursor-ui | Cursor `/visualize`. | fallback-only | Same as line 37. | todo |
-| CD-540 | `skills/maintain-formal-verification-skill/SKILL.md:3` | `Use for /maintain-formal-verification-skill` | cursor-ui | Cursor slash invocation. | agent-native | `/pstack:maintain-formal-verification-skill`, `$...`, `/...`. | todo |
-| CD-541 | `skills/maintain-formal-verification-skill/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-542 | `skills/maintain-formal-verification-skill/SKILL.md:9` | `` a verify skill that `/create-formal-verification-skill` generated `` | cursor-ui | Cursor slash name. | agent-native | Use the per-harness invocation form. | todo |
-| CD-543 | `skills/maintain-formal-verification-skill/SKILL.md:28` | `a project skill that runs a model checker` | skill-path | Implicitly searches Cursor's project skill directory. | agent-native | Search `.agents/skills`, `.claude/skills`, `.grok/skills`, and `.cursor/skills`. | todo |
-| CD-544 | `skills/maintain-verification-skill/SKILL.md:3` | `Use for /maintain-verification-skill` | cursor-ui | Cursor slash invocation. | agent-native | `/pstack:maintain-verification-skill`, `$maintain-verification-skill`, `/maintain-verification-skill`. | todo |
-| CD-545 | `skills/maintain-verification-skill/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-546 | `skills/maintain-verification-skill/SKILL.md:9` | `` for a skill generated by `/create-verification-skill` `` | cursor-ui | Cursor slash name. | agent-native | Use the per-harness invocation form. | todo |
-| CD-547 | `skills/maintain-verification-skill/SKILL.md:25` | `` (usually `.cursor/skills/verify-*/`) `` | skill-path | Searches only Cursor's skill directory. | agent-native | Search `.agents/skills/verify-*`, `.claude/skills/verify-*`, `.grok/skills/verify-*`, and `.cursor/skills/verify-*`. | todo |
-| CD-548 | `skills/maintain-verification-skill/SKILL.md:29` | `One read-only subagent per feature file, launched concurrently.` | subagent-field | Maps to Cursor `readonly: true` Task. | agent-native | Claude Code `subagent_type: "Explore"` plus "do not edit"; Grok built-in `explore` type (or a read-only role); Codex sandbox read-only. Orca: `worker-start --spec "...read-only..."` per feature, then `check --wait`. | todo |
-| CD-549 | `skills/maintain-verification-skill/SKILL.md:37` | `one PR of proven corrections` | pr-tool | Possibly Cursor's built-in PR tool. | agent-native | `gh pr create`. | todo |
-| CD-577 | `skills/no-comments/SKILL.md:3` | `Spawn Comment Sicko, fix accepted findings` | subagent-field | Relies on the Cursor plugin custom agent `comment-sicko`. | agent-native | Claude Code `pstack:comment-sicko` (plugin) or `~/.claude/agents/comment-sicko.md`; Grok `~/.grok/agents/comment-sicko.md`; Codex custom agent or Orca worker (see line 19). | todo |
-| CD-578 | `skills/no-comments/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-579 | `skills/no-comments/SKILL.md:19` | `Pick each subagent's reasoning level and fast or standard speed` | model-slug | Cursor fast slug variants. | agent-native | Claude Code `model`/`effort`; Orca `--model/--effort`; Grok config. | todo |
-| CD-580 | `skills/no-comments/SKILL.md:19` | `` Spawn `Task` with `subagent_type: "comment-sicko"`. `` | tool-name | Cursor `Task` tool and custom subagent_type. | agent-native | Claude Code `Agent` `subagent_type: "pstack:comment-sicko"`; Grok `spawn_subagent` `subagent_type: "comment-sicko"`. Codex or cross-agent: `orca orchestration worker-start --spec "$(cat <pstack>/agents/comment-sicko.md) Scope: <diff>" --worktree current --agent codex`. | todo |
-| CD-581 | `skills/no-comments/SKILL.md:20` | `` Reject a second, report it open, and fail `/no-comments`. `` | cursor-ui | Slash name. | agent-native | Per-harness name (`/pstack:no-comments`, `$no-comments`). | todo |
-| CD-582 | `skills/no-comments/SKILL.md:20` | `` run `/how` or `/why` on their symbol `` | tool-name | Cursor slash-invocation of skills from inside an agent. | agent-native | Read `<pstack>/skills/how/SKILL.md` and `why/SKILL.md` and follow them. | todo |
-| CD-583 | `skills/no-comments/SKILL.md:21` | `` run `/architect` once for the accepted set `` | tool-name | Cursor slash-invocation of the architect skill. | agent-native | Read `<pstack>/skills/architect/SKILL.md`. | todo |
-| CD-584 | `skills/no-comments/SKILL.md:22` | `**principle-fix-root-causes** and **principle-redesign-from-first-principles** skills` | skill-path | Name-only references. | agent-native | Read the matching `<pstack>/skills/<name>/SKILL.md`. | todo |
-| CD-585 | `skills/no-comments/SKILL.md:23` | `Wait for interactive approval.` | implicit | Assumes an interactive Cursor chat. | orca | As an Orca worker: `orca orchestration ask --question "<encode X?>" --options yes,no`, or `orca orchestration gate-create`. Interactive: `AskUserQuestion`/`ask_user_question`; Claude `-p`/Codex exec: treat as unapproved. | todo |
 | CD-586 | `skills/principle-attack-the-premise/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Relies on Cursor treating the field as "slash-only, but the agent can still read the file"; harnesses handle it differently. | agent-native | Claude Code and Grok honor the field: the model cannot auto-invoke and the Skill tool refuses, so cross-skill reads must `Read <pstack>/skills/<name>/SKILL.md`. Codex ignores the field; add `agents/openai.yaml` with `policy: allow_implicit_invocation: false`. | todo |
 | CD-587 | `skills/principle-boundary-discipline/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same Cursor-specific invocation semantics. | agent-native | Same as above: Claude Code/Grok honor it; Codex needs `agents/openai.yaml` `allow_implicit_invocation: false`. | todo |
-| CD-588 | `skills/principle-build-the-lever/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-589 | `skills/principle-build-the-lever/SKILL.md:17` | `write the lever as a skill they all read` | implicit | Assumes Cursor subagents share the parent's skill catalog. | orca | Put the lever skill at an absolute repo path and pass that path in each `orca orchestration worker-start --spec`. Claude/Grok subagents get the path in the brief. | todo |
 | CD-590 | `skills/principle-encode-lessons-in-structure/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
 | CD-591 | `skills/principle-exhaust-the-design-space/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
 | CD-592 | `skills/principle-experience-first/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
@@ -493,69 +370,12 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 | CD-602 | `skills/principle-model-the-domain/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
 | CD-603 | `skills/principle-never-block-on-the-human/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
 | CD-604 | `skills/principle-outcome-oriented-execution/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-605 | `skills/principle-prove-it-works/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-606 | `skills/principle-prove-it-works/SKILL.md:22` | `(the **show-me-your-work** skill)` | skill-path | Name-only reference. | agent-native | Read `<pstack>/skills/show-me-your-work/SKILL.md`. | todo |
 | CD-607 | `skills/principle-redesign-from-first-principles/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
 | CD-608 | `skills/principle-separate-before-serializing-shared-state/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-609 | `skills/principle-sequence-verifiable-units/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-610 | `skills/principle-sequence-verifiable-units/SKILL.md:17` | `the **build-the-lever** principle skill` | skill-path | Same. | agent-native | Read `<pstack>/skills/principle-build-the-lever/SKILL.md`. | todo |
-| CD-611 | `skills/principle-sequence-verifiable-units/SKILL.md:17` | `the **prove-it-works** principle skill` | skill-path | Short name, resolved through Cursor's catalog. | agent-native | Read `<pstack>/skills/principle-prove-it-works/SKILL.md`. | todo |
 | CD-612 | `skills/principle-subtract-before-you-add/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
 | CD-613 | `skills/principle-test-behavior-not-implementation/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-614 | `skills/principle-type-system-discipline/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-615 | `skills/principle-type-system-discipline/SKILL.md:9` | `` see the `typescript-best-practices` skill `` | skill-path | Name-only reference. | agent-native | Read `<pstack>/skills/typescript-best-practices/SKILL.md`. | todo |
-| CD-616 | `skills/principle-type-system-discipline/SKILL.md:12` | `The **boundary-discipline** principle skill says where` | skill-path | Short-name resolution. | agent-native | Read `<pstack>/skills/principle-boundary-discipline/SKILL.md`. | todo |
-| CD-617 | `skills/principle-type-system-discipline/SKILL.md:13` | `See the **encode-lessons-in-structure** principle skill.` | skill-path | Short-name resolution. | agent-native | Read `<pstack>/skills/principle-encode-lessons-in-structure/SKILL.md`. | todo |
-| CD-618 | `skills/recall/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-619 | `skills/recall/SKILL.md:9` | `**Before you start or resume work, you rebuild the user's recent` | implicit | Not a dependency: "resume" is prose. (The recall transcript paths are inventoried elsewhere.) | keep | No action. | n/a |
-| CD-620 | `skills/recall/SKILL.md:13` | `That second record is what the **why** skill searches` | skill-path | Name-only reference to the why skill. | agent-native | Read `<pstack>/skills/why/SKILL.md`. | todo |
-| CD-621 | `skills/recall/SKILL.md:15` | `` Transcripts live at `~/.cursor/projects/<slug>/agent-transcripts/<uuid>/<uuid>.jsonl` `` | transcript | Hard-codes the Cursor transcript layout and slug rule. | orca | Check `orca search --index-status --json`, then use `orca search "<phrase>" --path <worktree> --since <iso> --sort newest --json` across all agents. Fallback per agent: Claude `~/.claude/projects/<slug>/*.jsonl` (slug: `/` and `.` become `-`), Codex `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` (filter by cwd), Grok `~/.grok/sessions/<encoded-cwd>/<id>/updates.jsonl`. | todo |
-| CD-622 | `skills/recall/SKILL.md:17` | `` One specific prior chat to resume is the `session-pickup` playbook `` | skill-path | Routes to a poteto-mode playbook that is resolved through Cursor's skill catalog. | agent-native | Read the playbook in `<pstack>/skills/poteto-mode/SKILL.md`. In Orca, the hit's `resumeCommand` from `orca search` resumes the exact session. | todo |
-| CD-623 | `skills/recall/SKILL.md:18` | `Never read another project's transcripts without being asked` | transcript | Workspace scoping is defined by the Cursor per-workspace transcript folder. | orca | Scope with `orca search ... --path <abs worktree>`. Outside Orca, read only the current workspace's per-agent folder listed in the line-15 row. | todo |
-| CD-624 | `skills/recall/SKILL.md:19` | `Spawn parallel subagents on a fast, cheap model` | model-slug | Assumes Cursor `-fast` model slugs and the poteto-mode fast/standard speed table. | agent-native | Claude Code `Agent` with `model: "haiku"` or `"sonnet"` (drop `-fast`). Grok `spawn_subagent` `model` or `[subagents.models]`. Orca: `orca orchestration worker-start --spec ... --agent claude --model haiku`. | todo |
-| CD-625 | `skills/recall/SKILL.md:19` | `per the Subagents section of the **poteto-mode** skill` | model-slug | Pulls model and speed choice from poteto-mode's Cursor slug table. | agent-native | Map the slugs through `docs/harness/claude-code.md` Models (Claude Code). Codex and Grok use their own model ids; Orca uses `--model/--effort` on `worker-start`. | todo |
-| CD-626 | `skills/recall/SKILL.md:19` | `skip the current chat plus obvious noise (subagent, eval` | transcript | Assumes Cursor's transcript folder mixes subagent chats with top-level ones. | agent-native | Claude subagents live under `<session>/subagents/`, so skip that folder. With `orca search`, use `--scope conversation`. | todo |
-| CD-627 | `skills/recall/SKILL.md:20` | `skip an unavailable MCP and say so` | implicit | Assumes delegated why-investigators share the parent's MCP servers, as Cursor subagents do. | agent-native | Claude Code `general-purpose` keeps session MCP; Grok children inherit connected MCP (`mcpInheritance: all`). Orca workers are fresh CLI sessions that load only user/project MCP config, so session-added servers are missing; tell the worker to say "skipped <server>". | todo |
-| CD-628 | `skills/recall/SKILL.md:21` | `read the full transcript, not just a trimmed local copy` | transcript | Assumes Cursor's trimmed local transcript copies. | orca | `orca orchestration worker-read --dispatch <id> --source transcript` for Orca workers; otherwise read the agent's full JSONL (paths in the line-15 row). | todo |
-| CD-629 | `skills/recall/SKILL.md:33` | `Write the brief through the **unslop** skill` | skill-path | Name-only skill reference. | agent-native | Read `<pstack>/skills/unslop/SKILL.md`. | todo |
-| CD-630 | `skills/sharpen/SKILL.md:3` | `Use for /sharpen.` | cursor-ui | Same Cursor slash invocation. | agent-native | `/pstack:sharpen`, `$sharpen`, `/sharpen`. | todo |
-| CD-631 | `skills/sharpen/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-632 | `skills/show-me-your-work/SKILL.md:3` | `Use for /show-me-your-work, autonomous or multi-phase runs` | cursor-ui | Cursor slash invocation. | agent-native | `/pstack:show-me-your-work`, `$show-me-your-work`, `/show-me-your-work`. | todo |
-| CD-633 | `skills/show-me-your-work/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-634 | `skills/show-me-your-work/SKILL.md:36` | `(the **unslop** skill applies to log text too)` | skill-path | Name-only reference. | agent-native | Read `<pstack>/skills/unslop/SKILL.md`. | todo |
-| CD-635 | `skills/show-me-your-work/SKILL.md:38` | `` Use the helper `scripts/log.sh <logfile> <phase> <decision> <why> <evidence> <result>`. `` | skill-path | The relative `scripts/` path relies on the harness resolving it against the skill dir. | agent-native | Claude Code: skill base dir. Codex/Grok: installed skill path (`orca skills installed --json`). Fallback: the plain `printf` append the SKILL.md already allows. | todo |
-| CD-636 | `skills/show-me-your-work/SKILL.md:42` | `its evidence names this run, such as its agent id` | implicit | Assumes a Cursor agent id exists for the run. | orca | Use `$ORCA` dispatch/worker handle or terminal handle (`orca terminal list --json`). Fallback: the Claude session id, Codex rollout id, or Grok session id. | todo |
-| CD-637 | `skills/show-me-your-work/SKILL.md:53` | `(the **encode-lessons-in-structure** principle skill)` | skill-path | Short-name resolution. | agent-native | Read `<pstack>/skills/principle-encode-lessons-in-structure/SKILL.md`. | todo |
-| CD-638 | `skills/show-me-your-work/SKILL.md:57` | `` Don't glob across `~/.cursor/projects/*/`. `` | transcript | Cursor transcript root. | agent-native | Same scoping rule for each harness's session root. | todo |
-| CD-639 | `skills/show-me-your-work/SKILL.md:57` | `` Read this run's transcript under the active workspace's `agent-transcripts/` directory `` | transcript | Cursor transcript directory named by its system prompt. | orca | For Orca workers: `orca orchestration worker-read --dispatch <id> --source transcript`. Otherwise read the current session JSONL (Claude `~/.claude/projects/<slug>/<session>.jsonl`, Codex `~/.codex/sessions/.../rollout-*.jsonl`, Grok `~/.grok/sessions/<cwd>/<id>/updates.jsonl`). | todo |
-| CD-640 | `skills/show-me-your-work/SKILL.md:67` | `per the Subagents section of the **poteto-mode** skill` | model-slug | poteto-mode Cursor slug table. | agent-native | Map the slugs to `--model/--effort` per harness. | todo |
-| CD-641 | `skills/show-me-your-work/SKILL.md:67` | `spawn a subagent on a different model family` | model-slug | Assumes Cursor Task can pick any vendor's model; Claude Code `Agent` is Claude-only, and Grok may lock to xAI. | orca | Run `orca orchestration worker-start --spec "<review trail at abs path + transcript path>" --worktree current --agent codex --model <gpt id> --effort high`, or `--agent grok` when the run was Claude. Collect with `orca orchestration check --wait --types worker_done` and `worker-read`. Fallback outside Orca: headless `codex exec` or `grok -p`. | todo |
-| CD-642 | `skills/show-me-your-work/SKILL.md:74` | `reviewed by <model>` | model-slug | Expects a Cursor model slug name. | agent-native | Report the provider model id the worker ran on (from the Orca `worker-show` receipt or the CLI). | todo |
-| CD-643 | `skills/show-me-your-work/scripts/log.sh:1` | `#!/usr/bin/env bash` | script | I read the whole file: it is a plain bash TSV appender with no Cursor paths, APIs or assumptions. | keep | Works as-is in any harness. | n/a |
-| CD-969 | `skills/statechart/SKILL.md:3` | `Use for /statechart` | cursor-ui | Assumes Cursor's bare `/name` slash invocation of plugin skills. | agent-native | Claude Code `/statechart` (skills-CLI install), Codex `$statechart`, Grok `/statechart`. In an Orca worker, name the SKILL.md path in the spec. | todo |
-| CD-970 | `skills/statechart/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Relies on Cursor treating the field as slash-only. | agent-native | Claude Code and Grok honor it. Codex ignores it, so the skill may auto-trigger there. The skill's scripts (`node`, TLC, Mermaid) are harness-neutral. | todo |
 | CD-644 | `skills/tdd/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
 | CD-645 | `skills/tdd/SKILL.md:24` | `manual reproduction command, browser automation, snapshot comparison, log assertion,` | implicit | Not a dependency: "browser automation" is a generic verification technique. | keep | No action. In Orca, `orca goto`/`orca snapshot` can serve as the browser automation. | n/a |
-| CD-646 | `skills/teach/SKILL.md:3` | `` Runs the `how` and `why` skills `` | skill-path | Cursor's skill catalog resolves sibling skills by name. | agent-native | Claude Code `Read <pstack>/skills/how/SKILL.md` and `why/SKILL.md` (Skill tool refuses them); Codex `$how`/`$why` or read the path; Grok reads the path. | todo |
-| CD-647 | `skills/teach/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-648 | `skills/teach/SKILL.md:11` | `Those are real skill invocations that do their own digging.` | skill-path | Assumes the agent can invoke other skills as tools. | agent-native | Claude Code: spawn `Agent` with a brief "read <pstack>/skills/how/SKILL.md and follow it". Grok: `spawn_subagent` with the same brief. Codex: read inline. In Orca: `orca orchestration worker-start --spec "<follow how SKILL.md at abs path>" --agent claude`. | todo |
-| CD-649 | `skills/teach/SKILL.md:14` | `Run them in parallel and combine the results.` | implicit | Assumes the agent can run skills in parallel (Cursor Task fan-out). | agent-native | Claude Code: parallel `Agent` calls. Grok: background `spawn_subagent`, but child depth is limited to 1, so how/why cannot fan out again. Codex: sequential, or Orca workers via `orca orchestration worker-start ... --agent codex` plus `orca orchestration check --wait --types worker_done`. | todo |
-| CD-650 | `skills/teach/SKILL.md:17` | `reach for the image-generation tool and draw it` | tool-name | Depends on Cursor's built-in image-generation tool. | fallback-only | Claude Code has no image tool and Grok documents none; degrade to a series of Mermaid or ASCII diagrams. Inside Orca chat with `ORCA_CHAT_SCRATCH_DIR` set, write an HTML/SVG page there; otherwise share it via `orca artifacts share <file.html>`. | todo |
-| CD-651 | `skills/teach/SKILL.md:19` | `Write every response through the **unslop** skill` | skill-path | Resolves the skill by name through Cursor's catalog. | agent-native | Read `<pstack>/skills/unslop/SKILL.md` (Claude Code/Grok); Codex `$unslop` or read the path. | todo |
-| CD-652 | `skills/teach/SKILL.md:21` | `` the threads worth chasing with `how` or `why` `` | skill-path | Name-only skill reference. | agent-native | Same path-based read as above. | todo |
-| CD-653 | `skills/technical-writing/SKILL.md:3` | `Use for /technical-writing` | cursor-ui | Cursor slash invocation. | agent-native | `/pstack:technical-writing`, `$technical-writing`, `/technical-writing`. | todo |
-| CD-654 | `skills/technical-writing/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
-| CD-655 | `skills/technical-writing/SKILL.md:19` | `` as an addition to `unslop`'s abstract-metaphor rule `` | skill-path | Name-only reference. | agent-native | Point to `<pstack>/skills/unslop/SKILL.md` rule 26. | todo |
-| CD-656 | `skills/technical-writing/SKILL.md:93` | `Apply the **unslop** skill to every doc` | skill-path | Name-only reference. | agent-native | Read `<pstack>/skills/unslop/SKILL.md`. | todo |
-| CD-657 | `skills/typescript-best-practices/SKILL.md:4` | `paths: ["**/*.ts", "**/*.tsx"]` | frontmatter | Cursor glob auto-attach field; it is also undercut by `disable-model-invocation: true` on line 5, so it never auto-applies. | agent-native | Claude Code accepts `paths`, but line 5 blocks auto-load; Grok has no `paths` field, so it is ignored; Codex ignores both fields and auto-invokes by description. To get auto-attach, drop line 5 or add a CLAUDE.md/AGENTS.md line "for *.ts/*.tsx read typescript-best-practices". | todo |
-| CD-658 | `skills/typescript-best-practices/SKILL.md:5` | `disable-model-invocation: true` | frontmatter | Same as other skills, and it conflicts with `paths`. | agent-native | Same as the other disable-model-invocation rows. | todo |
-| CD-659 | `skills/typescript-best-practices/SKILL.md:10` | `Apply the **type-system-discipline** principle skill first.` | skill-path | Short-name resolution. | agent-native | Read `<pstack>/skills/principle-type-system-discipline/SKILL.md`. | todo |
-| CD-660 | `skills/typescript-best-practices/SKILL.md:15` | `` Brand primitives with `& { readonly __brand: "X" }` so they can't `` | implicit | Not a dependency: `readonly` is a TypeScript keyword. | keep | No action. | n/a |
-| CD-661 | `skills/typescript-best-practices/SKILL.md:25` | `See the **boundary-discipline** principle skill.` | skill-path | Short-name resolution. | agent-native | Read `<pstack>/skills/principle-boundary-discipline/SKILL.md`. | todo |
-| CD-662 | `skills/typescript-best-practices/references/patterns.md:3` | `See the **type-system-discipline** and **boundary-discipline** principle skills.` | skill-path | Short-name resolution. | agent-native | Read both `<pstack>/skills/principle-*/SKILL.md`. | todo |
-| CD-663 | `skills/typescript-best-practices/references/patterns.md:10` | `type AgentId = string & { readonly __brand: "AgentId" };` | implicit | Not a dependency: this is TypeScript sample code. | keep | No action. | n/a |
-| CD-664 | `skills/typescript-best-practices/references/patterns.md:26` | `` Match the `readonly __brand: 'X'` shape. Don't invent a new convention. `` | implicit | Not a dependency: this is TypeScript guidance. | keep | No action. | n/a |
-| CD-665 | `skills/typescript-best-practices/references/patterns.md:276` | `See the **boundary-discipline** principle skill.` | skill-path | Short-name resolution. | agent-native | Same. | todo |
 | CD-666 | `skills/unslop/SKILL.md:4` | `disable-model-invocation: true` | frontmatter | Same. | agent-native | Same as above. | todo |
 | CD-667 | `skills/unslop/SKILL.md:32` | `If you're coming from traditional automation: instead of registering event handlers` | implicit | Not a dependency: "automation" appears in a quoted example of bad prose. | keep | No action. | n/a |
 
