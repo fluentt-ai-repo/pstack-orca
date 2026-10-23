@@ -18,15 +18,15 @@ Cursor's `Task` tool spawns a subagent on any vendor's model. Claude Code and Co
 
 ## Route each spawn
 
-Read the role's line in the settings file (see Models). Then:
+Read `~/.agents/skills/select-model/SKILL.md` and decide the model and how to use it (see Models). Then:
 
-| The role's agent | Spawn with |
+| The model's agent | Spawn with |
 | --- | --- |
-| Your own agent (a Claude role while you are Claude Code) | Your native subagent tool: `Agent` in Claude Code, `spawn_agent` in Codex, `spawn_subagent` in Grok. It is faster, and it keeps your MCP servers. |
+| Your own agent (a Claude model while you are Claude Code) | Your native subagent tool: `Agent` in Claude Code, `spawn_agent` in Codex, `spawn_subagent` in Grok. It is faster, and it keeps your MCP servers. |
 | Another agent | An Orca worker. See Workers. |
 | `inherit-parent` or `auto` | Your native subagent tool on your own model. |
 
-A subagent that needs an MCP server stays native even when its role names another agent. An Orca worker loads only its own agent's MCP config and never inherits yours. Say so in your reply when this cost the panel its diversity.
+A subagent that needs an MCP server stays native even when its model belongs to another agent. An Orca worker loads only its own agent's MCP config and never inherits yours. Say so in your reply when this cost the panel its diversity.
 
 ## Workers
 
@@ -43,7 +43,7 @@ Before your first worker, run `orca skills get orchestration` and follow its coo
 | Cursor `Task` field | Orca worker |
 | --- | --- |
 | `subagent_type: generalPurpose`, `poteto-agent` | `--agent <agent>`. For `poteto-agent`, start the spec with "Read `<pstack>/poteto-mode/SKILL.md` in full, including its Principles section, before any work." |
-| `model: <cursor slug>` | `--agent`, `--model`, and `--effort` from the role's line. See Models. |
+| `model: <cursor slug>` | `--agent`, `--model`, and `--effort` from the model you chose. See Models. |
 | `readonly: true` | No flag exists. Put "Read-only. Do not edit, commit, or push." in the spec, use `--worktree current`, and check `git status` after the worker settles. |
 | `readonly: false` | `--worktree new-child` so its edits land in its own checkout. |
 | `environment: "cloud"` | `--worktree new-top-level`. Add `--on <saved-environment>` when `orca environment list` has one and the work must survive this machine sleeping. |
@@ -60,14 +60,7 @@ Orca refuses `--model` and `--effort` for Grok. `worker-start` exits 1 with `Age
 
 ## Models
 
-The settings file is `~/.agents/pstack-models.md`. Skills read it at the start of a task. `/setup-pstack` writes it. Each role line is `<role>: <agent> <model> <effort>`, and panel roles list several triples separated by commas:
-
-```text
-# budget: high
-feature, refactoring: grok grok-4.7-build-fast xhigh
-judgment and prose: claude opus xhigh
-interrogate reviewers: claude opus xhigh, grok grok-4.7-build-fast xhigh, codex gpt-6.1-sol xhigh
-```
+`~/.agents/skills/select-model/SKILL.md` holds this user's preferences and what this computer can run. Skills read it at the start of a task and decide the model from it. `/setup-pstack` writes it. A skill that still names a Cursor slug maps it through the table below.
 
 Valid agents, models, and efforts are the entries in `$ORCA_USER_DATA_PATH/agent-model-catalog.json`:
 
@@ -84,9 +77,9 @@ jq -r '.entries[] | .agent as $a | .discovered.models[]? | "\($a) \(.id) \([.eff
 | `composer-*`, `cursor-grok-*` | `grok grok-4.7-build-fast xhigh` |
 | `-fast` suffix | The model id is the speed. No speed flag exists. |
 | `auto`, `inherit-parent` | Omit `--model` and `--effort`. The worker uses its agent's configured default. |
-| The Task tool rejects a slug | `worker-start` exits 1 with `failedStage`. Use the role's default once and say so. Never guess a second id. |
+| The Task tool rejects a slug | `worker-start` exits 1 with `failedStage`. Use another id that `select-model` lists for the same agent and say so. Never guess an id. |
 
-Raising or lowering a role's effort moves along that model's `efforts` list in the catalog and stops at its ends.
+Raising or lowering a seat's effort moves along that model's `efforts` list in the catalog and stops at its ends.
 
 ## Tools
 
@@ -126,7 +119,7 @@ Raising or lowering a role's effort moves along that model's `efforts` list in t
 
 | Cursor | Orca session |
 | --- | --- |
-| `~/.cursor/rules/pstack-models.mdc` | `~/.agents/pstack-models.md`. See Models. |
+| `~/.cursor/rules/pstack-models.mdc` | `~/.agents/skills/select-model/SKILL.md`. See Models. |
 | `.cursor/skills/`, `~/.cursor/skills/` | Project `.claude/skills/` and `.agents/skills/`. User `~/.claude/skills/`, `~/.agents/skills/` (Codex), `~/.grok/skills/`. |
 | `.cursor/rules/*.mdc` | `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex and Grok. |
 | `.cursor/worktrees/` | `orca worktree list --json`. Remove an Orca worktree with `orca worktree rm`, never `git worktree remove`, so Orca forgets it. |
