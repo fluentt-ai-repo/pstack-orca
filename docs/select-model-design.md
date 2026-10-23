@@ -25,7 +25,7 @@ Verb first, like `create-verification-skill` and the `verify-<app>` skill it wri
 ## Generation
 
 1. **Survey the machine.** Only what can be observed here.
-   - Agent products on `PATH`, plus the agents Orca can launch (`orca search --index-status` lists the supported ids).
+   - Agent products on `PATH`, plus the agents in Orca's probed model catalog.
    - Models and efforts per product: Orca's `agent-model-catalog.json`, `~/.codex/models_cache.json`, `~/.grok/models_cache.json`, and the schema of your own subagent tool.
    - How each product can be started and what it refuses. Orca takes `--model` and `--effort` for Claude, Codex, Cursor, Antigravity, and Muse, only `--model` for OMP, needs an existing worktree for OpenCode, and runs Grok and zcode on their own config. Grok's model is `[models] default` in `~/.grok/config.toml`.
 2. **Ask for preferences.** Five questions: cost versus speed (budget), the preferred model per kind of work (code, prose and judgment, review), agents or models to avoid, how readily to use several models at once, and whether a role may run as an Orca worker on another vendor's agent. Each answer is written as a sentence with its reason, so the reading model can extend it to cases the list does not name.
@@ -81,6 +81,7 @@ The skill is edited only inside its own directory, and only after the user agree
 - `skills/poteto-mode/SKILL.md`: the Subagents section shrinks to "read `select-model`, then decide".
 - `skills/arena`, `swarm`, `interrogate`, `reflect`, `architect`, `how`, `why`: their role lines and default entries become guidance the model reads, apart from rules that belong to the skill itself (for example, an Arena judge from a different vendor than the parent).
 - `skills/poteto-help`, `skills/orca-harness`, `README.md`, `docs/guide/01-setup.md`, `docs/harness/claude-code.md`: wording.
+- Playbooks, in the unit that rewrites them: `skills/poteto-mode/playbooks/multi-phase-plan.md` and `skills/poteto-mode/scripts/check-plan.mjs` require the text "Ten lanes on `<swarm workers model>`" in the plan. The plan will name the model chosen for verification instead, and the script check changes with it.
 
 ## Decisions from the cross-session review
 
@@ -122,3 +123,18 @@ Order, with each step waiting for the one before:
 - Runtime: tasks of different size and risk, and whether the model's choice and the one-line reason in the reply fit the preferences.
 - Failure: a forced limit error moves the seat and changes no file.
 - Fallback: `poteto-mode` with no `select-model` prints the one-line notice and runs on the defaults.
+
+## Results of the first checks (2026-10-23)
+
+The generator and the `poteto-mode` Subagents section were run on real agents in the testbed, with the skills copied from the working tree. The generated skill was written to `/tmp/select-model-test/` for G1. For R1, R2, and R4 it was copied to `~/.agents/skills/select-model/`, then removed.
+
+| Run | Environment | Result |
+| --- | --- | --- |
+| G1 | Claude Code in an Orca chat, answers given in the prompt, `/setup-pstack` | Pass. No question asked. It surveyed Claude, Codex, and Grok, found the pins in `~/.claude/settings.json`, `~/.codex/config.toml`, and `~/.grok/config.toml`, wrote `SKILL.md` (51 lines), `inventory.md`, `log.md`, and the references, and started one read-only job per product. Grok ran `grok-4.7` at `medium`, not the `grok-4.7-build-fast` the user chose, and the skill says so and how to change it. |
+| R1 | Claude Code, `select-model` present, a one-file bug check | Pass. Read the skill first. Stayed in this session, one-line reason, started nothing. |
+| R2 | Same, a read of 59 skills plus a hard-to-undo redesign | Pass. Read the skill first. Chose a Grok worker for the wide read, an Opus subagent for the judgment, and a Codex worker for a second opinion, and said Orca would run Grok on `grok-4.7`. |
+| R3 | Claude Code, no `select-model` | Pass. The first line says the skill is missing and points at `/setup-pstack`. Defaults used. |
+| R4 | Codex in an Orca terminal, the R1 task | Pass. Its first command read `~/.agents/skills/select-model/SKILL.md`. Stayed in this session with a one-line reason. |
+
+Two defects were found and fixed: `references/grok.md` said Grok runs at `default_reasoning_effort` when the record showed `medium` with the file at `high`, and the generator added a Codex preference the user never gave. Not run: Codex generating the skill, Claude Code with no Orca, and a run that starts the workers `select-model` chose.
+

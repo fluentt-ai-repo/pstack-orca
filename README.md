@@ -14,7 +14,7 @@ npx skills add ynginkim/pstack-orca -g -a claude-code -a codex
 ln -s ../../.agents/skills/<name> ~/.grok/skills/<name>   # Grok reads ~/.grok/skills; link each skill you want
 ```
 
-Then run `/setup-pstack` (`$setup-pstack` in Codex) once to write `~/.agents/pstack-models.md`. Claude Code, Codex, and Grok share that file. Skills read it at the start of a task, so there is nothing to link.
+Then run `/setup-pstack` (`$setup-pstack` in Codex) once. It surveys the agents and models on this computer, asks for your preferences, and writes a `select-model` skill to `~/.agents/skills/select-model/`. Claude Code, Codex, and Grok read it by that path at the start of a task, so there is nothing to link. Run it again when you add an agent or change your mind.
 
 ## What this fork adds
 
@@ -25,11 +25,12 @@ Then run `/setup-pstack` (`$setup-pstack` in Codex) once to write `~/.agents/pst
 | [`MIRROR.md`](./MIRROR.md) | How the `upstream` (Cursor) and `upstream-orca` (Orca's bundled skills) branches are synced into `main`. |
 | [`docs/removed-cursor-features.md`](./docs/removed-cursor-features.md) | The Cursor-only features this fork deleted (benny, `make-bot-ui`), with the Claude Code, Codex, and Orca equivalents checked and what to build on request. |
 | [`docs/decursor-progress.md`](./docs/decursor-progress.md) | Which skills are rewritten by hand, the rules used, and how each rewrite was tested. |
+| [`docs/select-model-design.md`](./docs/select-model-design.md) | How `/setup-pstack` generates `select-model`, the skill that holds your model preferences and this computer's agents, and how a task uses it. |
 | `orca/` | Snapshot of the Orca skill guides and command schema this fork was checked against. CI fails when a doc names an `orca` command or flag that is not in it. |
 
 ## Status
 
-The adapter and the inventory are done. This fork is now rewriting skills by hand so they carry no Cursor wording and run on Claude Code, Codex, and Grok on their own, with Orca adding cross-agent workers. Done so far: `setup-pstack`, the body of `poteto-mode`, and the cross-model skills `arena`, `swarm`, `interrogate`, `reflect`, `architect`, `how`, and `why`. [`docs/decursor-progress.md`](./docs/decursor-progress.md) lists the rewrite rules, the order, and how each unit was checked. The playbooks and every other skill still read as Cursor text and rely on the adapter's general mapping.
+The adapter and the inventory are done. This fork is now rewriting skills by hand so they carry no Cursor wording and run on Claude Code, Codex, and Grok on their own, with Orca adding cross-agent workers. Done so far: `setup-pstack`, which generates `select-model` through `create-model-selection-skill`, and the body of `poteto-mode`. The cross-model skills `arena`, `swarm`, `interrogate`, `reflect`, `architect`, `how`, and `why` are being changed to read `select-model` instead of a role table. [`docs/decursor-progress.md`](./docs/decursor-progress.md) lists the rewrite rules, the order, and how each unit was checked. The playbooks and every other skill still read as Cursor text and rely on the adapter's general mapping.
 <!-- mirror:end -->
 
 ---
