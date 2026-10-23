@@ -6,6 +6,8 @@
 - **Questions.** Numbered options in the reply.
 - **Plan.** `update_plan` (unverified).
 - **Waiting.** Under Orca, `orca orchestration check --wait --timeout-ms 45000`, repeated in the same exec session until the event arrives. This was seen in a real run.
+- **Headless run.** `codex exec` runs one brief and exits. `-o <file>` writes the last message, `-s` sets the sandbox, `-m` the model, and `-c model_reasoning_effort=<level>` the effort. This ran.
+- **Sessions.** `codex agents` browses the sessions on the shared local app-server daemon, `codex queue --thread <id> --message <text>` queues a message for an existing session, and `codex resume`, `fork`, `archive` work on saved ones. Their help text was read, and they were not run. `codex app` continues in the ChatGPT desktop app. The desktop app also has scheduled tasks and worktrees (documented, not run).
 - **Skills.** `$name` runs a skill. `$skill-creator` writes one. Codex reads `~/.agents/skills/` and the project's `.agents/skills/` directly, so a skill there needs no link.
 
 ## Files
@@ -16,6 +18,6 @@
 
 ## Limits
 
-- `spawn_agent` takes only Codex models. Another vendor's model needs `spawn-worker`.
+- `spawn_agent` takes only Codex models. Another vendor's model needs `spawn-worker`, which a shell can do without Orca (see `cli-workers.md`).
 - Codex may ignore `disable-model-invocation`, so a slash-only skill can trigger on its own (unverified).
 - Codex running its own subagents, and Codex with no Orca at all, have not been run for this fork.

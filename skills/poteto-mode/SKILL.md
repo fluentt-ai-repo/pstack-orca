@@ -108,7 +108,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 Then spawn like this.
 
 - **The model is your own harness's.** Use `spawn-subagent` with that model and effort.
-- **The model is another agent's.** Use `spawn-worker`. When no worker can be started here, run the seat on your own model and say so in one line, because a harness can start only its own models.
+- **The model is another agent's.** Use `spawn-worker`. A worker can be started through Orca or by running the other product's CLI headless from the shell. When neither is possible here, run the seat on your own model and say so in one line.
 - **The preference is `auto`, `inherit-parent`, or "follow the session".** Use `spawn-subagent` and leave the model unset.
 - **A seat that needs one of your MCP servers** stays on your own harness even when its model belongs to another agent, because a worker loads only its own agent's MCP servers. Say so when this costs a panel its diversity.
 - **Your harness or Orca rejects the model as written.** Use another id that `select-model` lists for the same agent, and say so. Never guess an id.

@@ -1,12 +1,12 @@
 # No Orca
 
-A Claude Code or Codex session started on its own can start only its own models, with its own subagent tool. It cannot start another vendor's agent.
+A session with no `ORCA_CLI_*` variable has no supervised workers, no durable run, no inbox, and no schedules from Orca. It still has more than its own subagent tool.
 
-- `spawn-worker`: not available. A seat that wants another vendor's model runs on your own model instead. Say so in one line, and say that Orca would run it on the intended agent.
+- `spawn-worker`: start another product's CLI headless from the shell (`cli-workers.md`). That needs the product installed and logged in. `select-model` records which are. When none is, run the seat on your own model and say in one line which product would run it.
+- `control-agent` and `find-sessions`: the harness's own session tools (`claude-code.md`, `codex.md`).
 - `coordinate-workers`: the `orch` tool in `../poteto-mode/scripts/orch/`, or the plan in the reply.
-- `run-remote`, `run-on-schedule`, and `wake-on-event` have no Orca mechanism. Use the harness's own, or the fallback in the index.
+- `run-remote` has no mechanism. `run-on-schedule` and `wake-on-event` use the harness's own, or the fallback in the index.
 - When no other vendor is reachable, "several models together" means several models of your own vendor. Say that diversity is lower than a mixed panel would give.
-- A read-only seat uses the harness's read-only subagent type and a brief that says not to edit. Check `git status` after.
-- Another product's CLI may be installed on `PATH`. That does not make it startable from here. `select-model` records it as installed and not startable from here.
+- A read-only seat uses the harness's read-only subagent type, or the other product's read-only mode where `cli-workers.md` names one, and a brief that says not to edit. Check `git status` after.
 
-To use another vendor's agent, the user starts the task from Orca.
+The Claude desktop app's Code tab and the ChatGPT desktop app's Codex are plain sessions in this sense, with a shell and no Orca variables. What each app adds (parallel sessions, worktrees, scheduled tasks) is in its harness file.

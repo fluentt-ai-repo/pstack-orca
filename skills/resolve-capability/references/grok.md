@@ -11,9 +11,11 @@
 - Instructions: `AGENTS.md`.
 - Transcripts: `~/.grok/sessions/<URL-encoded cwd>/<session>/chat_history.jsonl`. `summary.json` in the same folder has `current_model_id` and `reasoning_effort`.
 
-## The model comes from config
+## The model: Orca decides it, the CLI does not
 
-Grok runs `[models] default` in `~/.grok/config.toml`. Orca refuses `--model` and `--effort` for it (see `orca-workers.md`). The effort is not settled: on one computer `default_reasoning_effort` was `high` and the session record said `medium`. Read the model and the effort from `summary.json` and say them in your reply.
+Started by Orca, Grok runs `[models] default` in `~/.grok/config.toml`, because Orca refuses `--model` and `--effort` for it (see `orca-workers.md`). Started directly, `grok -p "<brief>" -m <model> --reasoning-effort <level>` takes both, and the output's `modelUsage` names the model that ran (seen with `grok-4.7-build-fast`). So the model a preference names can be honored by starting Grok through its CLI (see `cli-workers.md`) and not through Orca.
+
+Under Orca the effort is not settled: on one computer `default_reasoning_effort` was `high` and the session record said `medium`. Read the model and the effort from `summary.json` and say them in your reply.
 
 ## Limits
 

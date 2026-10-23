@@ -20,6 +20,25 @@ Layer 1 and layer 2 are shipped together, so layer 1 reads layer 2 by the same r
 
 The model running a task reads layer 3 and the layer 2 index once at the start, as it reads `select-model` today. It decides which mechanism to use for each capability. It reads a layer 2 reference file only when it reaches a capability that needs one.
 
+## The environments this has to work in
+
+The user's computer runs pstack in three kinds of place, and only the first has Orca.
+
+| Place | What is there |
+| --- | --- |
+| Orca, with the Chat UI off | Claude Code, Codex, and Grok as terminal CLIs. Orca manages the terminals and, through hooks, sees the agent in each. |
+| The Claude desktop app | Claude Code in the Code tab. Parallel sessions, optional Worktree mode, and background sessions through `claude agents`. A shell, and no Orca variable. |
+| The ChatGPT desktop app | Codex. Subagents, worktrees, and scheduled tasks. A shell, and no Orca variable. |
+
+Each product manages its own sessions, and a shell can start any installed product's CLI without its interface. Seen in real runs on this computer:
+
+- `ListAgents` lists the Claude Code sessions on the machine, Orca-started terminal ones included. `SendMessage` delivered a message to a terminal session that Orca had started, and the session answered. Claude Code controls Claude Code sessions without Orca.
+- `claude --bg` starts a background session. `claude agents --json`, `logs`, and `rm` listed, read, and removed it.
+- `codex exec` ran from Claude Code with `-o` for the report, and `claude -p` and `grok -p` ran the same way. A direct `grok -p -m grok-4.7-build-fast --reasoning-effort low` ran the model it was asked for. Only Orca refuses a Grok model flag.
+- The documentation says the Claude desktop app's sessions are visible to Claude only inside the app and that the Codex scheduled tasks exist only in the ChatGPT desktop app. Neither was run here.
+
+So Orca is an enhancement and not a requirement. Without it a session can still start another vendor's agent from the shell. It loses supervision, a durable run, an inbox, managed worktrees, schedules, and remote environments. The adapter therefore treats a shell-started CLI as the `by hand` state of `spawn-worker`, and Orca as the `via Orca` state.
+
 ## The vocabulary
 
 A capability is one thing a playbook step needs from its environment, where the way to get it differs between environments. The names are closed: a skill uses these names and no others. A new need is added here first.
@@ -83,11 +102,11 @@ One line per capability and product. A cell marked `?` is not checked yet and mu
 | Capability | Claude Code | Codex | Grok | Orca adds | If nothing works |
 | --- | --- | --- | --- | --- | --- |
 | `spawn-subagent` | `Agent` tool (`model`, `effort`, `subagent_type`, `isolation`, `run_in_background`) | `spawn_agent` | `spawn_subagent` ? | Not needed | Do the work yourself and say so |
-| `spawn-worker` | none | none | none | `orca orchestration worker-start --agent <id>` inside a run | Fold the seat onto your own model and say so in one line |
+| `spawn-worker` | `codex exec`, `grok -p` from the shell (both ran) | `claude -p`, `claude --bg`, `grok -p` from the shell (`claude` ran) | the other CLIs from the shell | `orca orchestration worker-start --agent <id>` inside a run. It adds supervision and a durable run, and it refuses model and effort flags for Grok, which the CLI takes. | Fold the seat onto your own model and say so in one line |
 | `isolate-checkout` | `Agent` with `isolation: "worktree"` | `git worktree add` by hand ? | `git worktree add` by hand ? | `worker-start --worktree new-child`; remove with `orca worktree rm`, never `git worktree remove` | Work in a copy under the scratch path |
 | `run-remote` | none | none | none | `worker-start --on <saved environment>`; list with `orca environment list` | Run here and say that it dies with this session |
 | `coordinate-workers` | `scripts/orch` units, inbox, and gates (needs `bun`) | same | same | `orca orchestration run-create`, `task-create`, `gate-create`, `check --wait` | The plan in the reply |
-| `control-agent` | `SendMessage`, `TaskStop` ? | ? | ? | `orca orchestration worker-show`, `send`, `worker-stop`, `worker-abandon` | Say that the agent cannot be probed |
+| `control-agent` | `ListAgents` and `SendMessage` (a terminal session answered), `claude agents`, `logs`, `stop` | `codex agents`, `codex queue` (help read) | ? | `orca orchestration worker-show`, `send`, `worker-stop`, `worker-abandon` | Say that the agent cannot be probed |
 | `wake-on-event` | A `run_in_background` shell command wakes the session when it ends | `orca orchestration check --wait --timeout-ms 45000`, repeated and continued in the same exec session | ? | `orca orchestration check --wait`, `orca terminal wait --for exit`. An idle Orca chat is woken by an orchestration message. | Poll with a bounded shell loop, or stop and say what to re-run |
 | `run-on-schedule` | `/loop`, `CronCreate`, `ScheduleWakeup` ? | ? | ? | `orca automations create --trigger ...`. Every tick starts a new agent with no memory, so the tick prompt must carry everything, including reading the decision trail. | Skip and tell the user to re-run by hand |
 | `ask-user` | `AskUserQuestion` | numbered options in the reply | numbered options in the reply | In a worker: `orca orchestration ask` | Numbered options in the reply |

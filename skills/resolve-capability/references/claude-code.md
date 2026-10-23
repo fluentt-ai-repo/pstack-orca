@@ -6,6 +6,8 @@
 - **Questions.** `AskUserQuestion`.
 - **Plan.** Use the plan or todo tool if your tool list has one. Otherwise keep the list in the reply.
 - **Waking.** A command started with `run_in_background` wakes the session when it ends. `/loop`, `CronCreate`, `ScheduleWakeup`, `Monitor`, `SendMessage`, and `TaskStop` exist in some versions. They are unverified here, so look at your tool list.
+- **Other sessions.** `ListAgents` lists the Claude Code sessions on this machine, with their names and whether each is idle or busy, and `SendMessage` delivers a message to one by name. A terminal session that Orca started received a message and answered it. `notify_when_idle` asks for one notice when the target next goes idle. A session in another permission mode holds a cross-session message for its user's approval, so silence is not agreement.
+- **Background sessions.** `claude --bg "<brief>"` starts one and prints an id. `claude agents --json --all` lists sessions (interactive and background), and `claude logs <id>`, `claude attach <id>`, `claude stop <id>`, `claude rm <id>` manage a background one. They need a workspace that has accepted the trust prompt. All of this ran.
 - **Skills.** `/name` runs a skill. `skill-creator` writes one.
 
 ## Files
@@ -15,6 +17,7 @@
 
 ## Limits
 
-- A subagent started with `Agent` takes only Claude models. Another vendor's model needs `spawn-worker`.
+- A subagent started with `Agent` takes only Claude models. Another vendor's model needs `spawn-worker`, which a shell can do without Orca (see `cli-workers.md`).
+- The desktop app's Code tab runs sessions of its own (Worktree mode there is off until you turn it on). Its documentation says Claude sees only the sessions the desktop app runs. This was not run here.
 - No command or file read here reports remaining usage. `/usage` exists only in an interactive session. A limit shows up as an error when a start fails.
 - In the default permission mode, a first read outside the project can ask the user for permission.
