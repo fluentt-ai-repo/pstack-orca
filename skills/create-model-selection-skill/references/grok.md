@@ -21,3 +21,7 @@ When you are running in Grok, the subagent tool is `spawn_subagent`. Read its sc
 ## Transcripts
 
 `~/.grok/sessions/<URL-encoded workspace path>/<session>/chat_history.jsonl`.
+
+## Skill folder
+
+`~/.grok/skills/`. The `skills` CLI links a skill there as `<name> -> ../../.agents/skills/<name>`.

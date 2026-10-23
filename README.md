@@ -14,7 +14,7 @@ npx skills add ynginkim/pstack-orca -g -a claude-code -a codex
 ln -s ../../.agents/skills/<name> ~/.grok/skills/<name>   # Grok reads ~/.grok/skills; link each skill you want
 ```
 
-Then run `/setup-pstack` (`$setup-pstack` in Codex) once. It surveys the agents and models on this computer, asks for your preferences, and writes a `select-model` skill to `~/.agents/skills/select-model/`. Claude Code, Codex, and Grok read it by that path at the start of a task, so there is nothing to link. Run it again when you add an agent or change your mind.
+Then run `/setup-pstack` (`$setup-pstack` in Codex) once. It surveys the agents and models on this computer, asks for your preferences, and writes a `select-model` skill to `~/.agents/skills/select-model/`. Claude Code, Codex, and Grok read it by that path at the start of a task. It then offers to link the skill into the skill folders of the agents that list skills from their own folder (`~/.claude/skills`, `~/.grok/skills`), the way the `skills` CLI does. Run it again when you add an agent or change your mind.
 
 ## What this fork adds
 

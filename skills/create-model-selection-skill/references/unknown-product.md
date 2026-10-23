@@ -9,3 +9,7 @@ Work read-only. Do not log in, install, or write that product's config.
 5. Write its section in `inventory.md`, and a short `references/<product>.md` that says what you learned and how. Start that file with `<!-- learned on this computer, not from pstack -->`.
 
 If it cannot start without interaction, record it as `installed, not startable from here`.
+
+## Skill folder
+
+Do not guess a folder for a product with no file. Ask the user where it lists skills from. If they do not know, make no link.

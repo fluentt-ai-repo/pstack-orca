@@ -5,7 +5,7 @@ description: Set pstack up for this user and this computer. Generates the `selec
 
 # Setup pstack
 
-pstack does not ship a model table. It generates `select-model`, a skill under `~/.agents/skills/select-model/` that holds this user's preferences and this computer's agents and models. Claude Code, Codex, and Grok read it by that path at the start of a task. Nothing loads it for them, and nothing needs a link.
+pstack does not ship a model table. It generates `select-model`, a skill under `~/.agents/skills/select-model/` that holds this user's preferences and this computer's agents and models. Claude Code, Codex, and Grok read it by that path at the start of a task. Nothing loads it for them. The generator can also link it into the skill folders of the products that list skills from their own folder, as the `skills` CLI does, and asks first.
 
 ## Steps
 

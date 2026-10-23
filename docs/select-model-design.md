@@ -28,7 +28,7 @@ Verb first, like `create-verification-skill` and the `verify-<app>` skill it wri
    - Agent products on `PATH`, plus the agents in Orca's probed model catalog.
    - Models and efforts per product: Orca's `agent-model-catalog.json`, `~/.codex/models_cache.json`, `~/.grok/models_cache.json`, and the schema of your own subagent tool.
    - How each product can be started and what it refuses. Orca takes `--model` and `--effort` for Claude, Codex, Cursor, Antigravity, and Muse, only `--model` for OMP, needs an existing worktree for OpenCode, and runs Grok and zcode on their own config. Grok's model is `[models] default` in `~/.grok/config.toml`.
-2. **Ask for preferences.** Five questions: cost versus speed (budget), the preferred model per kind of work (code, prose and judgment, review), agents or models to avoid, how readily to use several models at once, and whether a role may run as an Orca worker on another vendor's agent. Each answer is written as a sentence with its reason, so the reading model can extend it to cases the list does not name.
+2. **Ask for preferences.** Five questions, then one about links: cost versus speed (budget), the preferred model per kind of work (code, prose and judgment, review), agents or models to avoid, how readily to use several models at once, and whether a role may run as an Orca worker on another vendor's agent. Each answer is written as a sentence with its reason, so the reading model can extend it to cases the list does not name.
 3. **Write the skill.**
 4. **Prove it.** Start one read-only subagent per surveyed agent. Drop what does not start. A model that is listed but cannot run is the failure this step exists to catch.
 
@@ -55,7 +55,7 @@ The ways to use models, stated only when this machine has them:
 - An Orca worker on another agent: when that agent's model suits the work better.
 - Several models together (swarm, arena, interrogate, reflect): for judgment that could split, changes that are costly to undo, and large independent batches.
 
-Nothing registers `select-model` as a skill, and nothing needs to. Every reader opens it by its absolute path, which works in any agent that can read a file. On this computer `~/.claude/skills/` and `~/.grok/skills/` hold symlinks into `~/.agents/skills/` that the `skills` CLI made, and Codex reads `~/.agents/skills/` itself. Neither `/setup-pstack` nor the generator adds a link, so Claude Code and Grok do not list `select-model` as a skill.
+Every reader opens `select-model` by its absolute path, which works in any agent that can read a file. The generator also offers, as its last question, to link the skill into the skill folders of the products that list skills from their own folder, the way the `skills` CLI does: a relative symlink `<folder>/select-model -> ../../.agents/skills/select-model`. On this computer that means `~/.claude/skills/` (Orca's Claude profile links its `skills` folder there) and `~/.grok/skills/`. Codex needs no link, because the `skills` CLI installs Codex skills straight into `~/.agents/skills/`. The generator never replaces something already at that name, and never copies the skill into a product folder. Each product's file in `references/` names its skill folder.
 
 Before it spawns, the model rechecks only what it is about to use: the CLI still exists, `ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set. Remaining usage is not readable on this machine (Orca has no command for it, and only Codex leaves a stale `rate_limits` record in its session logs). So usage is handled when it fails: a limit error moves the seat to another agent for this run only, and the reply says so. A transient state is never written into the skill.
 
@@ -136,6 +136,7 @@ The generator and the `poteto-mode` Subagents section were run on real agents in
 | R2 | Same, a read of 59 skills plus a hard-to-undo redesign | Pass. Read the skill first. Chose a Grok worker for the wide read, an Opus subagent for the judgment, and a Codex worker for a second opinion, and said Orca would run Grok on `grok-4.7`. |
 | R3 | Claude Code, no `select-model` | Pass. The first line says the skill is missing and points at `/setup-pstack`. Defaults used. |
 | R4 | Codex in an Orca terminal, the R1 task | Pass. Its first command read `~/.agents/skills/select-model/SKILL.md`. Stayed in this session with a one-line reason. |
+| G4 | Claude Code in an Orca chat, a fake home at `/tmp/fakehome`, link question answered "all", proof step skipped | Pass. Made `<home>/.claude/skills/select-model -> ../../.agents/skills/select-model` and checked that `SKILL.md` reads through it. Left a real directory already at `<home>/.grok/skills/select-model` alone and said why. Said Codex needs no link. `log.md` records both. |
 
 Two defects were found and fixed: `references/grok.md` said Grok runs at `default_reasoning_effort` when the record showed `medium` with the file at `high`, and the generator added a Codex preference the user never gave. Not run: Codex generating the skill, Claude Code with no Orca, and a run that starts the workers `select-model` chose.
 

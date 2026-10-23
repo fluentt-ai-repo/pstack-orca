@@ -29,7 +29,7 @@ If a source is missing (no catalog, no cache), say so in `inventory.md` and keep
 
 ## 3. Ask for preferences
 
-Ask five questions. Use your question tool if you have one, such as `AskUserQuestion` in Claude Code. Otherwise list numbered options in plain text. Put what the survey found, as a table of products and models, in the text of the first question itself and also print it as reply text. The user sees neither your reasoning nor tool-call narration, so a table that lives only there is a missing table.
+Ask these questions, the last one only when it applies. Use your question tool if you have one, such as `AskUserQuestion` in Claude Code. Otherwise list numbered options in plain text. Put what the survey found, as a table of products and models, in the text of the first question itself and also print it as reply text. The user sees neither your reasoning nor tool-call narration, so a table that lives only there is a missing table.
 
 1. **Budget.** Offer these four options with these exact labels. Name the current one on an update. Say that `large` matches the defaults.
    - `unlimited — max reasoning`
@@ -42,6 +42,7 @@ Ask five questions. Use your question tool if you have one, such as `AskUserQues
 3. **What to avoid.** Agents or models not to use, and why.
 4. **How readily to use several models at once.** Never unless asked, only for risky or contested work, or whenever it could help. This sets when the model reading the skill reaches for swarm, arena, interrogate, or reflect.
 5. **Another vendor's agent as an Orca worker.** Allowed, allowed only for reading, or not allowed. Skip this question when Orca is not here.
+6. **Links.** Ask last, after the user has seen the rest. `select-model` is read by its path, so a link is only for the products that list skills from their own folder. Each product's file in `references/` has a `Skill folder` section. List the products the survey found that need a link, each with its folder, and ask which to link. Offer all of them, a choice, or none. Skip the question when no product found needs one, when the user named another target directory (the links are relative to `~/.agents/skills/`), or on an update where every link is already in place. On an update, offer only a link that is missing.
 
 The defaults, when the user has no preference, are `grok grok-4.7-build-fast xhigh` for code and reading, and `claude opus xhigh` for prose, judgment, and the hardest changes. Offer a default only when the survey found that model. If the user is on Auto, or says to follow whatever model the session runs, write that as the preference.
 
@@ -54,7 +55,8 @@ Fill in the template in [`references/select-model-template.md`](references/selec
 - `SKILL.md`, from the template. `## Preferences` holds one sentence per answer, each with its reason, so the model reading it can extend the choice to a case the sentence does not name ("Hard design goes to `claude opus xhigh` because you said judgment quality matters more than cost" rather than "design: opus"). Do not write a table of roles. Write only what the user said. For a product they said nothing about, write that they stated no preference and add nothing, because the model that reads the skill will decide and a guess from you would read as the user's own choice.
 - `inventory.md`, in the shape the template gives.
 - `references/`, copied from this skill's `references/`: `orca.md` when Orca is here, `plain-terminal.md` when it is not, and one file for each product found. Put a first line in each, `<!-- from pstack <version in plugin.json>, overwritten on update -->`.
-- `log.md`, one line: the date, what was created, and that the user approved.
+- `log.md`, one line: the date, what was created, which links were made, and that the user approved.
+- **Links, for each product the user chose.** Do what the `skills` CLI does: a relative symlink named `select-model` inside the product's skill folder, pointing at `../../.agents/skills/select-model`. Run `mkdir -p <folder>` first. If the name is already a link to that same target, leave it. If it is anything else (a real directory, a file, or a link to somewhere else), do not replace it, and tell the user what is there. A product's folder may itself be a link to another folder (Orca's Claude profile links its `skills` to `~/.claude/skills`). Create the link in the folder the product's reference names and nowhere else. Never copy the skill into a product folder.
 
 The finished `SKILL.md` stays under about 90 lines. Link to `inventory.md` and `references/` instead of copying them in.
 
@@ -73,7 +75,7 @@ If you drop an entry, check that every preference sentence still names a model t
 
 Tell the user, in this order:
 
-1. The path of the skill and what it found (products, models, whether Orca is here).
+1. The path of the skill and what it found (products, models, whether Orca is here), and the links it made or left.
 2. Which entries were verified and which were not.
 3. How to change it: edit a sentence in `## Preferences`, or run `/setup-pstack` again. The skill asks before it edits itself when a task does not match it.
 4. When a product was found that this session could not start, which environment would start it.
