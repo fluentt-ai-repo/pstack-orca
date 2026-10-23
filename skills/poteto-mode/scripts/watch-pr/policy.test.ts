@@ -27,7 +27,7 @@ import type {
   PullRequestFacts,
   RollupState,
 } from "./types.ts";
-import { parsePrNumber } from "./types.ts";
+import { parsePrNumber, parseReviewBotConfig } from "./types.ts";
 
 const context = (number: number): PrContext => ({
   owner: "owner",
@@ -87,6 +87,36 @@ describe("readiness truth table", () => {
       kind: "blocker",
       blocker: { kind: "failing-checks" },
     });
+  });
+});
+
+describe("review bot", () => {
+  const reader = () =>
+    fakeReader({
+      fastPath: {
+        kind: "checks",
+        checks: [pendingCheck("Acme Review Bot"), passingCheck()],
+      },
+    });
+  it("reports a running review bot only for configured check names", async () => {
+    const configured = await readSnapshot({
+      reader: reader(),
+      context: context(7),
+      pendingHistory: "omit",
+      allowDraft: false,
+      reviewBot: parseReviewBotConfig({ checks: ["review bot"] }),
+    });
+    const unconfigured = await readSnapshot({
+      reader: reader(),
+      context: context(7),
+      pendingHistory: "omit",
+      allowDraft: false,
+    });
+    if (configured.kind !== "open" || unconfigured.kind !== "open")
+      throw new Error("expected open snapshots");
+    expect(configured.reviewBotRunning).toBe(true);
+    expect(unconfigured.reviewBotRunning).toBe(false);
+    expect(classifyPr(configured)).toEqual(classifyPr(unconfigured));
   });
 });
 

@@ -3,7 +3,10 @@ import { type CliRuntime, main, parseArgs } from "./cli.ts";
 import { fakeReader, passingCheck } from "./fakes.test-helper.ts";
 import { renderJson, renderPretty } from "./render.ts";
 import type { GitHubReader, WatcherVerdict } from "./types.ts";
-import { parsePrNumber } from "./types.ts";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { NO_REVIEW_BOT, parsePrNumber } from "./types.ts";
 
 const silentIo = { stdout: () => {}, stderr: () => {} };
 
@@ -79,8 +82,36 @@ describe("parseArgs", () => {
       timeout: 0,
       maxQueryErrors: 3,
       allowDraft: true,
+      reviewBot: NO_REVIEW_BOT,
     });
     expect(parsed.pretty).toBe(true);
+  });
+
+  it("merges a review bot config file with the review bot flags", () => {
+    const file = join(mkdtempSync(join(tmpdir(), "watch-pr-")), "bots.json");
+    writeFileSync(
+      file,
+      JSON.stringify({
+        logins: ["Review-Bot[bot]"],
+        markers: ["Severity"],
+        passKeyPatterns: ["RUN_ID:\\s*(\\S+)"],
+      })
+    );
+    const { reviewBot } = parseArgs(
+      [
+        "--review-bot-config",
+        file,
+        "--review-bot-logins",
+        "other-bot",
+        "--review-bot-checks",
+        "Review Bot",
+      ],
+      silentIo
+    ).polling;
+    expect(reviewBot?.logins).toEqual(["review-bot", "other-bot"]);
+    expect(reviewBot?.markers).toEqual(["severity"]);
+    expect(reviewBot?.checks).toEqual(["review bot"]);
+    expect(reviewBot?.passKeyPatterns.map(String)).toEqual(["/RUN_ID:\\s*(\\S+)/"]);
   });
 
   it("rejects every invalid mode and numeric shape as usage", async () => {
@@ -93,6 +124,8 @@ describe("parseArgs", () => {
       ["--stack", "--queued-stack"],
       ["--stack-prs", "1,2"],
       ["--queued-stack", "--stack-prs", "1,1"],
+      ["--review-bot-logins", "a,,b"],
+      ["--review-bot-config", "/nonexistent/watch-pr-bots.json"],
     ];
     for (const argv of invalid) {
       const harness = testRuntime(fakeReader());

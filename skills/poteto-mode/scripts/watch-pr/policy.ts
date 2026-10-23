@@ -4,7 +4,7 @@ import {
   resolveReviewThreads,
 } from "./github.ts";
 import type * as T from "./types.ts";
-import { nonEmpty } from "./types.ts";
+import { NO_REVIEW_BOT, nonEmpty } from "./types.ts";
 export function assessGitHubMerge(args: {
   readonly mergeStateStatus: T.MergeStateStatus;
   readonly headRollupState: T.RollupState;
@@ -50,24 +50,20 @@ async function mergeAssessment(
     }),
   };
 }
-const AUTOMATION_TOKENS = [
-  "bugbot",
-  "security review",
-  "pr review automation",
-  "review automation",
-] as const;
 export async function readSnapshot(args: {
   readonly reader: T.GitHubReader;
   readonly context: T.PrContext;
   readonly pendingHistory: "include" | "omit";
   readonly allowDraft: boolean;
+  readonly reviewBot?: T.ReviewBotConfig;
 }): Promise<T.PrSnapshot> {
+  const bot = args.reviewBot ?? NO_REVIEW_BOT;
   const facts = await args.reader.pullRequest(args.context);
   if (facts.state === "MERGED" || facts.mergedAt !== null)
     return { kind: "merged", context: args.context, facts };
   if (facts.state === "CLOSED")
     return { kind: "closed", context: args.context, facts };
-  const threads = await resolveReviewThreads(args.reader, args.context);
+  const threads = await resolveReviewThreads(args.reader, args.context, bot);
   const checks = await resolveChecks(args.reader, args.context);
   const failed = nonEmpty(
     checks.checks.filter(
@@ -129,12 +125,10 @@ export async function readSnapshot(args: {
     facts,
     threads,
     ci,
-    reviewAutomationRunning: checks.checks.some(
+    reviewBotRunning: checks.checks.some(
       (check) =>
         check.kind === "pending" &&
-        AUTOMATION_TOKENS.some((token) =>
-          check.name.toLowerCase().includes(token)
-        )
+        bot.checks.some((token) => check.name.toLowerCase().includes(token))
     ),
   };
 }
@@ -431,6 +425,7 @@ export async function runSimple(args: {
           context,
           pendingHistory: "include",
           allowDraft: args.options.allowDraft,
+          reviewBot: args.options.reviewBot,
         })
       );
     const complete = nonEmpty(rows);
@@ -744,6 +739,7 @@ export async function runQueued(args: {
       context,
       pendingHistory: "omit",
       allowDraft: args.options.allowDraft,
+      reviewBot: args.options.reviewBot,
     });
     const applied = applyQueueSnapshot(
       state,

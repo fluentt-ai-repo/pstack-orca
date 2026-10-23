@@ -18,7 +18,7 @@ import {
   passingCheck,
   pendingCheck,
 } from "./fakes.test-helper.ts";
-import { parsePrNumber } from "./types.ts";
+import { parsePrNumber, parseReviewBotConfig } from "./types.ts";
 
 const context = {
   owner: "owner",
@@ -226,69 +226,99 @@ describe("closed enum parsing", () => {
   });
 });
 
-it("annotates Bugbot threads with distinct review-pass counts", () => {
-  const response = {
+function reviewThreadResponse(
+  nodes: readonly {
+    id: string;
+    resolved: boolean;
+    login: string;
+    body: string;
+  }[]
+) {
+  return {
     data: {
       repository: {
         pullRequest: {
           reviewThreads: {
             pageInfo: { hasNextPage: false, endCursor: null },
-            nodes: [
-              {
-                id: "one",
-                isResolved: false,
-                comments: {
-                  nodes: [
-                    {
-                      body: "RUN_ID: run-1",
-                      createdAt: "now",
-                      path: "a.ts",
-                      line: 1,
-                      author: { login: "bugbot" },
-                    },
-                  ],
-                },
+            nodes: nodes.map((node) => ({
+              id: node.id,
+              isResolved: node.resolved,
+              comments: {
+                nodes: [
+                  {
+                    body: node.body,
+                    createdAt: "now",
+                    path: null,
+                    line: null,
+                    author: { login: node.login },
+                  },
+                ],
               },
-              {
-                id: "two",
-                isResolved: false,
-                comments: {
-                  nodes: [
-                    {
-                      body: "CURSOR_AUTOMATION_ID: run-2 severity high",
-                      createdAt: "now",
-                      path: null,
-                      line: null,
-                      author: { login: "cursor" },
-                    },
-                  ],
-                },
-              },
-              {
-                id: "resolved",
-                isResolved: true,
-                comments: {
-                  nodes: [
-                    {
-                      body: "RUN_ID: run-3",
-                      createdAt: "now",
-                      path: null,
-                      line: null,
-                      author: { login: "bugbot" },
-                    },
-                  ],
-                },
-              },
-            ],
+            })),
           },
         },
       },
     },
   };
-  const threads = buildReviewThreads(parseReviewThreadPage(response).threads);
+}
+
+const botThreads = reviewThreadResponse([
+  { id: "one", resolved: false, login: "review-bot", body: "RUN_ID: run-1" },
+  {
+    id: "two",
+    resolved: false,
+    login: "Shared-App[bot]",
+    body: "PASS_ID: run-2 severity high",
+  },
+  { id: "resolved", resolved: true, login: "review-bot", body: "RUN_ID: run-3" },
+]);
+
+const reviewBot = parseReviewBotConfig({
+  logins: ["review-bot", "shared-app"],
+  passKeyPatterns: ["RUN_ID:\\s*([a-zA-Z0-9_.:-]+)", "PASS_ID:\\s*([a-zA-Z0-9_.:-]+)"],
+});
+
+it("annotates configured review-bot threads with distinct review-pass counts", () => {
+  const threads = buildReviewThreads(
+    parseReviewThreadPage(botThreads).threads,
+    reviewBot
+  );
   expect(threads).toHaveLength(2);
-  expect(threads.map((thread) => thread.isBugbot)).toEqual([true, true]);
-  expect(threads.map((thread) => thread.bugbotReviewPasses)).toEqual([3, 3]);
+  expect(threads.map((thread) => thread.isReviewBot)).toEqual([true, true]);
+  expect(threads.map((thread) => thread.reviewBotPasses)).toEqual([3, 3]);
+});
+
+it("treats no thread as a review bot when none is configured", () => {
+  const threads = buildReviewThreads(parseReviewThreadPage(botThreads).threads);
+  expect(threads).toHaveLength(2);
+  expect(threads.map((thread) => thread.isReviewBot)).toEqual([false, false]);
+  expect(threads.map((thread) => thread.reviewBotPasses)).toEqual([0, 0]);
+});
+
+it("counts a shared login as a review bot only when a marker matches", () => {
+  const threads = buildReviewThreads(
+    parseReviewThreadPage(
+      reviewThreadResponse([
+        { id: "bot", resolved: false, login: "shared-app", body: "Severity: high" },
+        { id: "human", resolved: false, login: "shared-app", body: "thanks" },
+      ])
+    ).threads,
+    parseReviewBotConfig({ logins: ["shared-app"], markers: ["severity"] })
+  );
+  expect(threads.map((thread) => thread.isReviewBot)).toEqual([true, false]);
+  expect(threads.map((thread) => thread.reviewBotPasses)).toEqual([1, 1]);
+});
+
+it("rejects a review bot config that cannot work", () => {
+  expect(() => parseReviewBotConfig({ logins: "review-bot" })).toThrow(
+    "logins must be a list of non-empty strings"
+  );
+  expect(() => parseReviewBotConfig({ bots: [] })).toThrow(
+    "review bot config has unknown keys: bots"
+  );
+  expect(() => parseReviewBotConfig({ passKeyPatterns: ["RUN_ID"] })).toThrow(
+    "passKeyPatterns needs a capture group: RUN_ID"
+  );
 });
 
 describe("review thread pagination", () => {
@@ -340,11 +370,11 @@ describe("review thread pagination", () => {
     expect(reader.calls).toEqual(["reviewThreadPage:null"]);
   });
 
-  it("counts Bugbot review passes across every page", async () => {
-    const bugbot = (id: string, runId: string) => ({
+  it("counts review-bot passes across every page", async () => {
+    const bot = (id: string, runId: string) => ({
       id,
       firstComment: {
-        authorLogin: "bugbot",
+        authorLogin: "review-bot",
         body: `RUN_ID: ${runId}`,
         path: "a.ts",
         line: 1,
@@ -354,12 +384,12 @@ describe("review thread pagination", () => {
     });
     const reader = fakeReader({
       threadPages: [
-        { threads: [bugbot("one", "run-1")], endCursor: "next" },
-        { threads: [bugbot("two", "run-2")], endCursor: null },
+        { threads: [bot("one", "run-1")], endCursor: "next" },
+        { threads: [bot("two", "run-2")], endCursor: null },
       ],
     });
-    const threads = await resolveReviewThreads(reader, context);
-    expect(threads.map((item) => item.bugbotReviewPasses)).toEqual([2, 2]);
+    const threads = await resolveReviewThreads(reader, context, reviewBot);
+    expect(threads.map((item) => item.reviewBotPasses)).toEqual([2, 2]);
   });
 
   it("drops resolved threads from later pages too", async () => {
