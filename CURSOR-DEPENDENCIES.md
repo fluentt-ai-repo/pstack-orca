@@ -2,7 +2,7 @@
 
 Every place where upstream pstack ([`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)) depends on Cursor, and how this fork handles it in Orca. The rules these rows apply live in [`skills/resolve-capability/SKILL.md`](./skills/resolve-capability/SKILL.md). This file is the checklist that proves nothing was missed.
 
-192 rows. Locations refer to the `upstream` branch.
+153 rows. Locations refer to the `upstream` branch.
 
 ## How this list stays complete
 
@@ -27,29 +27,29 @@ Skills this fork rewrote by hand (`scripts/rewritten.json`) have no rows either,
 
 | Handling | Rows |
 | --- | --- |
-| `agent-native` | 75 |
-| `orca` | 60 |
-| `keep` | 30 |
-| `fallback-only` | 19 |
-| `skip` | 8 |
+| `agent-native` | 64 |
+| `orca` | 47 |
+| `keep` | 22 |
+| `fallback-only` | 13 |
+| `skip` | 7 |
 
 | Category | Rows |
 | --- | --- |
 | `frontmatter` | 25 |
-| `implicit` | 21 |
-| `cursor-ui` | 20 |
-| `subagent-field` | 18 |
-| `automation` | 16 |
-| `bugbot` | 13 |
-| `settings-path` | 13 |
-| `transcript` | 13 |
-| `model-slug` | 10 |
-| `skill-path` | 10 |
-| `cloud-agent` | 9 |
-| `url` | 8 |
-| `tool-name` | 7 |
+| `implicit` | 19 |
+| `cursor-ui` | 18 |
+| `automation` | 13 |
+| `bugbot` | 12 |
+| `transcript` | 12 |
+| `subagent-field` | 10 |
+| `settings-path` | 8 |
+| `skill-path` | 7 |
+| `url` | 7 |
+| `cloud-agent` | 6 |
+| `model-slug` | 6 |
 | `team-kit` | 6 |
-| `pr-tool` | 2 |
+| `tool-name` | 2 |
+| `pr-tool` | 1 |
 | `script` | 1 |
 
 ## What Orca cannot replace
@@ -158,7 +158,7 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 
 ## Docs (docs/)
 
-95 rows.
+56 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -218,45 +218,6 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 | CD-879 | `docs/guide/10-recipes-and-pitfalls.md:174` | `` **Treating `auto` as a model slug.** `` | model-slug | Cursor "auto" value. | agent-native | Means omit `--model` on Orca worker or Claude Agent. | todo |
 | CD-880 | `docs/guide/README.md:7` | `Install the plugin and pick your models.` | cursor-ui | Install flow is Cursor plugin. | orca | "Install with `npx skills add`" (see README:17). | todo |
 | CD-881 | `docs/guide/README.md:13` | `Projects and automations that scale past one agent.` | cloud-agent | Cursor Projects and Cursor Automations. | orca | Orca orchestration runs (`orca orchestration run-create`, `coordinator-start`) and `orca automations`. | todo |
-| CD-882 | `docs/harness/claude-code.md:3` | `` `<pstack>` means the folder that holds `skills/` and `docs/`. `` | skill-path | This assumes the whole plugin tree is installed, but `npx skills add` copies only skill dirs, so `docs/`, `agents/`, and `README.md` are absent. | fallback-only | Ship needed docs inside skill `references/`, or resolve `<pstack>` to an Orca-known clone path. Otherwise give GitHub URLs. | todo |
-| CD-883 | `docs/harness/claude-code.md:3` | `pstack skills use Cursor names. In Claude Code, read this file` | implicit | The whole adapter is Claude-Code-only, with no Codex/Grok/Orca mapping. | orca | Add an `skills/orca-harness/SKILL.md` (or columns) for Codex/Grok and Orca: worker-start, automations, and search. | todo |
-| CD-884 | `docs/harness/claude-code.md:7` | `\| Cursor \| Claude Code \|` | tool-name | Not a dependency: this is the header of the Claude Code adapter's Tools mapping table. | keep | Orca sessions use `skills/orca-harness/SKILL.md` instead. This file applies outside Orca in Claude Code. | n/a |
-| CD-885 | `docs/harness/claude-code.md:9` | `` `Task` \| `Agent` `` | tool-name | The Cursor Task tool. | agent-native | Claude `Agent`. Codex has no subagent tool, so use `orca orchestration worker-start`. Grok per CLI, else Orca worker. | todo |
-| CD-886 | `docs/harness/claude-code.md:10` | `` `AskQuestion` \| `AskUserQuestion`. `` | tool-name | The Cursor AskQuestion tool. | orca | Claude `AskUserQuestion`. Codex/Grok plain text. Orca worker uses `orca orchestration ask` and `orca orchestration gate-create` for decision gates. | todo |
-| CD-887 | `docs/harness/claude-code.md:11` | `` Open a todolist \| Use `TodoWrite` `` | tool-name | The Cursor todo list. | agent-native | Claude `TodoWrite`. Codex `update_plan`. Grok: in-reply list. | todo |
-| CD-888 | `docs/harness/claude-code.md:12` | `` `Read` `<pstack>/skills/<name>/SKILL.md` and follow it. `` | skill-path | Cursor attaches skills by name. | agent-native | With `npx skills add`, use Claude `Skill` tool / `~/.claude/skills/<name>/SKILL.md` and Codex `~/.agents/skills/<name>/SKILL.md`. | todo |
-| CD-889 | `docs/harness/claude-code.md:13` | `` `Grep`, `Glob` \| `Bash` with `rg` `` | tool-name | Cursor tool names. | agent-native | `rg` in Codex/Grok shells. | todo |
-| CD-890 | `docs/harness/claude-code.md:17` | `\| Cursor \| Claude Code \|` | subagent-field | Not a dependency: this is the header of the Claude Code adapter's Subagent fields table. | keep | In Orca, orca.md's Workers table replaces it. | n/a |
-| CD-891 | `docs/harness/claude-code.md:19` | `subagent_type: generalPurpose` | subagent-field | Cursor subagent type. | orca | Claude `general-purpose`. Orca `--agent <id>`. | todo |
-| CD-892 | `docs/harness/claude-code.md:20` | `` `poteto-agent`, `comment-sicko` \| `pstack:poteto-agent` `` | subagent-field | Plugin-prefixed agent names. | agent-native | With npx install there is no `pstack:` prefix. Agents must be copied to `~/.claude/agents/` separately. | todo |
-| CD-893 | `docs/harness/claude-code.md:21` | `` `readonly: true` \| `subagent_type: "Explore"` `` | subagent-field | Cursor readonly flag. | fallback-only | Orca has no read-only worker flag. Put "do not edit" in `--spec` and check `git status` in the worker worktree afterward. | todo |
-| CD-894 | `docs/harness/claude-code.md:22` | `` `readonly: false` \| `general-purpose`. It keeps the session's MCP servers. `` | implicit | Cursor subagents share parent MCP. | agent-native | Orca workers of other vendors get only their own CLI's MCP config. | todo |
-| CD-895 | `docs/harness/claude-code.md:23` | `` `environment: "cloud"` \| `isolation: "worktree"`. `` | cloud-agent | Cursor cloud subagent VM. | orca | `orca orchestration worker-start --worktree new-child --base-branch <b>`. For a real remote machine: `--on <saved-environment>` or `orca worktree create --host runtime:<id>` (per-workspace env recipe). | todo |
-| CD-896 | `docs/harness/claude-code.md:24` | `` \| `environment: "local"` \| Omit. \| `` | subagent-field | Not a dependency: this is the Claude Code adapter's mapping for the Task `environment` field. | keep | In Orca the mapping is `--worktree current`, or `new-child` when the worker edits, per orca.md. | n/a |
-| CD-897 | `docs/harness/claude-code.md:25` | `cloud_base_branch: <b>` | cloud-agent | Cursor cloud base. | orca | `--base-branch <b>` on worker-start or worktree create. | todo |
-| CD-898 | `docs/harness/claude-code.md:26` | `` `run_in_background: true` \| Omit. `` | subagent-field | Cursor background flag. | orca | Orca workers are async by default. Wait with `orca orchestration check --wait`. | todo |
-| CD-899 | `docs/harness/claude-code.md:27` | `` `resume` \| Spawn a new agent and paste the earlier result `` | subagent-field | Cursor resume of a subagent. | orca | `orca orchestration send`/`dispatch` to the retained worker (`worker-retain`), or `--retry-of <dispatch_id>`. | todo |
-| CD-900 | `docs/harness/claude-code.md:28` | `` `file_attachments` \| List the paths in the brief. `` | subagent-field | Cursor attachment field. | agent-native | Paths in the `--spec`. | todo |
-| CD-901 | `docs/harness/claude-code.md:32` | `\| Cursor \| Claude Code \|` | model-slug | Not a dependency: this is the header of the Claude Code adapter's Models table. | keep | In Orca, orca.md's Models table maps slugs to `<agent> <model> <effort>` triples. | n/a |
-| CD-902 | `docs/harness/claude-code.md:34` | `` `claude-<family>-<version>-<effort>[-fast]`, such as `claude-opus-5-5-xhigh` `` | model-slug | Cursor model slugs. | orca | `--agent claude --model opus --effort xhigh`. | todo |
-| CD-903 | `docs/harness/claude-code.md:35` | `` A `grok-*`, `gpt-*`, or other non-Claude slug \| Omit `model` `` | model-slug | The adapter drops non-Claude roles. | orca | Orca can honor them: `--agent grok --model <id>` and `--agent codex --model <gpt-id> --effort <lvl>`. | todo |
-| CD-904 | `docs/harness/claude-code.md:37` | `~/.cursor/rules/pstack-models.mdc` | settings-path | Cursor rule path. | agent-native | `~/.agents/skills/select-model/SKILL.md`, read by that path. | done |
-| CD-905 | `docs/harness/claude-code.md:44` | `` Detect. The detected models are the `model` values that the `Agent` tool schema lists `` | settings-path | Model detection is Claude-only. | orca | The generator reads the models and efforts from the `Agent` tool schema, and from Orca's catalog when Orca is here. | done |
-| CD-906 | `docs/harness/claude-code.md:45` | `` Map each default slug with the rows above: `claude-opus-5-5-xhigh` is `opus xhigh`, `` | model-slug | Not a dependency: this is the Claude Code adapter's own slug mapping. | keep | In Orca, `claude-opus-5-5-xhigh` becomes `claude opus xhigh` and `grok-4.7-xhigh-fast` becomes `grok grok-4.7-build-fast xhigh` per orca.md. | n/a |
-| CD-907 | `docs/harness/claude-code.md:50` | `\| Cursor \| Claude Code \|` | settings-path | Not a dependency: this is the header of the Claude Code adapter's Paths table. | keep | In Orca, orca.md's Paths table applies. | n/a |
-| CD-908 | `docs/harness/claude-code.md:52` | `` `.cursor/skills/`, `~/.cursor/skills/` `` | skill-path | Cursor skill dirs. | agent-native | `~/.claude/skills`, `~/.agents/skills` (Codex), `~/.grok/skills`. Project: `.claude/skills`, `.agents/skills`. | todo |
-| CD-909 | `docs/harness/claude-code.md:53` | `` `~/.cursor/plugins/`, `.cursor-plugin/plugin.json` `` | settings-path | Cursor plugin paths. | skip | Not used with npx skills. | todo |
-| CD-910 | `docs/harness/claude-code.md:54` | `` `.cursor/rules/*.mdc`, always-applied rules \| `CLAUDE.md` `` | settings-path | Cursor rules. | agent-native | CLAUDE.md, or AGENTS.md (Codex/Grok). | todo |
-| CD-911 | `docs/harness/claude-code.md:55` | `https://github.com/cursor/plugins/blob/main/pstack/<path>` | url | Links into the Cursor repo. | fallback-only | With npx install the local `<pstack>/docs` does not exist, so link to the fork's GitHub URL. | todo |
-| CD-912 | `docs/harness/claude-code.md:56` | `` Transcripts in `~/.cursor/projects/<slug>/agent-transcripts/` `` | transcript | Cursor transcript path. | orca | `orca search ... --json`. Fallback: `~/.claude/projects/<slug>/*.jsonl`, `~/.codex/sessions/`. | todo |
-| CD-913 | `docs/harness/claude-code.md:58` | `## Cursor-only features` | cursor-ui | Not a dependency: this is a section heading in the Claude Code adapter. | keep | In Orca, orca.md's Cursor-only features table applies. | n/a |
-| CD-914 | `docs/harness/claude-code.md:60` | `Claude Code has no Cursor Automations, Bugbot, Cursor cloud agents` | automation | This blanket-skips Cursor-only features. | orca | Automations map to `orca automations create/edit/run`. Cloud agents map to Orca worktrees/environments. Bugbot and PR tool stay as written. | todo |
-| CD-915 | `docs/harness/claude-code.md:62` | `\| Cursor \| Claude Code \|` | cursor-ui | Not a dependency: this is the header of the Claude Code adapter's Cursor-only features table. | keep | In Orca, orca.md's table applies. | n/a |
-| CD-916 | `docs/harness/claude-code.md:64` | `` `SendToUser` secret requests `` | automation | Cursor secret prompt. | fallback-only | No Orca secret store. Ask the user to set env vars on the host (or the per-workspace env recipe). | todo |
-| CD-917 | `docs/harness/claude-code.md:64` | `` routines, `update_state` routine calls, `api2.cursor.sh/automations` webhooks `` | automation | Cursor routine state and webhooks. | fallback-only | Orca automations have no state API or webhook. Persist state in a file in the `--workspace` worktree (with `--reuse-session`) and trigger via `orca automations run <id>` from a local listener. | todo |
-| CD-918 | `docs/harness/claude-code.md:65` | `Bugbot` | bugbot | Cursor Bugbot. | fallback-only | Triage Bugbot comments with `gh`. Skip start/configure steps. | todo |
-| CD-919 | `docs/harness/claude-code.md:66` | `Cursor cloud agents` | cloud-agent | Cursor cloud dashboard/machine. | orca | `orca worktree create --host runtime:<env-id>` or worker-start `--on <env>`. Status via `orca orchestration worker-show` / `orca worktree ps`. | todo |
-| CD-920 | `docs/harness/claude-code.md:67` | `A built-in PR tool \| Use the forge command` | pr-tool | Cursor PR tool. | agent-native | `gh pr create`. Orca links PRs with `orca worktree create --pr <n>`. | todo |
 
 ## README and plugin manifests
 

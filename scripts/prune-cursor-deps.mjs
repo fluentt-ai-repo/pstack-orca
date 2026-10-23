@@ -8,7 +8,8 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim()
-const { paths } = JSON.parse(readFileSync(join(root, 'scripts/rewritten.json'), 'utf8'))
+const list = JSON.parse(readFileSync(join(root, 'scripts/rewritten.json'), 'utf8'))
+const paths = [...list.paths, ...(list.removed ?? [])]
 const file = join(root, 'CURSOR-DEPENDENCIES.md')
 const lines = readFileSync(file, 'utf8').split('\n')
 
