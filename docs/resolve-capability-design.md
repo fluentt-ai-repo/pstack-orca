@@ -165,7 +165,7 @@ A lint keeps product names out of layer 1: no `Task`, `AskUserQuestion`, `TodoWr
 
 ## Checked and not checked
 
-Seen in a real run on this computer: the `Agent` tool's parameters in Claude Code; Codex waiting with `orca orchestration check --wait --timeout-ms 45000` and continuing in the same exec session; a Claude Code session woken by a finished `run_in_background` command; an idle Orca chat woken by an orchestration message; the Codex session store under Orca's `codex-accounts/<id>/home/sessions/`; the Grok session record.
+Seen in a real run on this computer: the `Agent` tool's parameters in Claude Code; Codex waiting with `orca orchestration check --wait --timeout-ms 45000` and continuing in the same exec session; a Claude Code session woken by a finished `run_in_background` command; an idle Orca chat woken by an orchestration message; the Codex session store under Orca's `codex-accounts/<id>/home/sessions/`; the Grok session record. From the terminal-only preparation: an Orca terminal sets `ORCA_CLI_BIN_DIR`, `ORCA_TAB_ID`, `ORCA_TERMINAL_HANDLE`, and `ORCA_PANE_KEY`, and does not set `ORCA_AGENT_SESSION_ID` or `ORCA_CLI_COMMAND`; Orca starts Claude Code in a terminal with `--dangerously-skip-permissions`; a tab closed in Orca's window can leave its process alive with no handle to close it by.
 
 Not seen, so left as `?`: Codex `spawn_agent` and `update_plan`, Grok `spawn_subagent` (Grok has not run as a parent), `AskUserQuestion` actually called, `isolation: "worktree"` executed, Claude Code's `Monitor`, `ScheduleWakeup`, `CronCreate`, `SendMessage`, and `TaskStop`, and how Codex or Grok wake from a background command.
 

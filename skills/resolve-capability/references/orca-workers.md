@@ -64,6 +64,7 @@ jq -r '.entries[] | .agent as $a | (.live // .discovered).models[]? | "\($a) \(.
 
 ## What a worker cannot do
 
+- Nothing but the brief stops a worker from editing. Orca starts Claude Code in a terminal with `--dangerously-skip-permissions` (seen in the process command line), so a worker is never held at a permission screen and a read-only seat is read-only only if its brief says so and you check `git status`.
 - MCP servers do not cross agents. A worker loads only its own agent's MCP configuration.
 - Remaining usage cannot be read. Orca has no command for it, and `orca status` does not report it. A limit shows up as an error when a start fails.
 - A worker that asks the user something uses `orca orchestration ask`. It never opens a question screen the coordinator cannot answer.
