@@ -9,9 +9,6 @@ import { join } from 'node:path'
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim()
 const { paths } = JSON.parse(readFileSync(join(root, 'scripts/rewritten.json'), 'utf8'))
 
-// Only these read the old `~/.agents/pstack-models.md` once, to carry its choices into `select-model`.
-const MIGRATION = ['skills/setup-pstack/', 'skills/create-model-selection-skill/']
-
 // The generator's references describe Orca's catalog, which lists a `cursor` agent product and full Claude model ids.
 const CATALOG = ['skills/create-model-selection-skill/references/']
 
@@ -25,7 +22,7 @@ const BANNED = [
   [/\bsubagent_type\b|\bgeneralPurpose\b|\brun_in_background\b|\bcloud_base_branch\b|\breadonly: (true|false)/, 'a Cursor Task field'],
   [/\bcreate-skill\b|todolist/, 'a Cursor-only skill or tool name'],
   [/\bgrok-[\d.]+-(max|xhigh|high|medium|low)\b|\bclaude-(opus|sonnet|haiku|fable)-\d/, 'a Cursor model slug', CATALOG],
-  [/pstack-models|role lines?\b/, 'the retired role table', MIGRATION],
+  [/pstack-models|role lines?\b/, 'the retired role table'],
 ]
 
 function* files(dir) {

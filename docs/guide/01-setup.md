@@ -26,7 +26,7 @@ Run:
 
 The budget sets the starting reasoning effort. `large` is `xhigh`, the default. `unlimited` lifts each model to its highest tier, up to `max`. Opus goes to `max`. Grok tops out at `xhigh`, so it stays there. `medium` and `small` lower the reasoning and spend fewer tokens.
 
-Your answers become sentences under `## Preferences` in `~/.agents/skills/select-model/SKILL.md`, each with its reason. To change one, edit the sentence, or run `/setup-pstack` again, which keeps your sentences unless you change them. Without `select-model`, skills run on their defaults and say so once. An older `~/.agents/pstack-models.md` is read once to carry its choices over, and left in place.
+Your answers become sentences under `## Preferences` in `~/.agents/skills/select-model/SKILL.md`, each with its reason. To change one, edit the sentence, or run `/setup-pstack` again, which keeps your sentences unless you change them. Without `select-model`, skills run on their defaults and say so once.
 
 You might be wondering what happens if you use Auto. Say in your answers that you want to follow whatever model the chat runs, and pstack leaves the subagent's `model` field unset, so the subagent inherits your parent chat model. Each skill sets its own panel size in its seat table, and your answer about using several models at once decides how readily `/swarm`, `/arena`, `/interrogate`, and `/reflect` start.
 
