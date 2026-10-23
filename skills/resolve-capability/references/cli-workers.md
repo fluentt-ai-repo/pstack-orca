@@ -1,0 +1,20 @@
+# Workers without Orca
+
+Any session with a shell can start another product's CLI without its interface. Orca is not needed for that. What Orca adds is supervision: a run record that survives a restart, an inbox, a report-file protocol, and worktrees it manages. Without Orca you start the process, wait for it, and read its output yourself.
+
+Run these from the shell tool. Start one in the background (Claude Code: `run_in_background`) when you have other work, write its answer to a file, and wait with `wake-on-event`.
+
+| Product | Command | Notes |
+| --- | --- | --- |
+| Codex | `codex exec --skip-git-repo-check --ephemeral -s read-only -C <dir> -m <model> -c model_reasoning_effort=<level> -o <report file> "<brief>"` | Ran from Claude Code with `gpt-6-luna` at `low` and wrote `OK` to the report file. `-s read-only` was accepted. That it blocks edits was not tested. A seat that writes takes `-s workspace-write`. `--dangerously-bypass-approvals-and-sandbox` only when the user asked. |
+| Claude Code | `claude -p --model <model> --effort <level> --output-format json "<brief>"` | Ran with `haiku`. The answer is in the JSON `result` and the model that ran is a key of `modelUsage`. `--effort` was not run. Read-only: `--permission-mode plan` or an `--allowedTools` list (not tested). |
+| Claude Code, in the background | `claude --bg --model <model> "<brief>"` prints a short id. `claude agents --json --all`, `claude logs <id>`, `claude stop <id>`, `claude rm <id>` | Ran end to end. The workspace must already be trusted, so run it where a Claude Code session has been accepted before. `rm` deletes the session. |
+| Grok | `grok -p "<brief>" -m <model> --reasoning-effort <level> --permission-mode plan --output-format json` | Ran with `grok-4.7-build-fast` at `low`, and `modelUsage` named that model. Unlike an Orca worker, a headless Grok takes the model and the effort. `-w [name]` starts it in its own git worktree (not tested). |
+
+## Rules
+
+- The report is the output file or the JSON answer. There is no `worker_done` message and no inbox, so wait on the process, not on a message.
+- A process you started dies with the session that started it unless you started it with `claude --bg` or detached it yourself. Say so when the work is long.
+- A seat that writes needs `isolate-checkout`. A seat that reads is held by the product's own mode where one was named above, and by the brief. Check `git status` after either.
+- MCP servers do not cross products, and remaining usage cannot be read. A limit shows up as an error.
+- Name the model and effort you asked for and the one the output says ran. They can differ.

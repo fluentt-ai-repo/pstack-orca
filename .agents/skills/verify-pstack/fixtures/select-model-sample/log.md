@@ -1,0 +1,1 @@
+- 2026-10-23: created by /setup-pstack. User approved the preferences. No links made (user chose none). Target ~/.agents/skills/select-model/; jobs not started (not verified here).

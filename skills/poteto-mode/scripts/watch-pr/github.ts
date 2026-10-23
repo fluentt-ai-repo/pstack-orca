@@ -1,6 +1,11 @@
 import { spawn } from "node:child_process";
 import type * as T from "./types.ts";
-import { nonEmpty, parsePrNumber } from "./types.ts";
+import {
+  NO_REVIEW_BOT,
+  nonEmpty,
+  normalizeLogin,
+  parsePrNumber,
+} from "./types.ts";
 export const REVIEW_THREADS_QUERY =
   "\nquery ReviewThreads($owner: String!, $repo: String!, $pr: Int!, $after: String) {\n  repository(owner: $owner, name: $repo) {\n    pullRequest(number: $pr) {\n      reviewThreads(first: 100, after: $after) {\n        pageInfo {\n          hasNextPage\n          endCursor\n        }\n        nodes {\n          id\n          isResolved\n          comments(first: 10) {\n            nodes {\n              body\n              createdAt\n              path\n              line\n              author { login }\n            }\n          }\n        }\n      }\n    }\n  }\n}\n";
 export const PR_COMMIT_STATUS_QUERY =
@@ -326,28 +331,25 @@ function parseComment(value: unknown): T.ReviewComment {
     createdAt: string(object.createdAt, "review comment.createdAt"),
   };
 }
-function isBugbot(comment: T.ReviewComment | null): boolean {
-  if (comment === null) return false;
-  const author = (comment.authorLogin ?? "").toLowerCase();
+function isReviewBot(
+  comment: T.ReviewComment | null,
+  bot: T.ReviewBotConfig
+): boolean {
+  if (comment === null || bot.logins.length === 0) return false;
+  if (!bot.logins.includes(normalizeLogin(comment.authorLogin ?? "")))
+    return false;
   const body = comment.body.toLowerCase();
   return (
-    author.includes("bugbot") ||
-    (author === "cursor" &&
-      [
-        "bugbot",
-        "cursor_automation_id",
-        "agentic security review",
-        "description start",
-        "severity",
-      ].some((token) => body.includes(token)))
+    bot.markers.length === 0 ||
+    bot.markers.some((marker) => body.includes(marker))
   );
 }
-function passKey(comment: T.ReviewComment | null): string | null {
+function passKey(
+  comment: T.ReviewComment | null,
+  bot: T.ReviewBotConfig
+): string | null {
   if (comment === null) return null;
-  for (const pattern of [
-    /RUN_ID:\s*([a-zA-Z0-9_.:-]+)/,
-    /CURSOR_AUTOMATION_ID:\s*([a-zA-Z0-9_.:-]+)/,
-  ]) {
+  for (const pattern of bot.passKeyPatterns) {
     const match = pattern.exec(comment.body);
     if (match?.[1]) return match[1];
   }
@@ -384,13 +386,14 @@ export function parseReviewThreadPage(value: unknown): T.ReviewThreadPage {
   return { threads, endCursor: page.hasNextPage && cursor ? cursor : null };
 }
 export function buildReviewThreads(
-  threads: readonly T.RawReviewThread[]
+  threads: readonly T.RawReviewThread[],
+  bot: T.ReviewBotConfig = NO_REVIEW_BOT
 ): readonly T.ReviewThread[] {
   const keys = new Set<string>();
   let keyless = false;
   for (const thread of threads) {
-    if (!isBugbot(thread.firstComment)) continue;
-    const key = passKey(thread.firstComment);
+    if (!isReviewBot(thread.firstComment, bot)) continue;
+    const key = passKey(thread.firstComment, bot);
     if (key === null) keyless = true;
     else keys.add(key);
   }
@@ -400,8 +403,8 @@ export function buildReviewThreads(
     .map(({ id, firstComment }) => ({
       id,
       firstComment,
-      isBugbot: isBugbot(firstComment),
-      bugbotReviewPasses: passes,
+      isReviewBot: isReviewBot(firstComment, bot),
+      reviewBotPasses: passes,
     }));
 }
 export function parsePullRequest(
@@ -631,7 +634,8 @@ export async function resolveChecks(
 }
 export async function resolveReviewThreads(
   reader: T.GitHubReader,
-  context: T.PrContext
+  context: T.PrContext,
+  bot: T.ReviewBotConfig = NO_REVIEW_BOT
 ): Promise<readonly T.ReviewThread[]> {
   const threads: T.RawReviewThread[] = [];
   let after: string | null = null;
@@ -640,7 +644,7 @@ export async function resolveReviewThreads(
     threads.push(...page.threads);
     after = page.endCursor;
   } while (after !== null);
-  return buildReviewThreads(threads);
+  return buildReviewThreads(threads, bot);
 }
 export async function resolveContext(args: {
   readonly reader: T.GitHubReader;

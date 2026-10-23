@@ -39,9 +39,11 @@ const CODE_NOISE = [/\breadonly\b/g, /\b\w+Cursor\b/g, /\bcursor is exhausted\b/
 const PATHS = ['skills', 'agents', 'automations', 'docs', 'README.md', 'plugin.json', '.cursor-plugin']
 
 // Files this fork deleted (see docs/removed-cursor-features.md). Their upstream lines need no row.
-const REMOVED = [/^automations\//, /^skills\/make-bot-ui\//]
 // Skills rewritten by hand (scripts/rewritten.json). scripts/lint-rewritten.mjs keeps Cursor wording out of them.
-const REWRITTEN = JSON.parse(readFileSync(join(root, 'scripts/rewritten.json'), 'utf8')).paths
+const LIST = JSON.parse(readFileSync(join(root, 'scripts/rewritten.json'), 'utf8'))
+const REWRITTEN = LIST.paths
+// Paths this fork deleted (the `removed` list in scripts/rewritten.json).
+const REMOVED = (LIST.removed ?? []).map((r) => new RegExp('^' + r.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
 
 function upstreamHits() {
   const grepArgs = ['grep', '-n', '-I', '-E', '-e', '.', ref, '--', ...PATHS, ':!*.lock']

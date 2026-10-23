@@ -4,7 +4,7 @@ description: "Find what a change could break somewhere else before it ships, bey
 disable-model-invocation: true
 ---
 
-> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+> Names in backticks, such as `spawn-worker`, are capabilities, not commands. Read `../resolve-capability/SKILL.md` before the first step. It says how each one is done here. Bundled skills live at `../<name>/SKILL.md` and are run by reading that file.
 
 # Blast radius
 
@@ -37,7 +37,7 @@ Step 4 is usually one small script that imports the same library the app ships a
 3. Look where grep stops. Read the source of the library you call, and check its pinned version and any local patch. Work out when things run: microtasks, unmount and teardown, Solid versus React. Follow what a symbol search misses: the JSON an API returns, a DB column, a wire format, another language reading the same bytes, a feature flag, code three hops downstream.
 4. Be honest about each risk. Give it a real chance of happening and a real cost if it does. Keep the risks you confirmed. List the ones you checked and cleared separately. Same rules as `why`. Cite a real `file:line`, a search that finds nothing is still an answer, and never make up a caller or an API.
 5. Prove the one fact. Write a script or test that runs the real code, run it, and paste what happened.
-6. For a big or wide change, run it as an `arena`. Ask more than one model the same question and merge the answers. Different models catch different real bugs.
+6. For a big or wide change, run it as an `arena`, with seats on more than one vendor's model where `spawn-worker` can start one. Ask each the same question and merge the answers. Different models catch different real bugs.
 
 ## What to hand back
 

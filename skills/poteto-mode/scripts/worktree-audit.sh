@@ -48,22 +48,24 @@ esac
 git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1 || { echo "error: base ref not found: $base" >&2; exit 1; }
 
 # PR state by branch, fetched once as [{number, state, head}] with a lowercase
-# state. Origin when its CLI can read this repo's PRs, otherwise gh. Empty when
-# neither can.
+# state. Empty when gh cannot read this repo's PRs.
 prs=$(mktemp)
-if command -v origin >/dev/null 2>&1 \
-	&& raw=$(origin pr list --author "@me" --state all --limit 1000 \
-		--json number,status,headRef 2>/dev/null); then
-	printf '%s' "$raw" | jq '[.[] | {number, state: .status, head: .headRef}]' > "$prs" 2>/dev/null
-elif raw=$(gh pr list --author "@me" --state all --limit 1000 \
+if raw=$(gh pr list --author "@me" --state all --limit 1000 \
 	--json number,state,headRefName 2>/dev/null); then
 	printf '%s' "$raw" | jq '[.[] | {number, state: (.state | ascii_downcase), head: .headRefName}]' > "$prs" 2>/dev/null
 fi
 [ -s "$prs" ] || echo "[]" > "$prs"
 
-# Transcripts dir: ~/.cursor/projects/<slugified-repo-path>/agent-transcripts.
-slug=$(printf '%s' "$main_wt" | sed 's#^/##; s#/#-#g')
-transcripts="$HOME/.cursor/projects/$slug/agent-transcripts"
+# Transcript stores that can show which chat touched a worktree. Each harness
+# keeps its own, and a store that does not exist is skipped. Claude Code keeps
+# one folder per working directory, named for the absolute path with / and .
+# turned into -. Codex and Grok keep one store each.
+claude_projects="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/projects"
+slug_of() { printf -- '-%s' "$(printf '%s' "$1" | sed 's#^/##; s#[/.]#-#g')"; }
+shared_roots=()
+for d in "$(printf '%s/%s' "$claude_projects" "$(slug_of "$main_wt")")" "${CODEX_HOME:-$HOME/.codex}/sessions" "$HOME/.grok/sessions"; do
+	[ -d "$d" ] && shared_roots+=("$d")
+done
 now=$(date +%s)
 
 echo "# base: $base"
@@ -101,10 +103,14 @@ git worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r wt;
 	[ -z "$pr" ] && pr="-"
 
 	# Most recent chat whose transcript operated in this worktree. Match path
-	# followed by "/" or a quote so glint-482 does not match glint-482-r37.
+	# followed by "/" or a quote so glint-482 does not match glint-482-r37. A
+	# Claude Code chat started inside the worktree has its own folder.
 	last="-"; last_ts=0
-	if [ -d "$transcripts" ]; then
-		f=$(rg -l -e "${wt}/" -e "${wt}\"" "$transcripts" 2>/dev/null \
+	roots=(${shared_roots[@]+"${shared_roots[@]}"})
+	own="$claude_projects/$(slug_of "$wt")"
+	[ -d "$own" ] && roots+=("$own")
+	if [ "${#roots[@]}" -gt 0 ]; then
+		f=$(rg -l -e "${wt}/" -e "${wt}\"" "${roots[@]}" 2>/dev/null \
 			| xargs stat -f '%m %N' 2>/dev/null | sort -rn | head -1)
 		if [ -n "$f" ]; then last_ts=$(echo "$f" | awk '{print $1}')
 			last=$(date -r "$last_ts" '+%Y-%m-%d' 2>/dev/null); fi

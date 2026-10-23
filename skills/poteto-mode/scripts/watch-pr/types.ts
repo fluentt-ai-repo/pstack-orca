@@ -65,8 +65,75 @@ export interface ReviewComment {
 export interface ReviewThread {
   readonly id: string;
   readonly firstComment: ReviewComment | null;
-  readonly isBugbot: boolean;
-  readonly bugbotReviewPasses: number;
+  readonly isReviewBot: boolean;
+  readonly reviewBotPasses: number;
+}
+// Review bots differ per repository, so none is built in. A repository without one needs no config.
+export interface ReviewBotConfig {
+  readonly logins: readonly string[];
+  readonly markers: readonly string[];
+  readonly checks: readonly string[];
+  readonly passKeyPatterns: readonly RegExp[];
+}
+export const NO_REVIEW_BOT: ReviewBotConfig = {
+  logins: [],
+  markers: [],
+  checks: [],
+  passKeyPatterns: [],
+};
+const REVIEW_BOT_KEYS = ["logins", "markers", "checks", "passKeyPatterns"];
+function textList(value: unknown, label: string): string[] {
+  if (value === undefined) return [];
+  if (
+    !Array.isArray(value) ||
+    value.some((item) => typeof item !== "string" || item.trim() === "")
+  )
+    throw new Error(`${label} must be a list of non-empty strings`);
+  return value.map((item: string) => item.trim());
+}
+export const normalizeLogin = (login: string): string =>
+  login.toLowerCase().replace(/\[bot\]$/, "");
+export function parseReviewBotConfig(value: unknown): ReviewBotConfig {
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    throw new Error("review bot config must be a JSON object");
+  const object = value as Record<string, unknown>;
+  const extra = Object.keys(object).filter(
+    (key) => !REVIEW_BOT_KEYS.includes(key)
+  );
+  if (extra.length > 0)
+    throw new Error(`review bot config has unknown keys: ${extra.join(", ")}`);
+  const passKeyPatterns = textList(
+    object.passKeyPatterns,
+    "passKeyPatterns"
+  ).map((source) => {
+    let pattern: RegExp;
+    try {
+      pattern = new RegExp(source);
+    } catch {
+      throw new Error(`passKeyPatterns has an invalid pattern: ${source}`);
+    }
+    if ((new RegExp(`${source}|`).exec("")?.length ?? 1) < 2)
+      throw new Error(`passKeyPatterns needs a capture group: ${source}`);
+    return pattern;
+  });
+  return {
+    logins: textList(object.logins, "logins").map(normalizeLogin),
+    markers: textList(object.markers, "markers").map((item) =>
+      item.toLowerCase()
+    ),
+    checks: textList(object.checks, "checks").map((item) => item.toLowerCase()),
+    passKeyPatterns,
+  };
+}
+export function mergeReviewBotConfigs(
+  ...configs: readonly ReviewBotConfig[]
+): ReviewBotConfig {
+  return {
+    logins: configs.flatMap((config) => config.logins),
+    markers: configs.flatMap((config) => config.markers),
+    checks: configs.flatMap((config) => config.checks),
+    passKeyPatterns: configs.flatMap((config) => config.passKeyPatterns),
+  };
 }
 interface CheckDetails {
   readonly name: string;
@@ -154,7 +221,7 @@ export type PrSnapshot =
       readonly facts: PullRequestFacts;
       readonly threads: readonly ReviewThread[];
       readonly ci: CiState;
-      readonly reviewAutomationRunning: boolean;
+      readonly reviewBotRunning: boolean;
     };
 export interface ReadyPr {
   readonly kind: "ready-pr";
@@ -410,4 +477,5 @@ export interface PollingOptions {
   readonly timeout: number;
   readonly maxQueryErrors: number;
   readonly allowDraft: boolean;
+  readonly reviewBot?: ReviewBotConfig;
 }

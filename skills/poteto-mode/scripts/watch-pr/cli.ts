@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   Command,
@@ -20,7 +21,13 @@ import {
 } from "./policy.ts";
 import { renderJson, renderPretty } from "./render.ts";
 import type * as T from "./types.ts";
-import { nonEmpty, parsePrNumber } from "./types.ts";
+import {
+  NO_REVIEW_BOT,
+  mergeReviewBotConfigs,
+  nonEmpty,
+  parsePrNumber,
+  parseReviewBotConfig,
+} from "./types.ts";
 export interface CliOptions {
   readonly owner: string | null;
   readonly repo: string | null;
@@ -56,6 +63,12 @@ function prNumber(value: string): T.PrNumber {
     throw new InvalidArgumentError("must be a positive integer");
   }
 }
+function textList(value: string): string[] {
+  const items = value.split(",").map((part) => part.trim());
+  if (items.some((item) => item === ""))
+    throw new InvalidArgumentError("contains an empty entry");
+  return items;
+}
 function stackPrList(value: string): T.NonEmpty<T.PrNumber> {
   const numbers = value.split(",").map((part) => prNumber(part.trim()));
   if (new Set(numbers).size !== numbers.length)
@@ -78,6 +91,22 @@ interface RawOptions {
   readonly statusOnly: boolean;
   readonly allowDraft: boolean;
   readonly pretty: boolean;
+  readonly reviewBotConfig?: string;
+  readonly reviewBotLogins?: string[];
+  readonly reviewBotChecks?: string[];
+}
+function reviewBot(raw: RawOptions): T.ReviewBotConfig {
+  const fromFile =
+    raw.reviewBotConfig === undefined
+      ? NO_REVIEW_BOT
+      : parseReviewBotConfig(
+          JSON.parse(readFileSync(raw.reviewBotConfig, "utf8"))
+        );
+  const fromFlags = parseReviewBotConfig({
+    logins: raw.reviewBotLogins ?? [],
+    checks: raw.reviewBotChecks ?? [],
+  });
+  return mergeReviewBotConfigs(fromFile, fromFlags);
 }
 export function parseArgs(
   argv: readonly string[],
@@ -85,7 +114,7 @@ export function parseArgs(
 ): CliOptions {
   const program = new Command("watch-pr")
     .description(
-      "Watch one pull request, a connected stack, or an immutable queued stack.\nJSON (NDJSON while polling) is the default; --pretty renders human text."
+      "Watch one pull request, a connected stack, or an immutable queued stack.\nJSON (NDJSON while polling) is the default; --pretty renders human text.\nNo review bot is assumed. Name a repository's bots with the --review-bot options."
     )
     .configureOutput({ writeOut: io.stdout, writeErr: io.stderr })
     .exitOverride()
@@ -128,11 +157,34 @@ export function parseArgs(
     )
     .option("--status-only", "print one status table and exit 0", false)
     .option("--allow-draft", "do not treat a draft as a merge gate", false)
-    .option("--pretty", "render human text instead of JSON", false);
+    .option("--pretty", "render human text instead of JSON", false)
+    .option(
+      "--review-bot-config <file>",
+      'JSON file: {"logins": [...], "markers": [...], "checks": [...], "passKeyPatterns": [...]}'
+    )
+    .option(
+      "--review-bot-logins <login,...>",
+      "authors whose review threads come from a review bot",
+      textList
+    )
+    .option(
+      "--review-bot-checks <name,...>",
+      "check-name substrings that mean a review bot is still running",
+      textList
+    );
   program.parse(argv, { from: "user" });
   const raw = program.opts<RawOptions>();
   if (raw.stackPrs !== undefined && !raw.queuedStack)
     program.error("error: --stack-prs requires --queued-stack");
+  const bot = ((): T.ReviewBotConfig => {
+    try {
+      return reviewBot(raw);
+    } catch (error) {
+      return program.error(
+        `error: review bot settings: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  })();
   return {
     owner: raw.owner ?? null,
     repo: raw.repo ?? null,
@@ -147,6 +199,7 @@ export function parseArgs(
       timeout: raw.timeout,
       maxQueryErrors: raw.maxQueryErrors,
       allowDraft: raw.allowDraft,
+      reviewBot: bot,
     },
   };
 }

@@ -22,7 +22,7 @@ function ciCell(row: T.PrSnapshot): string {
 function reviewCell(row: T.PrSnapshot): string {
   if (row.kind !== "open") return "\u2014";
   const open = row.threads.length;
-  return row.reviewAutomationRunning
+  return row.reviewBotRunning
     ? open
       ? `🤖 running, ${open} open`
       : "🤖 running"
@@ -59,8 +59,8 @@ function threadLine(thread: T.ReviewThread): string {
     comment?.path ?? "None",
     comment?.line ?? "None",
     comment?.authorLogin ?? "None",
-    `isBugBot=${thread.isBugbot}`,
-    `bugbotReviewPasses=${thread.bugbotReviewPasses}`,
+    `isReviewBot=${thread.isReviewBot}`,
+    `reviewBotPasses=${thread.reviewBotPasses}`,
     (comment?.body ?? "").split(/\r?\n/, 1)[0]?.slice(0, 180) ?? "",
   ].join(" ");
 }

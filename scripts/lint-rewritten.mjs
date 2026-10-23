@@ -9,14 +9,40 @@ import { join } from 'node:path'
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim()
 const { paths } = JSON.parse(readFileSync(join(root, 'scripts/rewritten.json'), 'utf8'))
 
+// The generator's references describe Orca's catalog, which lists a `cursor` agent product and full Claude model ids.
+const CATALOG = ['skills/create-model-selection-skill/references/']
+
+// The adapter names Claude Code's own `Agent` tool fields (`subagent_type`, `run_in_background`) and Orca's `cursor` agent id.
+const ADAPTER = ['skills/resolve-capability/']
+const ADAPTER_REFERENCES = ['skills/resolve-capability/references/']
+
 const BANNED = [
-  [/cursor/i, 'the word Cursor'],
+  [/\bcursor/i, 'the word Cursor', [...CATALOG, ...ADAPTER_REFERENCES]],
   [/\.mdc\b/, '.mdc rule file'],
   [/\bAskQuestion\b/, 'AskQuestion'],
   [/`Task`|\bTask (tool|subagent|call)\b/, 'the Task tool'],
   [/agent-transcripts|cursor-team-kit|[Bb]ugbot/, 'a Cursor-only service'],
   [/environment: "cloud"|\bcloud agent/i, 'Cursor cloud agents'],
-  [/\bgrok-[\d.]+-(max|xhigh|high|medium|low)\b|\bclaude-(opus|sonnet|haiku|fable)-\d/, 'a Cursor model slug'],
+  [/\bsubagent_type\b|\bgeneralPurpose\b|\brun_in_background\b|\bcloud_base_branch\b|\breadonly: (true|false)/, 'a Cursor Task field', ADAPTER],
+  [/\bcreate-skill\b|todolist/, 'a Cursor-only skill or tool name'],
+  [/\bgrok-[\d.]+-(max|xhigh|high|medium|low)\b|\bclaude-(opus|sonnet|haiku|fable)-\d/, 'a Cursor model slug', CATALOG],
+  [/pstack-models|role lines?\b/, 'the retired role table'],
+]
+
+// The seven cross-model skills, the playbooks, and the poteto-mode references name capabilities (skills/resolve-capability) and no harness, tool, or command.
+// The adapter, the generator, poteto-mode, and setup-pstack are outside this list because they have to name products.
+const CAPABILITY_ONLY = [
+  'skills/arena/', 'skills/swarm/', 'skills/interrogate/', 'skills/reflect/', 'skills/architect/', 'skills/how/', 'skills/why/',
+  'skills/poteto-mode/playbooks/', 'skills/poteto-mode/references/',
+]
+
+const NO_PRODUCT = [
+  [/\b(spawn_agent|spawn_subagent|AskUserQuestion|TodoWrite|update_plan|run_in_background|subagent_type|skill-creator|SendMessage|TaskStop|CronCreate|ScheduleWakeup|worker-(start|show|read|stop|release))\b/, 'a harness tool or Orca command'],
+  [/\borca\b/i, 'Orca'],
+  [/\bClaude\b|\bCodex\b|\bGrok\b/i, 'an agent product'],
+  [/`(Agent|Explore|Plan)`|\bAgent tool\b/, 'a harness tool'],
+  [/`gh( [^`]*)?`|\bgh (pr|api|issue|run)\b/, 'a gh command'],
+  [/\.(claude|grok)\/|\bCLAUDE\.md\b|\bAGENTS\.md\b|\$CLAUDE_CONFIG_DIR|\$CODEX_HOME|~\/\.(claude|codex|grok)\b/, 'a product path'],
 ]
 
 function* files(dir) {
@@ -39,7 +65,9 @@ for (const rel of paths) {
       .replace(TRANSITION, (block) => block.replace(/[^\n]/g, ''))
       .split('\n')
       .forEach((text, i) => {
-        for (const [re, why] of BANNED) if (re.test(text)) hits.push(`${file.slice(root.length + 1)}:${i + 1}  ${why}: ${text.trim().slice(0, 100)}`)
+        const capabilityOnly = CAPABILITY_ONLY.some((x) => file.startsWith(join(root, x)))
+        if (capabilityOnly) for (const [re, why] of NO_PRODUCT) if (re.test(text)) hits.push(`${file.slice(root.length + 1)}:${i + 1}  ${why} (name a capability instead): ${text.trim().slice(0, 100)}`)
+        for (const [re, why, exempt = []] of BANNED) if (re.test(text) && !exempt.some((x) => file.startsWith(join(root, x)))) hits.push(`${file.slice(root.length + 1)}:${i + 1}  ${why}: ${text.trim().slice(0, 100)}`)
       })
   }
 }

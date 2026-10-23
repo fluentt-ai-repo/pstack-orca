@@ -20,7 +20,7 @@ ${rule}
 ### PR mechanics
 ### Verdict and merge
 ### Boot recipe
-\`git show origin/main:\` /loop 1h status message
+\`resolve-capability/SKILL.md\` \`run-on-schedule\` status message
 
 ## PR 1
 **Depends on.** None.
@@ -32,7 +32,7 @@ ${rule}
 - [ ] Do the thing.
 **Verify, unit.** ${rule}
 - [ ] Check the thing.
-**Verify, live.** ${rule} Ten lanes on \`example-model\` at the PR head
+**Verify, live.** ${rule} Ten lanes at the PR head on \`example-model\`
 ${Array.from({ length: 10 }, (_, i) => `- [ ] Lane ${i + 1}. Save \`lane-${i + 1}.png\`. Pass when evidence exists.`).join("\n")}
 **Verify, perf.** ${rule}
 - [ ] Metric. Recorded.

@@ -7,7 +7,6 @@ import {
   openStore,
   parseVerdict,
   type Counts,
-  type Forge,
   type Frontier,
   type InboxPointer,
   type OpenGate,
@@ -82,7 +81,6 @@ interface GateResolveOptions {
 
 interface FrontierSetOptions {
   readonly repo?: string;
-  readonly forge: Forge;
   readonly prs?: readonly number[];
 }
 
@@ -255,7 +253,13 @@ function requireSubcommand(program: Command): never {
 
 function createProgram(io: Io): Command {
   const program = new CommanderCommand("orch")
-    .description("Plain-file orchestrate bookkeeping")
+    .description(
+      "Plain-file orchestrate bookkeeping. It works the same from any agent or terminal."
+    )
+    .addHelpText(
+      "after",
+      "\nUnder Orca, units, the inbox, and gates can live in Orca's run state instead (the coordinate-workers capability in resolve-capability). The verification ledger stays here either way."
+    )
     .usage("[--store <dir>] [--json] [--force] <command>")
     .configureOutput({ writeOut: io.stdout, writeErr: io.stderr })
     .exitOverride()
@@ -487,11 +491,6 @@ function createProgram(io: Io): Command {
         "repository directory (or ORCH_REPO)"
       ).env("ORCH_REPO")
     )
-    .addOption(
-      new Option("--forge <forge>", "pull request forge")
-        .choices(["gh", "origin"])
-        .default("gh")
-    )
     .option(
       "--prs <n,...>",
       "optional expected pull request order pin",
@@ -504,7 +503,6 @@ function createProgram(io: Io): Command {
         (store) =>
           store.frontier.set({
             repo: frontierRepo(options),
-            forge: options.forge,
             prs: options.prs,
           }),
         frontierLine
