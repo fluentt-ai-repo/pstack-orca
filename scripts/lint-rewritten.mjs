@@ -29,9 +29,12 @@ const BANNED = [
   [/pstack-models|role lines?\b/, 'the retired role table'],
 ]
 
-// The seven cross-model skills name capabilities (skills/resolve-capability) and no harness, tool, or command.
+// The seven cross-model skills, the playbooks, and the poteto-mode references name capabilities (skills/resolve-capability) and no harness, tool, or command.
 // The adapter, the generator, poteto-mode, and setup-pstack are outside this list because they have to name products.
-const CAPABILITY_ONLY = ['skills/arena/', 'skills/swarm/', 'skills/interrogate/', 'skills/reflect/', 'skills/architect/', 'skills/how/', 'skills/why/']
+const CAPABILITY_ONLY = [
+  'skills/arena/', 'skills/swarm/', 'skills/interrogate/', 'skills/reflect/', 'skills/architect/', 'skills/how/', 'skills/why/',
+  'skills/poteto-mode/playbooks/', 'skills/poteto-mode/references/',
+]
 
 const NO_PRODUCT = [
   [/\b(spawn_agent|spawn_subagent|AskUserQuestion|TodoWrite|update_plan|run_in_background|subagent_type|skill-creator|SendMessage|TaskStop|CronCreate|ScheduleWakeup|worker-(start|show|read|stop|release))\b/, 'a harness tool or Orca command'],

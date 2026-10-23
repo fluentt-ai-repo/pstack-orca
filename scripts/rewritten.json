@@ -35,6 +35,10 @@
     "skills/statechart/",
     "skills/teach/",
     "skills/technical-writing/",
-    "skills/typescript-best-practices/"
+    "skills/typescript-best-practices/",
+    "skills/poteto-mode/playbooks/",
+    "skills/poteto-mode/references/review-bot-triage.md",
+    "skills/poteto-mode/scripts/check-plan.mjs",
+    "skills/poteto-mode/scripts/worktree-audit.sh"
   ]
 }
