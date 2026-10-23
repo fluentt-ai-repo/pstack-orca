@@ -55,6 +55,8 @@ The ways to use models, stated only when this machine has them:
 - An Orca worker on another agent: when that agent's model suits the work better.
 - Several models together (swarm, arena, interrogate, reflect): for judgment that could split, changes that are costly to undo, and large independent batches.
 
+Nothing registers `select-model` as a skill, and nothing needs to. Every reader opens it by its absolute path, which works in any agent that can read a file. On this computer `~/.claude/skills/` and `~/.grok/skills/` hold symlinks into `~/.agents/skills/` that the `skills` CLI made, and Codex reads `~/.agents/skills/` itself. Neither `/setup-pstack` nor the generator adds a link, so Claude Code and Grok do not list `select-model` as a skill.
+
 Before it spawns, the model rechecks only what it is about to use: the CLI still exists, `ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set. Remaining usage is not readable on this machine (Orca has no command for it, and only Codex leaves a stale `rate_limits` record in its session logs). So usage is handled when it fails: a limit error moves the seat to another agent for this run only, and the reply says so. A transient state is never written into the skill.
 
 ## When a run does not match the skill
@@ -67,10 +69,9 @@ Before it spawns, the model rechecks only what it is about to use: the CLI still
 
 The skill is edited only inside its own directory, and only after the user agrees.
 
-## Fallback and migration
+## Fallback
 
 - No `select-model` yet: `poteto-mode` keeps today's defaults (`grok grok-4.7-build-fast xhigh` for code, `claude opus xhigh` for prose and judgment), says so in one line, and points at `/setup-pstack`.
-- `/setup-pstack` reads an existing `~/.agents/pstack-models.md` once and turns its lines into preference sentences. The file is then unused. It is not deleted.
 
 ## What changes in the repo
 
@@ -109,7 +110,7 @@ Order, with each step waiting for the one before:
 1. Design review (done) and this document.
 2. The generator, `setup-pstack`, and the `poteto-mode` Subagents section. The design session announces when the `select-model` contract and that section are final.
 3. `select-model` generated on this computer by the generator.
-4. The seven skills, the four docs, and the lint (it forbids `pstack-models` outside `setup-pstack` and the generator, which reads the old file once to migrate). The Unit 3 session starts here and builds on its unpushed commits `63300d9` and `d5be86d`.
+4. The seven skills, the four docs, and the lint (it forbids `pstack-models` in every rewritten skill, because the role-line file was never released and nothing migrates from it). The Unit 3 session starts here and builds on its unpushed commits `63300d9` and `d5be86d`.
 5. Real runs of the changed skills, as in Unit 3, on the environments listed above.
 
 ## Open points

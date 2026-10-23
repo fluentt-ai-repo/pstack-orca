@@ -11,11 +11,7 @@ pstack does not ship a model table. It generates `select-model`, a skill under `
 
 ### 1. Check what exists
 
-- `~/.agents/skills/select-model/SKILL.md` exists: this is an update.
-- `~/.agents/pstack-models.md` exists and `select-model` does not: this is a migration. The generator reads the old file once and turns its lines into preferences.
-- Neither exists: a new setup.
-
-Tell the user which of the three applies in one sentence.
+If `~/.agents/skills/select-model/SKILL.md` exists, this is an update. Otherwise it is a new setup. Tell the user which in one sentence.
 
 ### 2. Generate or update `select-model`
 
