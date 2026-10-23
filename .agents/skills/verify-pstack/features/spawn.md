@@ -35,6 +35,7 @@ Preconditions:
 ## Gotchas
 
 - S-pair-154658 (2026-10-23, `sonnet low`, terminal, fake home) passed `spawn-adapter`, `spawn-other-orca`, and `spawn-same`, and failed `spawn-readonly`: the judgment seat was a `general-purpose` subagent, not `Explore`, though its brief forbade edits. It was not rerun at the default effort. Its Grok worker spec ended with the adapter's report sentence word for word.
+- S-ro-155230 rechecked `spawn-readonly` after the adapter said general-purpose types are not read-only (3ed7e61): same model, effort, surface, and fake home, one judgment seat with its model fixed to `sonnet low` for cost. It chose `Explore` and passed. Its reply said the subagent ran in the background, which the call does not show.
 - Earlier passes, with the retired role table and the prompt wording "how explorer 역할": S1b and S3 (Claude chat), S2 (no Orca), S4 (Codex). The prompts above replace the role name with the kind of work and have not run yet in this wording.
 - The prompts ask the agent to report how it started the helper and which model ran. So the report itself proves nothing. The proof is that the report matches Orca's worker record and the worker's own session record.
 - Orca refuses `--model` and `--effort` for Grok with `Agent grok does not support launch-time model selection`. A run that hits this and then retries without the flags passes only if the skill no longer tells it to pass them.
