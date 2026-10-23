@@ -2,7 +2,7 @@
 
 Every place where upstream pstack ([`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)) depends on Cursor, and how this fork handles it in Orca. The rules these rows apply live in [`skills/resolve-capability/SKILL.md`](./skills/resolve-capability/SKILL.md). This file is the checklist that proves nothing was missed.
 
-134 rows. Locations refer to the `upstream` branch.
+78 rows. Locations refer to the `upstream` branch.
 
 ## How this list stays complete
 
@@ -27,27 +27,26 @@ Skills this fork rewrote by hand (`scripts/rewritten.json`) have no rows either,
 
 | Handling | Rows |
 | --- | --- |
-| `agent-native` | 52 |
-| `orca` | 45 |
-| `keep` | 20 |
-| `fallback-only` | 13 |
-| `skip` | 4 |
+| `agent-native` | 39 |
+| `keep` | 18 |
+| `orca` | 14 |
+| `fallback-only` | 4 |
+| `skip` | 3 |
 
 | Category | Rows |
 | --- | --- |
 | `frontmatter` | 23 |
-| `implicit` | 19 |
-| `cursor-ui` | 16 |
-| `automation` | 13 |
 | `bugbot` | 12 |
-| `transcript` | 12 |
-| `cloud-agent` | 6 |
-| `model-slug` | 6 |
-| `skill-path` | 6 |
-| `team-kit` | 6 |
-| `settings-path` | 5 |
-| `subagent-field` | 5 |
-| `url` | 3 |
+| `implicit` | 9 |
+| `automation` | 5 |
+| `cursor-ui` | 5 |
+| `transcript` | 5 |
+| `subagent-field` | 4 |
+| `settings-path` | 3 |
+| `skill-path` | 3 |
+| `team-kit` | 3 |
+| `model-slug` | 2 |
+| `url` | 2 |
 | `pr-tool` | 1 |
 | `script` | 1 |
 
@@ -147,66 +146,10 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 
 ## Docs (docs/)
 
-56 rows.
+0 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CD-826 | `docs/guide/01-setup.md:7` | `In a Cursor chat, run:` | cursor-ui | Cursor install. | orca | `npx skills add <repo> -g -a claude-code -a codex -a grok`. Check with `orca skills installed`. | todo |
-| CD-827 | `docs/guide/01-setup.md:13` | `Cursor confirms the plugin is installed.` | cursor-ui | It describes Cursor's `/add-plugin` confirmation UI. | agent-native | Claude Code: `/plugin install` or a skills dir. Codex: `~/.agents/skills/`. Grok: `~/.grok/skills/`. Confirm by listing the installed skill folder. | todo |
-| CD-828 | `docs/guide/01-setup.md:15` | `` run `/plugin marketplace add cursor/plugins`, then `/plugin install pstack@cursor-plugins`. Claude `` | url | Claude install via the Cursor marketplace, with prefix. | agent-native | npx install, unprefixed `/setup-pstack`. Codex `$setup-pstack`. | todo |
-| CD-829 | `docs/guide/01-setup.md:25` | `` It writes `~/.cursor/rules/pstack-models.mdc` `` | settings-path | Cursor rule path. | agent-native | Setup surveys the computer and writes the `select-model` skill. The guide says so. | done |
-| CD-830 | `docs/guide/01-setup.md:31` | `inherits your parent chat model` | model-slug | Cursor "Auto" model picker. | agent-native | `inherit-parent` means omit `--model` (Orca worker uses the agent's configured default). | todo |
-| CD-831 | `docs/guide/01-setup.md:37` | `` it writes `.cursor/skills/verify-<app>/` `` | skill-path | Cursor project skill dir. | agent-native | `.claude/skills/verify-<app>/` plus `.agents/skills/` symlink. | todo |
-| CD-832 | `docs/guide/01-setup.md:43` | `After setup, start a new chat. The model rule applies to new sessions.` | cursor-ui | This assumes Cursor's chat UI rule loading. | orca | The next task reads `select-model` on its own. No new chat is needed. | done |
-| CD-833 | `docs/guide/01-setup.md:64` | `makes it a [Custom Mode](https://cursor.com/docs/skills#using-a-skill-as-a-custom-mode), which stays in context on` | cursor-ui | Cursor Custom Mode, Agents Window, and CLI. | fallback-only | No Orca equivalent. Use a CLAUDE.md/AGENTS.md line "use poteto-mode for every task", or re-type per message. | todo |
-| CD-834 | `docs/guide/02-poteto-mode.md:93` | `` a Custom Mode keeps `/poteto-mode` in context on every turn `` | cursor-ui | Cursor Custom Mode. | fallback-only | Same as 01-setup:64. | todo |
-| CD-835 | `docs/guide/02-poteto-mode.md:107` | `` Type `/in-cloud` before the task `` | cursor-ui | Cursor `/in-cloud` built-in. | orca | Replace with "ask the coordinator to start Orca workers on `<environment>`" (`orca environment list`). | todo |
-| CD-836 | `docs/guide/02-poteto-mode.md:107` | `[cloud subagent](https://cursor.com/docs/subagents#cloud-subagents). Each one gets its own VM` | cloud-agent | Cursor cloud subagent VM. | orca | `orca orchestration worker-start --on <saved-environment> --worktree new-top-level` or `orca worktree create --host runtime:<id>`. Without an env: local `--worktree new-child`. | todo |
-| CD-837 | `docs/guide/02-poteto-mode.md:112` | `branch off <base> in a fresh worktree` | implicit | Worktree creation via Cursor agent. | orca | `orca worktree create --name <n> --base-branch <base> --agent <a> --prompt "..."`. Fallback: `git worktree add`. | todo |
-| CD-838 | `docs/guide/02-poteto-mode.md:123` | `which chats still touch it` | transcript | Worktree cleanup reads Cursor chats per worktree. | orca | `orca worktree ps` / `orca worktree list --json` show live terminals and agents per worktree. Remove via `orca worktree rm`. | todo |
-| CD-839 | `docs/guide/03-understand.md:33` | `queries whatever evidence categories your MCPs expose` | implicit | Parallel subagents share parent MCPs (Cursor). | agent-native | Claude subagents inherit MCP. Orca cross-vendor workers do not, so keep MCP fan-out within the coordinator's own agent. | todo |
-| CD-840 | `docs/guide/03-understand.md:59` | `mines your own recent chats plus the shared record` | transcript | Cursor transcripts. | orca | `orca search "<topic>" --json`. | todo |
-| CD-841 | `docs/guide/03-understand.md:65` | `If you want to resume one specific chat, that's the Session` | implicit | Not a dependency: "resume" refers to the session-pickup playbook, which reads on-disk trails. | keep | No action. To find a past chat in Orca, use `orca search "<query>" --path <workspace> --json`. | n/a |
-| CD-842 | `docs/guide/03-understand.md:72` | `take over this branch. read the decision log` | implicit | Session pickup may read the prior Cursor chat. | orca | `orca orchestration worker-read --source transcript` / `orca search`. Fallback: decision log and git only. | todo |
-| CD-843 | `docs/guide/03-understand.md:75` | `It reconstructs the branch state and decisions, names the resume point,` | implicit | Not a dependency: "resume point" is prose. | keep | No action. | n/a |
-| CD-844 | `docs/guide/04-design.md:31` | `each writing to its own worktree` | model-slug | Arena candidates and judge on other model families via Cursor. | orca | Per-candidate `orca orchestration worker-start --worktree new-child --agent codex\|grok\|claude`. Fallback: same family. | todo |
-| CD-845 | `docs/guide/04-design.md:47` | `The panel comes from your` | settings-path | Panel lists use Cursor slugs from the `.mdc` rule. | orca | Panel entries become `<agent> <model> <effort>` triples for worker-start. | todo |
-| CD-846 | `docs/guide/04-design.md:59` | `fans N workers across independent slices` | implicit | Swarm uses Cursor Task fan-out. | orca | One `orca orchestration task-create` and `worker-start` per slice, then `orca orchestration check --wait`. | todo |
-| CD-847 | `docs/guide/04-design.md:69` | `sends the same diff, intent, and rubric to reviewers on different model families` | model-slug | Cross-family review. | orca | worker-start with `--agent codex`, `--agent grok`, and `--agent claude`. | todo |
-| CD-848 | `docs/guide/05-build-and-clean.md:59` | `` `/deslop` ships in the `cursor-team-kit` plugin `` | team-kit | Cursor team kit. | fallback-only | Plain-words cleanup, as the text already says. | todo |
-| CD-849 | `docs/guide/05-build-and-clean.md:77` | `spawns [Comment Sicko](../../agents/comment-sicko.md)` | subagent-field | Named Cursor subagent. | agent-native | Claude `~/.claude/agents/comment-sicko.md`. Others: Orca worker with agent file as spec. Note `agents/` is not installed by npx. | todo |
-| CD-850 | `docs/guide/05-build-and-clean.md:79` | `` `/deslop` cleans slop out of the code, `/unslop` cleans it out `` | team-kit | `/deslop` is a cursor-team-kit skill, not shipped by pstack. | fallback-only | Reread the diff before commit and cut slop with pstack's `unslop` and `no-comments`. | todo |
-| CD-851 | `docs/guide/05-build-and-clean.md:81` | `` If the diff feels padded, say `deslop it` before you commit, `` | team-kit | "deslop it" invokes the cursor-team-kit `deslop` skill. | fallback-only | Reread the diff and apply `unslop` and `no-comments` before committing. | todo |
-| CD-852 | `docs/guide/06-verify-and-ship.md:61` | `` It writes `.cursor/skills/verify-<app>/` `` | skill-path | Cursor project skill dir. | agent-native | `.claude/skills/` and `.agents/skills/`. | todo |
-| CD-853 | `docs/guide/06-verify-and-ship.md:88` | `ideally from a scheduled automation so nobody has to remember` | automation | Cursor Automations schedule. | orca | `orca automations create --name verify-maint --trigger daily --time 03:00 --prompt "/maintain-verification-skill" --provider claude --repo path:<repo>`. | todo |
-| CD-854 | `docs/guide/06-verify-and-ship.md:134` | `with a bundled watcher on GitHub or the Origin CLI` | implicit | The Origin CLI is a Cursor-internal forge, and the watcher may assume Cursor wakeups. | fallback-only | GitHub path via `gh pr checks --watch`. Drop the Origin mention. | todo |
-| CD-855 | `docs/guide/06-verify-and-ship.md:150` | `One fresh agent per PR proves the behavior live` | implicit | Cursor subagent per PR. | orca | `orca worktree create --pr <n> --agent <a>` or worker-start per PR. | todo |
-| CD-856 | `docs/guide/07-overnight.md:3` | `an isolated worktree or cloud agent` | cloud-agent | Cursor cloud agent. | orca | Orca worktree or `--host runtime:<id>` environment. | todo |
-| CD-857 | `docs/guide/07-overnight.md:26` | `/loop until done.` | automation | Cursor `/loop`. | agent-native | Claude `/loop`. Codex/Grok: none. Orca: `orca automations create --workspace active --reuse-session --trigger hourly --prompt "continue until <predicate>"`. | todo |
-| CD-858 | `docs/guide/07-overnight.md:35` | `` `/loop` is Cursor's built-in wake mechanism `` | automation | Cursor built-in wake loop. | orca | Same as above, or a coordinator loop with `orca orchestration check --wait`. | todo |
-| CD-859 | `docs/guide/07-overnight.md:40` | `you're about to go offline or restart Cursor` | cursor-ui | Cursor app restart. | orca | "restart Orca / the agent". Orca terminals persist via terminal-daemon. | todo |
-| CD-860 | `docs/guide/07-overnight.md:68` | `spawns a reviewer on a different model family to read the trail and the transcript` | transcript | Cross-family reviewer reading the Cursor transcript. | orca | worker-start `--agent codex` with the transcript from `orca orchestration worker-read --source transcript` or a session file path. | todo |
-| CD-861 | `docs/guide/07-overnight.md:70` | `in the chat that ran the work` | transcript | Current Cursor chat. | agent-native | Run in the same Orca agent tab. Reads the local session file. | todo |
-| CD-862 | `docs/guide/07-overnight.md:76` | `A swarm of fresh verifiers checks the owner's code-ready head` | implicit | Cursor subagent fan-out. | orca | worker-start per verifier on `--worktree new-child --base-branch <head>`. | todo |
-| CD-863 | `docs/guide/07-overnight.md:88` | `fleets of subagents under one standing coordinator chat` | cloud-agent | Cursor Project coordinator. | orca | `orca orchestration coordinator-start`, `run-create`, `task-create --deps`, `worker-start`, and `inbox`. | todo |
-| CD-864 | `docs/guide/07-overnight.md:96` | `A [Cursor Project](https://cursor.com/blog/projects) gives one coordinator agent` | cloud-agent | Cursor Projects plus cloud subagents (laptop can close). | orca | Orca orchestration run. Laptop-closed needs a paired server: `orca serve` / `--on <environment>`. Otherwise fallback-only: the local machine must stay awake. | todo |
-| CD-865 | `docs/guide/07-overnight.md:100` | `Give each body of work its own Project` | cursor-ui | Cursor Project UI and chat drag. | fallback-only | One Orca run per body of work (`orca orchestration run-create`). No chat drag, so pass context via `--spec` or `orca search` results. | todo |
-| CD-866 | `docs/guide/07-overnight.md:108` | `use /recall for context from past chats` | transcript | Cursor chats. | orca | `orca search`. | todo |
-| CD-867 | `docs/guide/07-overnight.md:113` | `A scheduled or event-driven automation removes that step. Software maintenance` | automation | Cursor event-driven automations (Slack trigger). | orca | Orca supports schedule only. Emulate events with a cron trigger and `--precheck` that exits 0 only when new input exists. | todo |
-| CD-868 | `docs/guide/07-overnight.md:118` | `pstack ships this as a dormant [automation pack](../../automations/benny/README.md) for Slack issue reports.` | automation | The Benny pack targets Cursor Automations. | orca | Set it up as two `orca automations create` jobs with `--precheck` polling the Slack channel. | todo |
-| CD-869 | `docs/guide/07-overnight.md:120` | `` Give `/loop` a predicate that can pass or fail. `` | automation | Cursor `/loop`. | orca | Predicate becomes an Orca `--precheck` command or the coordinator's check. | todo |
-| CD-870 | `docs/guide/09-make-it-yours.md:13` | `` drafts `.cursor/skills/<your-name>-mode/SKILL.md` through Cursor's built-in `create-skill` flow `` | skill-path | Cursor skill path plus built-in create-skill. | agent-native | `~/.claude/skills/<name>-mode/` or `.agents/skills/`. Claude `skill-creator` or Codex `$skill-creator`. | todo |
-| CD-871 | `docs/guide/09-make-it-yours.md:13` | `mines your recent transcripts in the active workspace` | transcript | Cursor transcripts. | orca | `orca search ... --json`. | todo |
-| CD-872 | `docs/guide/09-make-it-yours.md:31` | `sends the transcript to three parallel reviewers` | transcript | Cursor transcript plus Task fan-out. | orca | Transcript via session file or `worker-read`. Reviewers via worker-start. | todo |
-| CD-873 | `docs/guide/09-make-it-yours.md:60` | `` routes through Cursor's built-in `create-skill` `` | cursor-ui | Cursor built-in. | agent-native | Claude `skill-creator` and Codex `$skill-creator`. Otherwise write SKILL.md directly. | todo |
-| CD-874 | `docs/guide/09-make-it-yours.md:96` | `bot over a webhook routine. For example, you could swipe` | automation | Cursor Automations webhook routine. | fallback-only | No Orca webhook. A local server calls `orca automations run <id>` (or `orca agent launch --prompt`), and the per-item payload must go in a file the automation prompt reads. | todo |
-| CD-875 | `docs/guide/10-recipes-and-pitfalls.md:5` | `pinned cards reading /how, /tdd, and /loop` | implicit | The image alt text references Cursor `/loop`. | skip | Cosmetic. Alt text only. | todo |
-| CD-876 | `docs/guide/10-recipes-and-pitfalls.md:114` | `how do i get poteto-mode to stay on every turn?` | cursor-ui | The answer is Cursor Custom Mode. | fallback-only | poteto-help answer must change to the CLAUDE.md/AGENTS.md line. | todo |
-| CD-877 | `docs/guide/10-recipes-and-pitfalls.md:164` | `` "make it better" gives `/loop` nothing to check. `` | automation | Cursor `/loop`. | orca | Reword to "the loop or Orca `--precheck`". | todo |
-| CD-878 | `docs/guide/10-recipes-and-pitfalls.md:168` | `Run them as cloud agents, or say "own worktree per attempt".` | cloud-agent | Cursor cloud agents. | orca | Orca workers with `--worktree new-child`, or `--on <environment>`. | todo |
-| CD-879 | `docs/guide/10-recipes-and-pitfalls.md:174` | `` **Treating `auto` as a model slug.** `` | model-slug | Cursor "auto" value. | agent-native | Means omit `--model` on Orca worker or Claude Agent. | todo |
-| CD-880 | `docs/guide/README.md:7` | `Install the plugin and pick your models.` | cursor-ui | Install flow is Cursor plugin. | orca | "Install with `npx skills add`" (see README:17). | todo |
-| CD-881 | `docs/guide/README.md:13` | `Projects and automations that scale past one agent.` | cloud-agent | Cursor Projects and Cursor Automations. | orca | Orca orchestration runs (`orca orchestration run-create`, `coordinator-start`) and `orca automations`. | todo |
 
 ## README and plugin manifests
 

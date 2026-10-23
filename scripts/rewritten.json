@@ -46,7 +46,8 @@
     "skills/poteto-mode/scripts/package.json",
     "skills/poteto-mode/scripts/check-plan.test.ts",
     "agents/",
-    "plugin.json"
+    "plugin.json",
+    "docs/guide/"
   ],
   "removed": [
     "automations/",

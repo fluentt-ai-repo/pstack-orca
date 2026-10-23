@@ -52,6 +52,7 @@ Each rule came from a unit that passed its check. Apply them to every later skil
 | 3c | The seven cross-model skills name capabilities (`skills/resolve-capability/`), not products or commands | Done, checked by the author. Two runs that need a worker still fail on a low-effort model | See Unit 3c checks |
 | 4 | Playbooks: all 23, `review-bot-triage.md`, `check-plan.mjs`, and `worktree-audit.sh` | Done, checked by the author. Four of the 23 ran as plans or a first step | See Unit 4 checks |
 | 5 | Remaining skills, then `docs/guide` and the README | | |
+| 5b | `docs/guide`: the index and pages 01 to 10 | Done, checked by the author. No agent ran | See Unit 5b checks |
 
 ### Unit 1 checks
 
@@ -181,6 +182,22 @@ Facts these runs settled:
 
 - A playbook that names a capability and points at the adapter made a low-effort model read the adapter, ask whether Orca is here, and read the one reference it needed. None of the four skipped the check.
 - Plan-only runs cannot show whether a model follows the adapter once the work is long. The first multi-hour run is still unchecked.
+
+### Unit 5b checks
+
+The guide now describes this fork. The reader uses Claude Code, Codex, or Grok in a terminal, in Orca, in the Claude desktop app's Code tab, or in the ChatGPT desktop app's Codex. Orca is optional. Install is `npx skills add ynginkim/pstack-orca -g -a claude-code -a codex -a grok -s '*' -y`. Each page was rewritten against the skill or playbook it describes. Pages 03 and 08 needed no change.
+
+| What changed | Where |
+| --- | --- |
+| Plugin install, Custom Modes, the `/in-cloud` command, Cursor Projects, and the Cursor-only automation pack are gone | 01, 02, 07 |
+| A capability names section and a list of the 21 capabilities | 09 |
+| `.cursor/skills/` became `.agents/skills/` with a link from `.claude/skills/` | 01, 06 |
+| `/deslop` is gone, and the page says pstack has no code-slop skill | 05 |
+| Scheduling is `run-on-schedule`, with Claude Code, Orca, and the Codex desktop app named as options | 06, 07 |
+| Merging says `gh` and the exact steps, with no Origin forge | 06 |
+| The `auto` pitfall became "a model this computer can't reach" | 10 |
+
+How it was checked: a one-off script followed every relative link and anchor in the guide and found none broken, nothing outside the guide links to a missing anchor, and the guide has no long dash and no absolute path. `lint-rewritten` covers `docs/guide/` from now on. The guide says which behavior it did not check: both desktop apps, and the three scheduling tools.
 
 ### Not yet checked (for the maintainer)
 

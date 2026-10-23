@@ -1,8 +1,8 @@
 # Make it yours
 
-poteto-mode is one person's style. The playbooks, routing, and model roles underneath it work just as well with yours. This page covers generating a personal mode, capturing lessons from a session, fixing the repo so agents stop repeating mistakes, authoring a focused skill, and testing a skill change before you trust it.
+poteto-mode is one person's style. The playbooks, routing, and model selection underneath it work just as well with yours. This page covers generating a personal mode, capturing lessons from a session, fixing the repo so agents stop repeating mistakes, authoring a focused skill, and testing a skill change before you trust it.
 
-Start smaller than you think. You don't need many skills on day one, or even this whole plugin. Prompt plainly, watch where agents fail, and add a skill or a check when the same failure shows up twice.
+Start smaller than you think. You don't need many skills on day one, or even this whole set of skills. Prompt plainly, watch where agents fail, and add a skill or a check when the same failure shows up twice.
 
 ## Generate your own mode with `/automate-me`
 
@@ -10,7 +10,7 @@ Start smaller than you think. You don't need many skills on day one, or even thi
 /automate-me
 ```
 
-You don't describe your style, because [`/automate-me`](../../skills/automate-me/SKILL.md) reads it out of your history. It mines your recent transcripts in the active workspace for repeated preferences, in how you like replies, delegation, verification, code, prose, and process, then asks you which patterns are really you. It drafts `.cursor/skills/<your-name>-mode/SKILL.md` through Cursor's built-in `create-skill` flow, runs the draft through [`/unslop`](../../skills/unslop/SKILL.md), and opens a PR from a worktree so you review it like any other change.
+You don't describe your style, because [`/automate-me`](../../skills/automate-me/SKILL.md) reads it out of your history. It mines your recent transcripts in the active workspace for repeated preferences, in how you like replies, delegation, verification, code, prose, and process, then asks you which patterns are really you. It drafts `<your-name>-mode/SKILL.md` in your project's skill folder, or your user-level one, with your harness's skill-authoring skill (`author-skill`), runs the draft through [`/unslop`](../../skills/unslop/SKILL.md), and can open a PR from a worktree so you review it like any other change.
 
 Run it again whenever your habits drift:
 
@@ -47,7 +47,7 @@ Human review isn't on the list. A reviewer who must catch the same mistake on ev
 
 It reads recent commits, reverts, review comments, and comments that explain workarounds, then groups the mistakes into classes. A class counts once it has happened twice. It fixes the most frequent classes one commit each, at the highest level that works, and proves each new check fails on a real past mistake. It also keeps a table in the agent instruction file that pairs each rule with what enforces it, so a rule that nothing enforces shows up as a repeat. The reply lists each class with its evidence, the level chosen, and why a higher level didn't work.
 
-Run it with no argument and it finds the classes from history on its own. `/reflect` and `/correct` split the work. `/reflect` improves skills from one session. `/correct` changes the repo so a mistake class can't come back. Pair it with `/architect` when the fix is a new boundary. [Run many projects in parallel](./07-overnight.md#run-many-projects-in-parallel) has a prompt that does both across a whole repo.
+Run it with no argument and it finds the classes from history on its own. `/reflect` and `/correct` split the work. `/reflect` improves skills from one session. `/correct` changes the repo so a mistake class can't come back. Pair it with `/architect` when the fix is a new boundary. [Run a program with a standing coordinator](./07-overnight.md#run-a-program-with-a-standing-coordinator) has a prompt that does both across a whole repo.
 
 ## Author a focused skill
 
@@ -57,9 +57,26 @@ When you already know the workflow you want to capture:
 /poteto-mode write a skill for verifying database migrations in this repo
 ```
 
-Writing a skill matches the [Authoring or modifying a skill playbook](../../skills/poteto-mode/playbooks/authoring-a-skill.md), which routes through Cursor's built-in `create-skill`, validates the frontmatter and links, and ships the result through the Opening a PR playbook. Agent-facing prose has a higher bar than human prose, because an unhelpful sentence becomes an instruction some future agent follows. Let the playbook hold that bar rather than writing a `SKILL.md` freehand.
+Writing a skill matches the [Authoring or modifying a skill playbook](../../skills/poteto-mode/playbooks/authoring-a-skill.md), which routes through `author-skill`, validates the frontmatter and links, and ships the result through the Opening a PR playbook. Agent-facing prose has a higher bar than human prose, because an unhelpful sentence becomes an instruction some future agent follows. Let the playbook hold that bar rather than writing a `SKILL.md` freehand.
 
 Two special cases have their own generators. A skill that must drive your app and prove behavior is a verification skill, so use [`/create-verification-skill`](../../skills/create-verification-skill/SKILL.md) and [`/maintain-verification-skill`](../../skills/maintain-verification-skill/SKILL.md) instead. A skill that checks a property of your code with a model checker, a proof, or another verifier is a formal verification skill, so use [`/create-formal-verification-skill`](../../skills/create-formal-verification-skill/SKILL.md) and [`/maintain-formal-verification-skill`](../../skills/maintain-formal-verification-skill/SKILL.md). [Verify and ship](./06-verify-and-ship.md#prove-a-property-with-a-formal-verification-skill) covers both kinds.
+
+## Capability names
+
+Open a pstack skill and you will see names in backticks, such as `spawn-worker`, `wake-on-event`, or `use-forge`. They are capabilities, not commands. A step names what it needs from your environment and leaves the tool out, because the tool differs between Claude Code, Codex, Grok, and Orca. [`resolve-capability`](../../skills/resolve-capability/SKILL.md) says which tool does each one in each environment, and what to do when none can. The model reads it at the start of a task, and it asks whether Orca is here as its own question.
+
+There are 21, in groups:
+
+- **Agents and work.** `spawn-subagent` starts a helper inside your harness. `spawn-worker` starts a worker on another agent product and collects a report. `isolate-checkout` gives a writer its own worktree, ports, and temp paths. `run-remote` keeps a run alive while your computer sleeps. `coordinate-workers` holds dispatch, dependencies, an inbox, and decision gates. `control-agent` probes, messages, stops, or replaces an agent. `choose-model` picks a model and effort for a seat.
+- **Waiting and time.** `wake-on-event` blocks on or is woken by a finished worker, a CI result, or a PR change. `run-on-schedule` is a recurring tick for a long program.
+- **Talking to you.** `ask-user` is a question with options, only for a call you must make. `track-todos` is a visible plan with step status.
+- **Code hosting.** `use-forge` creates, reviews, and merges pull requests. `read-review-bot` reads automated review threads and check runs.
+- **Files, skills, and sessions.** `run-skill` runs another pstack skill. `author-skill` writes a new one. `find-sessions` finds this workspace's past and running sessions. `locate` says where instructions, skills, and worktrees live. `durable-store` is a place that outlives a restart.
+- **Driving and inspecting.** `list-mcp-servers` shows which MCP servers the session has. `drive-app` drives a browser, a terminal program, or a window and captures evidence. `inspect-runtime` attaches to a live process for a profile or a heap snapshot.
+
+Each capability has one of four states in a given environment. The harness does it with its own tool, it needs a product that may be missing (Orca, `gh`), you do it by hand with the shell, or the step is skipped and the reply says so in one line. Starting another vendor's agent is a good example. Any session with a shell can start Codex, Claude, or Grok without its interface. Orca adds supervision, an inbox, and a run that survives a restart.
+
+When you write your own skill, name a capability and read `resolve-capability` instead of naming a tool. The list is closed. A new need goes into the adapter first, in a pull request to pstack, because the adapter ships with the skills. `select-model` records the facts about your computer and is the place for those, not a skill.
 
 ## Write docs to a standard with `/technical-writing`
 

@@ -28,11 +28,11 @@ The design isn't sacred once code starts. If implementation shows the same worka
 /arena take my prompt to the arena verbatim. i want to compare their proposals with yours.
 ```
 
-[`/arena`](../../skills/arena/SKILL.md) is the general tool underneath. N subagents attempt the same design or code brief in parallel, each writing to its own worktree or directory. A read-only judge, on a different model family when your configuration allows one, scores every candidate against a rubric. The coordinator reads each candidate end to end, picks a base, grafts in the best ideas from the losers, and verifies the result.
+[`/arena`](../../skills/arena/SKILL.md) is the general tool underneath. N runners attempt the same design or code brief in parallel, each writing to its own worktree or directory. A runner is a helper in your own harness or a worker on another vendor's agent. A read-only judge, on a different vendor than your session when one is reachable, scores every candidate against a rubric. The coordinator reads each candidate end to end, picks a base, grafts in the best ideas from the losers, and verifies the result.
 
 ```mermaid
 flowchart LR
-    A[One task] --> B[Configured panel]
+    A[One task] --> B[Panel]
     B --> C[Candidate 1]
     B --> D[Candidate 2]
     B --> E[Candidate N]
@@ -44,7 +44,7 @@ flowchart LR
     H --> I[Verify]
 ```
 
-The panel comes from your [`/setup-pstack`](../../skills/setup-pstack/SKILL.md) configuration, and you can adjust it per task. Ask for more candidates when the decision matters, fewer when it doesn't:
+The panel comes from `select-model`, which [`/setup-pstack`](../../skills/setup-pstack/SKILL.md) wrote, and you can adjust it per task. `/arena` asks for at least two different models, from different vendors when your computer has them. Ask for more candidates when the decision matters, fewer when it doesn't. A request to keep the run small narrows the scope. It does not cut the number of vendors, unless you say so:
 
 ```text
 /arena this, 5 candidates. the cache key format is expensive to change later.
@@ -75,7 +75,7 @@ Read the dismissals too. The lead is a pragmatic senior engineer, not an oracle,
 Never take the first design. Ask for a few, and pick from evidence you can see:
 
 ```text
-/poteto-mode prototype a few options for the new dropdown menu. take screenshots or videos for me to compare.
+/poteto-mode prototype a few options for the new dropdown menu. take screenshots for me to compare. add a video where your tools can record one.
 ```
 
 The [Prototype playbook](../../skills/poteto-mode/playbooks/prototype.md) builds throwaway sketches in a scratch directory, puts the variants behind one switcher, drives each one, and captures screenshots or timings. It also works for behavior and algorithms, not just UI. Prototypes are planning with code. They let the agent answer its own open questions by running something instead of asking you, and they leave room for an option you wouldn't have thought of.
