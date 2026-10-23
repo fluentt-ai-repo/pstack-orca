@@ -101,7 +101,7 @@ Read the leaf skill in full for any principle you apply. Each entry names when i
 
 **Decide the model and the way from the `select-model` skill.** At the start of a task, read `~/.agents/skills/select-model/SKILL.md` if it exists. It holds this user's preferences and what this computer can run. It is not a table to look up. Read it, then decide for this task which model to use and how: stay in this session, a subagent of your own harness, an Orca worker on another agent, or several models together. Small, reversible work stays in this session. Go further only for a reason, and say the choice and its reason in one line in your reply.
 
-**No `select-model` yet.** Run on these defaults and say once in your reply: "No select-model skill yet, using defaults. Run /setup-pstack to set one up for this computer." Code delegates and reading use `grok grok-4.7-build-fast xhigh`. Prose, judgment, and the hardest changes use `claude opus xhigh`. A default that names another agent runs on your own model when Orca is not here, and the reply says so.
+**No `select-model` yet.** Run on these defaults and say once in your reply: "No select-model skill yet, using defaults. Run /setup-pstack to set one up for this computer." Code delegates and reading use `grok grok-4.7-build-fast xhigh`. Prose, judgment, and the hardest changes use `claude opus xhigh`. A default that names another agent runs as an Orca worker when Orca is here: check `ORCA_CLI_BIN_DIR` and `ORCA_CLI_COMMAND` before you decide it cannot. It runs on your own model only when neither is set, and the reply says so.
 
 Then spawn like this.
 

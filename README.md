@@ -26,6 +26,7 @@ Then run `/setup-pstack` (`$setup-pstack` in Codex) once. It surveys the agents 
 | [`docs/removed-cursor-features.md`](./docs/removed-cursor-features.md) | The Cursor-only features this fork deleted (benny, `make-bot-ui`), with the Claude Code, Codex, and Orca equivalents checked and what to build on request. |
 | [`docs/decursor-progress.md`](./docs/decursor-progress.md) | Which skills are rewritten by hand, the rules used, and how each rewrite was tested. |
 | [`docs/select-model-design.md`](./docs/select-model-design.md) | How `/setup-pstack` generates `select-model`, the skill that holds your model preferences and this computer's agents, and how a task uses it. |
+| [`.agents/skills/verify-pstack/`](./.agents/skills/verify-pstack/SKILL.md) | Contributors: verify a skill change by running it in real Claude Code, Codex, and Grok sessions through Orca. Internal. The `skills` CLI does not install it, because it only lists `skills/`. |
 | `orca/` | Snapshot of the Orca skill guides and command schema this fork was checked against. CI fails when a doc names an `orca` command or flag that is not in it. |
 
 ## Status
