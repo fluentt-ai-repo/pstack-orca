@@ -4,7 +4,7 @@
 
 - **Subagents.** `spawn_agent` (unverified). Read its schema for the models and efforts it accepts.
 - **Questions.** Numbered options in the reply.
-- **Plan.** `update_plan` (unverified).
+- **Plan.** `update_plan` was not in the instructions of the Codex build seen here (0.160.1), and the Codex app showed no plan list. Keep the list in the reply.
 - **Waiting.** Under Orca, `orca orchestration check --wait --timeout-ms 45000`, repeated in the same exec session until the event arrives. This was seen in a real run.
 - **Headless run.** `codex exec` runs one brief and exits. `-o <file>` writes the last message, `-s` sets the sandbox, `-m` the model, and `-c model_reasoning_effort=<level>` the effort. This ran.
 - **Sessions.** `codex agents` browses the sessions on the shared local app-server daemon, `codex queue --thread <id> --message <text>` queues a message for an existing session, and `codex resume`, `fork`, `archive` work on saved ones. Their help text was read, and they were not run. `codex app` continues in the ChatGPT desktop app. The desktop app also has scheduled tasks and worktrees (documented, not run).
