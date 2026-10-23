@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Arena
 
-Open a todo list with one entry per phase (Frame, Fan out, Cross-judge, Pick, Graft, Verify) before launching anything. Use your plan tool, or your reply when you have none.
+Open a plan with `track-todos`, one entry per phase (Frame, Fan out, Cross-judge, Pick, Graft, Verify), before launching anything.
 
 ## Phase A: Frame
 
@@ -22,11 +22,11 @@ Every candidate gets the same prompt, so the prompt is the contract.
    | Cross-judge | judgment | read-only | one, on an agent other than your own when one is reachable. It starts after every candidate has finished. |
 
    Pick each runner's reasoning level and speed for the job, per that section.
-4. Give each candidate its own output location (a git worktree where possible, otherwise `/tmp/arena-<slug>/candidate-<n>/`), per the **separate-before-serializing-shared-state** principle skill.
+4. Give each candidate its own output location (`isolate-checkout` where possible, otherwise `/tmp/arena-<slug>/candidate-<n>/`), per the **separate-before-serializing-shared-state** principle skill.
 
 ## Phase B: Fan out
 
-Start all N runners at once, in the background when your subagent tool can, each with the task, the path to the shared grounding, its own output path, and instructions to produce the artifact and a short rationale naming the alternatives it considered and what it rejected.
+Start all N runners at once, each with the task, the path to the shared grounding, its own output path, and instructions to produce the artifact and a short rationale naming the alternatives it considered and what it rejected.
 
 If a candidate produces no output, proceed with N-1 and note the dropout.
 

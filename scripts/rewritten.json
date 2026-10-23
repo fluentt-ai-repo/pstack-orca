@@ -3,6 +3,7 @@
   "paths": [
     "skills/setup-pstack/",
     "skills/create-model-selection-skill/",
+    "skills/resolve-capability/",
     "skills/poteto-mode/SKILL.md",
     "skills/arena/",
     "skills/swarm/",

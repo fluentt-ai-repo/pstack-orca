@@ -8,11 +8,11 @@ disable-model-invocation: true
 
 Sketch types, function signatures, class shapes, and module boundaries with `not implemented` bodies and pseudocode. Synthesize across multiple model perspectives, then fill in code against the chosen sketch.
 
-Bundled skills live at `../<name>/SKILL.md` from this file. Run one by reading that file and following it. Your harness's skill tool may refuse them, because they are slash-only.
+Run a bundled skill with `run-skill`. Bundled skills live at `../<name>/SKILL.md` from this file.
 
 ## Start
 
-Open a todo list with one entry per phase before starting. Use your plan tool, or your reply when you have none.
+Open a plan with `track-todos`, one entry per phase, before starting.
 
 1. Ground
 2. Sketch

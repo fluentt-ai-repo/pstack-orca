@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 ## Start
 
-Open a todo list with one entry per phase before launching anything. Use your plan tool, or your reply when you have none.
+Open a plan with `track-todos`, one entry per phase, before launching anything.
 
 1. Frame
 2. Fan out
@@ -23,12 +23,12 @@ Open a todo list with one entry per phase before launching anything. Use your pl
 
    | Seat | Kind | Needs | Count and diversity |
    |---|---|---|---|
-   | Worker | code or read, by the slice | when it writes, its own worktree, ports, and temp paths. When it verifies, the exact SHAs and its own checkout of them. | N, from the shape chosen in step 2. All start together. |
-4. Give each worker its own writable output when it writes. Workers share this machine, so give each its own worktree, ports, and temp paths, per the **separate-before-serializing-shared-state** principle skill. When workers verify or measure commits, each brief names the exact SHAs, and the worker uses its own checkout of them. A measurement brief also names the method (sample count, what one sample is, order). The worker records both in its result.
+   | Worker | code or read, by the slice | when it writes, `isolate-checkout`. When it verifies, the exact SHAs and its own checkout of them. | N, from the shape chosen in step 2. All start together. |
+4. Give each worker its own writable output when it writes. Workers share this machine, so give each `isolate-checkout` (its own worktree, ports, and temp paths), per the **separate-before-serializing-shared-state** principle skill. When workers verify or measure commits, each brief names the exact SHAs, and the worker uses its own checkout of them. A measurement brief also names the method (sample count, what one sample is, order). The worker records both in its result.
 
 ## Phase B: Fan out
 
-Start all N workers at once, in the background when your subagent tool can, each on the model chosen in step 3. When a worker must start from a non-default pushed branch, its brief names the branch and tells it to check that branch out first.
+Start all N workers at once, each on the model chosen in step 3. When a worker must start from a non-default pushed branch, its brief names the branch and tells it to check that branch out first.
 
 Every brief stands alone. Include the goal, scope, exact slice or race arm, how to verify, and what to report. Reports use `PASS`, `ISSUES`, or `BLOCKED` with evidence. A worker that can prove a defect reports `ISSUES` and lists every issue it can prove, not only the first.
 

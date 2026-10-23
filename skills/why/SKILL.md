@@ -12,10 +12,10 @@ Read `~/.agents/skills/select-model/SKILL.md` and choose each seat's model and h
 
 | Seat | Kind | Needs | Count and diversity |
 |---|---|---|---|
-| Investigator | read | read-only. One tool or MCP each. A seat that needs an MCP server stays on your own harness. Source control needs only git and `gh`. | one per category with a matching MCP, all in one message. Source control always. |
+| Investigator | read | read-only. One tool or MCP each. A seat that needs an MCP server stays on your own harness. Source control needs only git and `use-forge`. | one per category with a matching MCP, all in one message. Source control always. |
 | Synthesizer | judgment | read-only. MCP, for citation spot-checks. | one |
 
-Every spawn is a general-purpose subagent with your MCP servers available. The MCP-backed investigators and the synthesizer's citation spot-checks need them, and some read-only agent types drop MCP tools. **Pick an agent type that keeps them.** An investigator that needs an MCP server stays on your own harness, per the Subagents section, even when `select-model` prefers another agent for that kind of work. Investigators still shouldn't write anything, and each brief says so.
+Every seat starts with your MCP servers available. The MCP-backed investigators and the synthesizer's citation spot-checks need them, and some read-only seat types drop MCP tools. **Pick a seat type that keeps them** (`spawn-subagent` says where the types are listed). An investigator that needs an MCP server stays on your own harness, per the Subagents section, even when `select-model` prefers another agent for that kind of work. Investigators still shouldn't write anything, and each brief says so.
 
 ## Operating Posture
 
@@ -29,7 +29,7 @@ If the target is vague ("why do we do it this way?" with no clear referent), mak
 
 ## Step 2. Establish the Code Anchor
 
-Before spawning investigators, build the seed context inline: file paths and line ranges, key symbols (functions, classes, constants), the last few commits touching the target, PR numbers from merge commits (pattern `(#1234)` in the subject line), and any linked ticket IDs. Run `git blame -L <start>,<end> <file>` for last-touch commits, `git log --follow -p -- <file>` for full history with patches through renames, `git log --oneline -20 -- <file>` for recent commits with PR numbers visible, and `git log -1 --format=%B <commit>` to extract PR numbers. Then pull the PR bodies and discussion for any substantive commit: `gh pr view <number> --json title,body,author,createdAt,mergedAt,labels,closingIssuesReferences,comments,reviews`. This anchor goes to every investigator and to the synthesizer.
+Before spawning investigators, build the seed context inline: file paths and line ranges, key symbols (functions, classes, constants), the last few commits touching the target, PR numbers from merge commits (pattern `(#1234)` in the subject line), and any linked ticket IDs. Run `git blame -L <start>,<end> <file>` for last-touch commits, `git log --follow -p -- <file>` for full history with patches through renames, `git log --oneline -20 -- <file>` for recent commits with PR numbers visible, and `git log -1 --format=%B <commit>` to extract PR numbers. Then pull the PR bodies and discussion for any substantive commit with `use-forge`: title, body, author, created and merged dates, labels, closing issues, comments, and reviews. This anchor goes to every investigator and to the synthesizer.
 
 ## Step 3. Spawn Parallel Investigators
 
@@ -37,7 +37,7 @@ Before spawning investigators, build the seed context inline: file paths and lin
 
 ### Discovery
 
-Before spawning investigators, list the MCP servers your session has. Use your tool list when it names them. In Claude Code an MCP tool is `mcp__<server>__<tool>`, and tools that load on demand are listed by name. Otherwise run your CLI's listing, `claude mcp list`, `codex mcp list`, or `grok mcp list`.
+Before spawning investigators, list the MCP servers your session has. Use your tool list when it names them, including tools that load on demand. Otherwise use your harness's own listing command.
 
 Map each available MCP to one evidence category:
 
@@ -49,20 +49,21 @@ Map each available MCP to one evidence category:
 6. Error / exception tracking
 7. Product analytics warehouse
 
-Source control is always available through git and `gh`. For the other six, classify using the MCP name, server instructions, tool names, and resource descriptors. If an MCP could fit more than one category, choose the one matching its primary evidence. Record ambiguous cases in the coverage map.
+Source control is always available through git and `use-forge`. For the other six, classify using the MCP name, server instructions, tool names, and resource descriptors. If an MCP could fit more than one category, choose the one matching its primary evidence. Record ambiguous cases in the coverage map.
 
-Spawn one investigator per category that has a matching MCP, all in a single message so they run concurrently, each owning exactly one tool or MCP. Don't ask one agent to cover multiple MCPs. Each is an Investigator seat. The source control investigator needs only git and `gh`, so it can run on any model `select-model` allows.
+Spawn one investigator per category that has a matching MCP, all in a single message so they run concurrently, each owning exactly one tool or MCP. Don't ask one agent to cover multiple MCPs. Each is an Investigator seat. The source control investigator needs only git and `use-forge`, so it can run on any model `select-model` allows.
 
 Each investigator's prompt is `references/investigator-prompt.md` filled in, plus:
 - the category playbook `references/sources/<source>.md` for the selected MCP, adapted from the examples in `references/source-playbook.md`
 - `references/sources/incident-postmortem.md` **if the target code looks defensive** (null checks, retry logic, timeout handling, rate limiting, feature flags, egress guards, OOM handlers)
 - the code anchor and the user's original question
+- the absolute path of `../resolve-capability/SKILL.md`, which the source control investigator reads for `use-forge`
 
 ### Investigator roster, one per available evidence category
 
 Each category below is uniquely positioned to surface one shape of "why", shown after "Best at". Use it to know what to expect back, to name a gap when a category returns empty, and, only in the rare provably-irrelevant case, to justify a skip.
 
-1. **Source control** (git history, `gh` for PRs, code comments, tests). Always spawn, the only guaranteed source. Best at *implementation-time rationale captured during review*.
+1. **Source control** (git history, pull requests through `use-forge`, code comments, tests). Always spawn, the only guaranteed source. Best at *implementation-time rationale captured during review*.
 2. **Issue / ticket tracker** (e.g. Linear, Jira, GitHub Issues, Plane, Shortcut MCP). Best at *the product or business forcing function*. Strongest when the why is external to engineering.
 3. **Long-form documents** (e.g. Notion, Confluence, Google Docs, Coda MCP). Best at *long-form design rationale*, written out before it becomes code.
 4. **Real-time team chat** (e.g. Slack, Discord, Microsoft Teams, Mattermost MCP). Best at *real-time deliberation that never reached a doc*. Especially important when the source control, ticket, and doc paper trail is thin.
