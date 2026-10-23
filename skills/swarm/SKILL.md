@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Swarm
 
+> Names in backticks, such as `spawn-worker` and `find-sessions`, are capabilities, not commands. Read `../resolve-capability/SKILL.md` before the first step. It says how each one is done here and whether a worker on another agent can be started.
+
 ## Start
 
 Open a plan with `track-todos`, one entry per phase, before launching anything.

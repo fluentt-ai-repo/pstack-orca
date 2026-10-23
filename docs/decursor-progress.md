@@ -10,25 +10,25 @@ Each rule came from a unit that passed its check. Apply them to every later skil
 
 | Cursor wording | Write this instead | Learned from |
 | --- | --- | --- |
-| `AskQuestion` | "Use your question tool if you have one, such as `AskUserQuestion` in Claude Code. Otherwise list numbered options in plain text." | setup-pstack |
+| `AskQuestion` | Write `ask-user`. The adapter (`skills/resolve-capability/`) says which tool it is in each harness. | setup-pstack, interrogate |
 | A table or summary the user must see before answering | Put it in the text of the question itself. Some models write their visible-looking explanation into reasoning, and the user then sees only a one-line summary. | setup-pstack |
 | Cursor model slugs (`grok-4.7-xhigh-fast`, `claude-opus-5-5-xhigh`) | `<agent> <model> <effort>`, such as `grok grok-4.7-build-fast xhigh` and `claude opus xhigh` | setup-pstack |
 | The `pstack-models.mdc` always-applied rule | The `select-model` skill that `/setup-pstack` generates at `~/.agents/skills/select-model/`. Skills read it by that path at the start of a task and decide the model themselves. Do not rely on a rules directory: Orca's Claude profile does not link `rules/`, and Codex has no auto-load. | setup-pstack, select-model |
-| Run another pstack skill with `/name` | "Run the **name** skill by reading its `SKILL.md` next to this one." | setup-pstack |
-| `Task`, `subagent_type`, and Cursor model slugs in a spawn step | Read `select-model`, then decide the model and the way to use it. Same agent as you: your own subagent tool. Another agent: an Orca worker when Orca is available, otherwise your own model plus one line saying so. A preference to follow the session: your subagent tool with the model unset. | poteto-mode |
-| Starting an agent with a model flag | Orca refuses `--model` and `--effort` for Grok (`Agent grok does not support launch-time model selection`). Start it with `--agent grok` alone and report the model that ran, taken from the Grok session record. | poteto-mode |
-| `Open a todolist` | A todo list with your plan tool (`TodoWrite` in Claude Code, `update_plan` in Codex), or the list in your reply when you have none. | poteto-mode |
+| Run another pstack skill with `/name` | Write `run-skill`. Bundled skills live at `../<name>/SKILL.md`. | setup-pstack, architect |
+| `Task`, `subagent_type`, and Cursor model slugs in a spawn step | Read `select-model`, then decide the model and the way to use it. Write `spawn-subagent` for your own harness and `spawn-worker` for another agent's model. The adapter says how each is done here, and the Subagents section of `poteto-mode` says what to do when one cannot be. | poteto-mode |
+| Starting an agent with a model flag | Write `spawn-worker`. Which agents refuse a model or effort flag, and where the model that ran is recorded, are facts in the adapter's references, not in a skill. | poteto-mode |
+| `Open a todolist` | Write `track-todos`. | poteto-mode, arena, swarm, architect |
 | Wording that belongs to skills not yet rewritten | Keep it inside `<!-- transition:start -->` and `<!-- transition:end -->`. The lint skips that block. Delete the block when the last skill it covers is rewritten. | poteto-mode |
-| A spawn step repeated in every cross-model skill (`Task` fields, model slugs, fallbacks for a rejected slug) | One sentence: "Read `select-model` and choose each seat's model from it. Start every seat as the Subagents section of `../poteto-mode/SKILL.md` says." The skill keeps a seat table (kind, needs, count and diversity) and names no model. A missing `select-model` and a rejected id are handled once, in the Subagents section. | arena, how, swarm, interrogate, reflect, why |
-| `environment: "cloud"` workers, `cloud_base_branch` | Workers start on this machine, in the background when the subagent tool can. A worker that writes gets its own worktree, ports, and temp paths. A worker that verifies a commit uses its own checkout of the SHA. A worker that must start from another branch gets the branch name in its brief. | swarm |
-| "Use `readonly: false`, because readonly strips MCPs" | Pick an agent type that keeps your MCP tools, because some read-only agent types drop them, and tell the seat not to edit files. A seat that needs your MCP servers stays on your own harness (see the Subagents section). | reflect, why |
-| The `agent-transcripts/` directory the system prompt names | One table of where each agent keeps this workspace's transcripts. Claude Code: `<config dir>/projects/<workspace folder>/*.jsonl`. Codex: `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-*.jsonl`, filtered on `payload.cwd`. Grok: `~/.grok/sessions/<URL-encoded workspace path>/<session>/chat_history.jsonl`. Match the opening user prompt. | reflect |
-| `create-skill`, and the routing token `new skill via create-skill:` | The harness's skill-authoring skill (`skill-creator` in Claude Code, `$skill-creator` in Codex), or the Authoring a skill playbook when there is none. The token is `new skill: <name>`. | reflect |
-| Listing MCPs from the `mcps/` directory | The tool list, or `claude mcp list`, `codex mcp list`, `grok mcp list`. | why |
+| A spawn step repeated in every cross-model skill (`Task` fields, model slugs, fallbacks for a rejected slug) | One sentence: "Read `select-model` and choose each seat's model from it. Start every seat as the Subagents section of `../poteto-mode/SKILL.md` says." The skill keeps a seat table (kind, needs, count and diversity) and names no model, product, or command. Under its title, one line sends the reader to `../resolve-capability/SKILL.md`, because a skill run on its own does not pass through `poteto-mode`. | arena, how, swarm, interrogate, reflect, why |
+| `environment: "cloud"` workers, `cloud_base_branch` | Workers start on this machine. A worker that writes uses `isolate-checkout`. A worker that verifies a commit uses its own checkout of the SHA. A worker that must start from another branch gets the branch name in its brief. | swarm |
+| "Use `readonly: false`, because readonly strips MCPs" | Pick a seat type that keeps your MCP tools, because some read-only types drop them (`spawn-subagent` says where the types are listed), and tell the seat not to edit files. A seat that needs your MCP servers stays on your own harness (see the Subagents section). | reflect, why |
+| The `agent-transcripts/` directory the system prompt names | Write `find-sessions`, list the workspace's sessions newest first, and match the opening user prompt. The per-product paths live in the adapter. | reflect |
+| `create-skill`, and the routing token `new skill via create-skill:` | Write `author-skill`. The token is `new skill: <name>`. | reflect |
+| Listing MCPs from the `mcps/` directory | "Use your tool list when it names them, including tools that load on demand. Otherwise use your harness's own listing command." The adapter has no capability for this yet. | why |
 | Tool names in a prompt (`Read, Grep, Glob`) | "your file-reading and search tools" | how, interrogate |
 | A reviewer label with a model slug | `<agent> <model> <effort>` | interrogate |
-| A skill that runs other bundled skills | One line near the top: bundled skills live at `../<name>/SKILL.md` and are run by reading that file. | architect |
-| A model the session cannot reach | Keep the entry as written and mark it `not reachable here`. Offer one bulk choice, `inherit-parent`, instead of a per-role replacement. Outside Orca the role runs on the session's own model. | setup-pstack |
+| A skill that runs other bundled skills | Write `run-skill`, and say once that bundled skills live at `../<name>/SKILL.md`. | architect |
+| A model the session cannot reach | Keep the entry as written and mark it `not reachable here`. Offer one bulk choice, `inherit-parent`, instead of a per-role replacement. When no CLI of that product can be started, the seat runs on the session's own model. | setup-pstack |
 
 ## Units
 
@@ -39,6 +39,7 @@ Each rule came from a unit that passed its check. Apply them to every later skil
 | 2b | `agents/` | Deferred, low priority | |
 | 3 | Cross-model skills: arena, swarm, interrogate, reflect, architect, how, why | Done, checked by the author | See below |
 | 3b | The same skills, `poteto-help`, `orca-harness`, the setup guide, and the Claude Code adapter, moved from role lines to `select-model` | Done, checked by the author | See Unit 3b checks |
+| 3c | The seven cross-model skills name capabilities (`skills/resolve-capability/`), not products or commands | Done, checked by the author. Two runs that need a worker still fail on a low-effort model | See Unit 3c checks |
 | 4 | Playbooks, by remaining Cursor rows: orchestrate 33, multi-phase-plan 28, autopilot-full 12, babysit 10, opening-a-pr 8, worktree-cleanup 8, shipping 7, session-pickup 6 | Next | |
 | 5 | Remaining skills, then `docs/guide` and the README | | |
 
@@ -124,6 +125,35 @@ Facts these runs settled:
 - The seat tables carried the rules the role lines used to hide: runner and reviewer diversity, the judge outside the parent's vendor, MCP seats staying home, and the judge starting after the candidates finish.
 - A seat table with no model names left the choice to `select-model`. With the sample's preferences, reading and exploring went to Grok, judgment to Claude, and a second vendor to Codex.
 
+### Unit 3c checks
+
+The seven skills now name capabilities in backticks and no harness, tool, or command. `scripts/lint-rewritten.mjs` forbids product names, `orca` commands, `gh` commands, and product paths in them. The adapter, the generator, `poteto-mode`, and `setup-pstack` are outside that list because they have to name products. The runs went through `verify-pstack`: Claude in a terminal on `sonnet` at `low`, the sample `select-model`, one prompt each. `reflect`, `why`, and `architect` stopped at the plan.
+
+| Run | Skill | Result |
+| --- | --- | --- |
+| cm-how | `how`, complex path | Fail. No call read the adapter or checked for Orca. Both explorers ran as native subagents. The reply says another vendor needs Orca. |
+| cm-swarm | `swarm`, two slices | Fail. Same cause. Two native seats, no worker. |
+| cm-int | `interrogate` | Fail. Reviewers A and B were both Claude. The reply says the change was too small for another vendor. |
+| cm-arena | `arena` | Fail. Runners and judge were all Claude. The reply says diversity shrank. The judge started after the runners. |
+| cm-reflect | `reflect`, plan | Pass with a finding. It ran `which find-sessions` first, because the step named a capability with no pointer to the adapter. |
+| cm-why | `why`, plan | Pass. Source control goes to a Grok worker, every MCP seat and the synthesizer stay home, and the empty categories are gaps. |
+| cm-arch | `architect`, plan | Pass. Claude and Codex workers as runners, a read-only judge on another agent after them. |
+| cm-how-d | `how`, same prompt, default model and effort | Pass. It read the adapter, started two Grok workers without flags (`grok-4.7` ran), and used a native explainer. |
+
+The fix was one line under each title: names in backticks are capabilities, and `../resolve-capability/SKILL.md` says how each is done here. A skill run on its own does not pass through `poteto-mode`, so nothing else sent the reader to the adapter. After it, three runs on the same low-effort model changed as follows.
+
+| Run | Skill | Result |
+| --- | --- | --- |
+| cm2-how | `how` | Fail. It read the adapter first and ran `env \| grep ORCA_CLI_`, which found Orca. It still ran both explorers as native subagents, with no reason in the reply. |
+| cm2-arena | `arena` | Fail. It read the adapter and checked for Orca, then ran two native runners because the prompt said to keep the run small. It skipped the judge because the two diffs matched. |
+| cm2-reflect | `reflect`, plan | Pass. It read the adapter first and resolved `find-sessions` to the Claude Code path. The plan was drafted without reading `select-model`, and the reply says so. |
+
+Facts these runs settled:
+
+- A skill run on its own needs its own pointer to the adapter. With it, every run read the adapter before its first spawn. Without it, none did.
+- The pointer fixed reading, not choosing. On `sonnet` at `low`, the seat table's diversity rule and the judge's phase lost to "keep it small". The same prompt at the default model started workers. That points to the model, not the wording, so it was not changed again.
+- The adapter's `durable-store` path was used for worker reports in one run, which created `~/.pstack/`. Transient reports are not what that capability is for.
+
 ### Not yet checked (for the maintainer)
 
 
@@ -138,3 +168,5 @@ Facts these runs settled:
 - Codex running `arena`, `swarm`, `interrogate`, or `why`. Codex ran `how` and the first step of `reflect`. The spawn routing they share is the same text.
 - The synthesizer of `reflect` with the new seat table. V5 stopped after starting it.
 - A `select-model` generated from the user's real answers. The runs used the sample the generator's author wrote.
+- `arena` and `interrogate` at the default model after the adapter pointer. The default-model run covered `how` only.
+- The adapter's change that starts another vendor's CLI from the shell (`codex exec`, `claude -p`, `grok -p`) without Orca. The Unit 3c runs ran in an Orca terminal.

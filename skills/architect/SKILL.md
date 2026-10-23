@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Architect
 
+> Names in backticks, such as `spawn-worker` and `find-sessions`, are capabilities, not commands. Read `../resolve-capability/SKILL.md` before the first step. It says how each one is done here and whether a worker on another agent can be started.
+
 Sketch types, function signatures, class shapes, and module boundaries with `not implemented` bodies and pseudocode. Synthesize across multiple model perspectives, then fill in code against the chosen sketch.
 
 Run a bundled skill with `run-skill`. Bundled skills live at `../<name>/SKILL.md` from this file.
