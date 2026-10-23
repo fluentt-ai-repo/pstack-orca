@@ -55,7 +55,7 @@ Fill in the template in [`references/select-model-template.md`](references/selec
 
 - `SKILL.md`, from the template. `## Preferences` holds one sentence per answer, each with its reason, so the model reading it can extend the choice to a case the sentence does not name ("Hard design goes to `claude opus xhigh` because you said judgment quality matters more than cost" rather than "design: opus"). Do not write a table of roles. Write only what the user said. For a product they said nothing about, write that they stated no preference and add nothing, because the model that reads the skill will decide and a guess from you would read as the user's own choice.
 - `inventory.md`, in the shape the template gives.
-- No `references/` folder. The mechanisms for each environment ship in the `resolve-capability` skill next to `poteto-mode`, so `SKILL.md` points at it as `../resolve-capability/SKILL.md` and nothing is copied. This skill's own `references/` are for the survey only.
+- No `references/` folder. The mechanisms for each environment ship in the `resolve-capability` skill next to `poteto-mode`, so `SKILL.md` points at it as `../resolve-capability/SKILL.md` and nothing is copied. Also write the absolute path of the `resolve-capability` folder that sits next to this skill, as the second place to look, because an install of pstack that is not under `~/.agents/skills/` does not resolve the relative path. This skill's own `references/` are for the survey only.
 - `log.md`, one line: the date, what was created, which links were made, and that the user approved.
 - **Links, for each product the user chose.** Do what the `skills` CLI does: a relative symlink named `select-model` inside the product's skill folder, pointing at `../../.agents/skills/select-model`. Run `mkdir -p <folder>` first. If the name is already a link to that same target, leave it. If it is anything else (a real directory, a file, or a link to somewhere else), do not replace it, and tell the user what is there. A product's folder may itself be a link to another folder (Orca's Claude profile links its `skills` to `~/.claude/skills`). Create the link in the folder the product's reference names and nowhere else. Never copy the skill into a product folder.
 
@@ -79,7 +79,7 @@ Tell the user, in this order:
 1. The path of the skill and what it found (products, models, whether Orca is here), and the links it made or left.
 2. Which entries were verified and which were not.
 3. How to change it: edit a sentence in `## Preferences`, or run `/setup-pstack` again. The skill asks before it edits itself when a task does not match it.
-4. When a product was found that this session could not start, which environment would start it.
+4. For each product found, how this session can start it: with its own subagent tool, by running the product's CLI headless from the shell, or only through Orca. A product that this session cannot start itself is not one that cannot start anywhere.
 5. When the user named another target directory, that tasks read `~/.agents/skills/select-model/SKILL.md` by default and that `poteto-mode` has to be told the other path.
 
 Then stop. Do not start work on the project.
