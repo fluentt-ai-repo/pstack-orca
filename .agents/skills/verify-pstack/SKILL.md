@@ -126,7 +126,7 @@ Known limits:
 `vp` writes these into `~/Documents/pstack-testbed-evidence/<run id>/`.
 
 - `run.json`, with the prompt, the launch output, and the `select-model`, lock, and testbed state at launch.
-- `summary.txt`, the readable account: models and effort, the first prompt, every tool call (an `&` marks a Claude call sent in the same message as the one before, so the two started together), the skill files named in tool calls, every touch of `select-model`, the last todo list, native subagents with their model and effort, Orca workers with what was requested and what model actually ran (read from the worker's own record), temp folders the run created, and the final reply.
+- `summary.txt`, the readable account: models and effort, the first prompt, every tool call (an `&` marks a Claude call sent in the same message as the one before, so the two started together), the skill files named in tool calls, every touch of `select-model`, the last todo list, native subagents with their model and effort, Orca workers with what was requested and what model actually ran (read from the worker's own record), CLI workers started from the shell (`grok -p`, `codex exec`, `claude -p`, `claude --bg`) with the model their output names, temp folders the run created, and the final reply.
 - `facts.json`, the same as data.
 - `records/`, copies of the session record, its subagent records, and each worker's own record.
 - `fakehome/` and `tmp/` from cleanup, `testbed-residue.txt` when the run changed the testbed, and `cleanup.log`.

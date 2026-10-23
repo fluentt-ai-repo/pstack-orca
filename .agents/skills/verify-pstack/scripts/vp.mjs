@@ -574,6 +574,21 @@ function workers(rec, sinceMs) {
   return out
 }
 
+// Another product's CLI started headless from a shell (resolve-capability/references/cli-workers.md). No Orca record exists for these.
+const CLI_WORKER = /\b(grok\s+(-p|--single)\b|codex\s+exec\b|claude\s+(-p|--print|--bg)\b)/
+
+function cliWorkers(rec, width) {
+  return rec.calls
+    .map((c, i) => ({ c, n: i + 1 }))
+    .filter(({ c }) => CLI_WORKER.test(callText(c)))
+    .map(({ c, n }) => {
+      const out = String(c.result ?? '')
+      const usage = out.match(/"modelUsage"\s*:\s*\{\s*"([^"]+)"/)
+      const model = out.match(/"(?:model|model_id|current_model_id)"\s*:\s*"([^"]+)"/)
+      return { n, shown: shown(c, width), ran: usage?.[1] ?? model?.[1] ?? null, output: oneLine(out, 300) }
+    })
+}
+
 function tmpDirs(rec, sinceMs) {
   const dirs = new Set()
   for (const c of rec.calls)
@@ -612,6 +627,7 @@ function facts(rec, sinceMs, width) {
       ...rec.subagents.map((s) => ({ from: 'subagent meta', shown: `type=${s.agentType} model=${s.model ?? 'unset'} effort=${s.effort ?? 'unset'} finished=${s.finished} "${s.description ?? ''}"` })),
     ],
     workers: workers(rec, sinceMs),
+    cli_workers: cliWorkers(rec, width),
     tmp_dirs: tmpDirs(rec, sinceMs),
     final_reply: finalText.join('\n\n'),
   }
@@ -637,6 +653,9 @@ function render(f, header = []) {
         `      ran: ${w.ran ? `${w.ran.models.join(', ')} effort ${w.ran.effort ?? '?'} (${w.ran.record})` : 'own record not found'}`,
       )
   }
+  L.push('', 'CLI workers (another product started from the shell):')
+  if (!f.cli_workers.length) L.push('  none')
+  for (const w of f.cli_workers) L.push(`  call ${w.n}: ${w.shown}`, `      ran: ${w.ran ?? 'not named in the output'}. output: ${w.output || '(none yet)'}`)
   if (f.tmp_dirs.length) L.push('', 'temp dirs the run created:', ...f.tmp_dirs.map((d) => `  ${d}`))
   L.push('', 'final reply:', f.final_reply || '(none yet)')
   return L.join('\n')
@@ -908,7 +927,9 @@ function closeRunTerminals(r) {
     }
     // A tab closed in Orca's window leaves its PTY running with no tab, and close then answers terminal_handle_stale.
     // The PTY still takes input, so end the agent and its shell from inside, the way a user would.
-    if (t.orphaned && t.connected && t.writable !== false) {
+    // Read the state again: the tab can close between the first list and the close.
+    const now = (testbedTerminals() ?? []).find((x) => x.handle === t.handle) ?? t
+    if (now.orphaned && now.connected && now.writable !== false) {
       for (const text of [EXIT_COMMAND[r.agent] ?? '/exit', 'exit']) {
         orca(['terminal', 'send', '--terminal', t.handle, '--text', text, '--enter'])
         sleep(3000)
