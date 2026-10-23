@@ -4,7 +4,7 @@ description: "Generate a project-local skill that formally verifies the code whe
 disable-model-invocation: true
 ---
 
-> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+> Names in backticks, such as `locate`, are capabilities, not commands. Read `../resolve-capability/SKILL.md` before the first step. It says how each one is done here. Bundled skills live at `../<name>/SKILL.md` and are run by reading that file.
 
 # Create a formal verification skill
 
@@ -32,7 +32,7 @@ Pick the tool that answers the question at the lowest cost: a model checker, a p
 
 ## Generate the verify skill
 
-Write a project-local skill with frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers. From the skill alone, the next agent must be able to tell whether a change touches the verified code, run the check, tell a real bug from a modeling error, and update the verification when a change is intended. Put the coverage record and the sync commit in the skill, and tell the next agent to move the sync commit forward only after it confirms that the verification describes the code at the new commit. Use this repo's real commands, paths, and nouns, and leave no placeholders.
+Write a project-local skill, in `.agents/skills/<name>/` with a relative link from `.claude/skills/` (`locate` lists each harness's folder), with frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers. From the skill alone, the next agent must be able to tell whether a change touches the verified code, run the check, tell a real bug from a modeling error, and update the verification when a change is intended. Put the coverage record and the sync commit in the skill, and tell the next agent to move the sync commit forward only after it confirms that the verification describes the code at the new commit. Use this repo's real commands, paths, and nouns, and leave no placeholders.
 
 ## Prove it before you hand off
 
@@ -40,4 +40,4 @@ Follow the generated skill once, as the next agent would, on a scratch change th
 
 ## Hand off
 
-Tell the user what you verified, which tool you used and why, the bounds, what the check found in plain words, how to run it, and what it does not cover. Suggest a second target only if you found a close one. Point the user at `/maintain-formal-verification-skill` for bringing the verification back in line after changes that did not recheck it.
+Tell the user what you verified, which tool you used and why, the bounds, what the check found in plain words, how to run it, and what it does not cover. Suggest a second target only if you found a close one. Point the user at `/maintain-formal-verification-skill` (`$maintain-formal-verification-skill` in Codex) for bringing the verification back in line after changes that did not recheck it.

@@ -4,7 +4,7 @@ description: "Draw what an app's user sees as a Mermaid statechart from a TLA+ m
 disable-model-invocation: true
 ---
 
-> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+> Bundled skills live at `../<name>/SKILL.md` and are run by reading that file.
 
 # Statechart
 

@@ -4,7 +4,7 @@ description: "Bring a project's formal verification back in line with the code a
 disable-model-invocation: true
 ---
 
-> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+> Names in backticks, such as `locate`, are capabilities, not commands. Read `../resolve-capability/SKILL.md` before the first step. It says how each one is done here. Bundled skills live at `../<name>/SKILL.md` and are run by reading that file.
 
 # Maintain a formal verification skill
 

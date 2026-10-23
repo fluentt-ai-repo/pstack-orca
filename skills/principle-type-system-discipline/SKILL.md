@@ -4,7 +4,7 @@ description: "Apply when designing types, reviewing a function signature, or wri
 disable-model-invocation: true
 ---
 
-> **In Orca** (`ORCA_CLI_BIN_DIR` or `ORCA_CLI_COMMAND` is set): read `../orca-harness/SKILL.md` before this skill and map its Cursor names through it.
+> Bundled skills live at `../<name>/SKILL.md` and are run by reading that file.
 
 # Type System Discipline
 
