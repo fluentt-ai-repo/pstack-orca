@@ -22,7 +22,7 @@ The model running a task reads layer 3 and the layer 2 index once at the start, 
 
 ## The vocabulary
 
-A capability is one thing a playbook step needs from its environment. The names are closed: a skill uses these names and no others. A new need is added here first.
+A capability is one thing a playbook step needs from its environment, where the way to get it differs between environments. The names are closed: a skill uses these names and no others. A new need is added here first.
 
 Each capability has one of four states in a given environment.
 
@@ -37,7 +37,8 @@ Each capability has one of four states in a given environment.
 | `spawn-worker` | An asynchronous worker on another agent product, with a report file | cross-vendor `Task`, cloud agents, swarm lanes | 28 + part of 70 |
 | `isolate-checkout` | Its own worktree, branch, ports, and temp paths for a writer | `Task` worktree isolation, `.cursor/worktrees` | part of 24 |
 | `run-remote` | A run that survives this machine sleeping | `environment: "cloud"`, cloud VMs | part of 28 |
-| `coordinate-workers` | Durable task, dependency, inbox, and decision-gate state across workers | the `orch` store, the Task coordinator loop | part of 70 |
+| `coordinate-workers` | Dispatch, dependencies, an inbox, and decision gates across workers | the Task coordinator loop, the `orch` store's units, inbox, and gates | part of 70 |
+| `control-agent` | Probe whether an agent is alive or stuck, send it a message, stop it, or replace it | Task `resume`, the dashboard liveness probe, cancelling a nested subagent | part of 70 |
 | `wake-on-event` | Block on, or be woken by, a worker finishing, a CI result, or a PR change | `/loop` as a watcher, `watch-pr` wakeups | part of 36 |
 | `run-on-schedule` | A recurring tick for a long program | `/loop 1h`, Cursor Automations schedules | part of 36 |
 | `ask-user` | A question with options, only for a call the user must make | `AskQuestion` | part of 19 |
@@ -48,7 +49,11 @@ Each capability has one of four states in a given environment.
 | `run-skill` | Run another pstack skill by name | `/name`, name-only references, short-name resolution | 75 |
 | `author-skill` | Write a new skill | `create-skill` | part of 25 |
 | `drive-app` | Drive a browser, a terminal program, or a desktop window, and capture evidence | team-kit `control-ui` and `control-cli`, cloud screen recording | part of 25 |
+| `inspect-runtime` | Attach to a live process: CDP, a CPU profile, a heap snapshot, code evaluated in the running process | team-kit control skills used by `runtime-forensics` and `perf-issue` | part of 25 |
 | `locate` | Where skills, instruction files, scratch state, and worktrees live | `.cursor/skills`, `.cursor/rules`, `~/.cursor/...`, the agent store path | 21 |
+| `durable-store` | `~/.pstack/store/<repo-slug>/` | same | same | same, named in every worker spec | The same path |
+| `inspect-runtime` | Node inspector or Chrome DevTools protocol through the shell ? | same ? | same ? | `orca eval` and the browser commands for a page ? | Say which attach method was missing |
+| `durable-store` | A place that outlives a session restart: decision trails, plan files, queue state | the agent store path the Cursor system prompt names | part of 21 |
 | `choose-model` | Which model and effort for a seat | Cursor model slugs, fast slugs | 31 |
 
 What this does not cover, on purpose:
@@ -57,6 +62,19 @@ What this does not cover, on purpose:
 - **Cursor UI wording** (50 rows). Custom Modes, the sidebar, and plugin-install screens are skipped. The slash prefix (`/name` in Claude Code, `$name` in Codex) is a one-line note in the user guide, not a capability.
 - **URLs and the install source** (11 rows) and the plugin manifests. A packaging decision, made once.
 - **Features removed already** (Automations event triggers, `make-bot-ui`, the benny pack). They are recorded in `docs/removed-cursor-features.md`.
+
+## Bundled tools are not capabilities
+
+pstack ships tools that run the same everywhere: `scripts/orch` (the units table, the verification ledger keyed by PR and head SHA, the frontier), `scripts/watch-pr` (the READY, WAITING, ADVANCE, COMPLETE verdict for a PR), `scripts/check-plan.mjs`, and `scripts/worktree-audit.sh`. A step that uses one of them says so by name. What differs by environment is only how the agent waits for it (`wake-on-event`) and what it needs installed. They need `bun`, which is not a given, so the generator's survey records whether `bun` is here.
+
+Two consequences from the review of the playbooks:
+
+- The `orch` store's units, inbox, and gates duplicate what Orca does, so under Orca a step uses `coordinate-workers`. The verification ledger has no Orca equivalent and stays on `orch` everywhere.
+- Reading a PR until it reaches a terminal verdict is `watch-pr` plus `wake-on-event`. It is not a capability of its own.
+
+`deslop` is not shipped by pstack and is not a capability. Steps that name it use the bundled `unslop` and `no-comments` skills through `run-skill`.
+
+The Cursor-internal forge (`origin pr ...`) is dropped from every playbook and script. Steps use `gh`. The playbooks' ban on `gt` stays.
 
 ## Mechanisms (first draft)
 
@@ -68,9 +86,10 @@ One line per capability and product. A cell marked `?` is not checked yet and mu
 | `spawn-worker` | none | none | none | `orca orchestration worker-start --agent <id>` inside a run | Fold the seat onto your own model and say so in one line |
 | `isolate-checkout` | `Agent` with `isolation: "worktree"` | `git worktree add` by hand ? | `git worktree add` by hand ? | `worker-start --worktree new-child`; remove with `orca worktree rm`, never `git worktree remove` | Work in a copy under the scratch path |
 | `run-remote` | none | none | none | `worker-start --on <saved environment>`; list with `orca environment list` | Run here and say that it dies with this session |
-| `coordinate-workers` | `scripts/orch` file store (needs `bun`) | same | same | `orca orchestration run-create`, `task-create`, `gate-create`, `check --wait` | The `orch` store, or the plan in the reply |
-| `wake-on-event` | `/loop` skill ? | ? | ? | `orca orchestration check --wait`, `orca terminal wait --for exit` | Poll with a bounded shell loop, or stop and say what to re-run |
-| `run-on-schedule` | cron and `/loop` tools ? | ? | ? | `orca automations create --trigger ...` | Skip and tell the user to re-run by hand |
+| `coordinate-workers` | `scripts/orch` units, inbox, and gates (needs `bun`) | same | same | `orca orchestration run-create`, `task-create`, `gate-create`, `check --wait` | The plan in the reply |
+| `control-agent` | `SendMessage`, `TaskStop` ? | ? | ? | `orca orchestration worker-show`, `send`, `worker-stop`, `worker-abandon` | Say that the agent cannot be probed |
+| `wake-on-event` | A `run_in_background` shell command wakes the session when it ends | `orca orchestration check --wait --timeout-ms 45000`, repeated and continued in the same exec session | ? | `orca orchestration check --wait`, `orca terminal wait --for exit`. An idle Orca chat is woken by an orchestration message. | Poll with a bounded shell loop, or stop and say what to re-run |
+| `run-on-schedule` | `/loop`, `CronCreate`, `ScheduleWakeup` ? | ? | ? | `orca automations create --trigger ...`. Every tick starts a new agent with no memory, so the tick prompt must carry everything, including reading the decision trail. | Skip and tell the user to re-run by hand |
 | `ask-user` | `AskUserQuestion` | numbered options in the reply | numbered options in the reply | In a worker: `orca orchestration ask` | Numbered options in the reply |
 | `track-todos` | the plan or todo tool in the tool list ? | `update_plan` | ? | none | A list in the reply |
 | `find-sessions` | `~/.claude/projects/<slug>/*.jsonl` | `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-*.jsonl`, filtered on `payload.cwd` | `~/.grok/sessions/<URL-encoded cwd>/<session>/` | `orca search`, `orca worktree ps`, `orca orchestration worker-read` | Say which store you could not read |
@@ -86,6 +105,38 @@ Two rules sit on top of the table.
 
 1. **The model chooses among the mechanisms; the adapter says exactly how to run the one it chose.** Where an action cannot be undone (`orca worktree rm`, merging a PR, deleting a branch), the adapter gives the exact command and the reading model does not improvise it.
 2. **Where an environment differs in structure and not only in name, the playbook states the intent and the invariants, and the adapter's reference file holds the procedure.** The Orca coordinator loop (run, worker, `check --wait`, ack, release) is the main case, and `orchestrate.md` leans on it.
+
+## Where the structure differs, not only the name
+
+These steps cannot be fixed by renaming. The playbook states the intent and the invariants. The adapter's reference file holds the procedure for each environment.
+
+- **`orchestrate`: roles and placement, queue and drain, liveness, close.** Cursor delivers completion notices and spawns, resumes, and drains only through `Task`. Orca has the coordinator wait on a run: `run-create`, `worker-start`, `check --wait`, ack, release. A nested sub-coordinator (depth 3) and "cloud work survives a Cursor restart, so reattach by PR and branch" become `run-use` reattachment in Orca. This goes whole into `references/orca-workers.md`.
+- **`autopilot-full` and `multi-phase-plan`: owners and the heartbeat.** In Cursor an owner is a cloud agent that survives its VM dying, and a `/loop 1h` tick runs in the same session and rereads the playbook from trunk. An Orca automation starts a fresh agent on every tick, so the tick prompt must carry everything, including reading the decision trail. An owner is local unless `--on <environment>` is given, so it dies when the computer sleeps.
+- **`babysit` and `shipping`: waiting on the watcher.** Cursor's `/loop` dynamic mode lets the watcher's output drive the wakeups. Claude Code, Orca, and Codex wait differently (see `wake-on-event`).
+- **`multi-phase-plan`: the boot recipe and the ten live lanes.** Each lane assumes its own cloud VM. Ten lanes on one local computer collide on ports and resources, so `isolate-checkout` applies.
+- **`worktree-cleanup`.** `git worktree remove --force` and `rm -rf` must not touch a worktree Orca manages. The steps that read pinned and active chats from the sidebar, and `worktree-audit.sh` reading `~/.cursor/projects/<slug>/agent-transcripts`, become `find-sessions`.
+- **`check-plan.mjs`.** Its pattern for "Ten lanes on `<model>` at the PR head" and its program markers (`git show origin/main:` and `/loop 1h`) change with the vocabulary. The plan skeleton reads `pstack/skills/...` from the target repository's trunk, which fails in a repository that does not vendor pstack. It reads the installed copy instead.
+
+## Steps where the adapter gives the exact command
+
+The reading model does not compose these. A reference file states each one with its conditions.
+
+- `shipping`: `gh pr merge <pr> --squash`, one at a time from the bottom of a stack; read the result back with `gh pr view --json state,mergedAt,baseRefName`; `--auto` only when the head has a verdict; after a merge, `gh pr edit --base <trunk>` and `git push --force-with-lease`; the `git patch-id` comparison.
+- `autopilot-full` and `autopilot-stack`: `--force-with-lease` pinned to the last pushed SHA; `gh pr edit <pr> --base <parent>`.
+- `babysit`: replying to a review comment with `gh api --method POST repos/<o>/<r>/pulls/<pr>/comments/<id>/replies --input payload.json`, with the comment body treated as data and never placed into a shell command.
+- `worktree-cleanup`: `orca worktree rm` under Orca, and otherwise `git worktree remove --force`, then `rm -rf` and `git worktree prune` for what is left; the `xcrun simctl --set testing delete all`, `delete unavailable`, and `runtime delete <id>` commands. The Cursor app-data cleanup is deleted. Deleting is irreversible, so `wip:N` stays a human decision.
+- Orca workers: when to use `worker-release` (only after a worker has settled), `worker-stop`, and `worker-abandon`. `orchestration reset` is destructive and is named with its exact conditions so no run calls it on its own.
+- `orchestrate` stack safety: only one stacker may change the topology by force-push, rebase onto a new base, or merge. Force-push to a shared branch, deploys, deletion, and closing someone else's PR go to the user.
+- Steps a person does: waiting at merge-ready for the operator's click, and the operator's merge in `autopilot-stack`. The adapter's state for these is `use-forge` printing the exact command for the user to run.
+
+## Where a long run rereads the index
+
+- `autopilot-full` and `autopilot-stack`: at every tick, because each tick rereads the playbook. `multi-phase-plan` puts the adapter in its list of files to reread, and `check-plan` enforces it.
+- `orchestrate`: at runtime install, after a restart, before the first wave of spawns after the context was compacted, and at close. Not at every drain.
+- `babysit` rearm and the `shipping` landing watcher: only the `wake-on-event` section.
+- `session-pickup`: always, because the previous session may have run in another environment. It is the one place where a capability's state can change under the run. `pause-safely` writes a line into the resume note saying which environment the run was in.
+- `autonomous-run` and `hillclimb`: on every heartbeat wake.
+- Before an irreversible command (`worktree-cleanup`, `shipping`): only the section for that command.
 
 ## How a skill uses it
 
@@ -112,10 +163,17 @@ A lint keeps product names out of layer 1: no `Task`, `AskUserQuestion`, `TodoWr
 3. **Lint.** The product-name ban above.
 4. **Long runs.** One multi-hour playbook (`autopilot-full` or `orchestrate`) to see whether the model still follows the adapter after the index has scrolled out of its context.
 
+## Checked and not checked
+
+Seen in a real run on this computer: the `Agent` tool's parameters in Claude Code; Codex waiting with `orca orchestration check --wait --timeout-ms 45000` and continuing in the same exec session; a Claude Code session woken by a finished `run_in_background` command; an idle Orca chat woken by an orchestration message; the Codex session store under Orca's `codex-accounts/<id>/home/sessions/`; the Grok session record.
+
+Not seen, so left as `?`: Codex `spawn_agent` and `update_plan`, Grok `spawn_subagent` (Grok has not run as a parent), `AskUserQuestion` actually called, `isolation: "worktree"` executed, Claude Code's `Monitor`, `ScheduleWakeup`, `CronCreate`, `SendMessage`, and `TaskStop`, and how Codex or Grok wake from a background command.
+
 ## Open points
 
-1. The names of the capabilities, especially `find-sessions`, `locate`, and `drive-app`.
-2. The cells marked `?`, mostly Grok and Codex scheduling and waking.
+1. The names `find-sessions`, `locate`, `durable-store`, `inspect-runtime`, `control-agent`, and `drive-app`. Whether `control-agent` should be three verbs (probe, message, stop).
+2. The cells marked `?`, listed above. Each is checked before the adapter ships or the cell is removed.
 3. Whether Orca counts as present only through the two environment variables, or also when `orca` is on `PATH`.
 4. How the plain, no-Orca mechanisms for `coordinate-workers` and `wake-on-event` should be tested.
-5. Whether `choose-model` stays a capability in this table or remains only `select-model`.
+5. Whether `choose-model` stays a row in this table or remains only `select-model`.
+6. The playbook review proposed `read-merge-state` as a capability. This draft treats it as `watch-pr` plus `wake-on-event`, because `watch-pr` runs the same in every environment. Say so if a step turns up that needs more.
