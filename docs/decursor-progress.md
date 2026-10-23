@@ -28,6 +28,16 @@ Each rule came from a unit that passed its check. Apply them to every later skil
 | Tool names in a prompt (`Read, Grep, Glob`) | "your file-reading and search tools" | how, interrogate |
 | A reviewer label with a model slug | `<agent> <model> <effort>` | interrogate |
 | A skill that runs other bundled skills | Write `run-skill`, and say once that bundled skills live at `../<name>/SKILL.md`. | architect |
+| `environment: "cloud"` owners, `Task` resume, a cloud agent's status in the dashboard | `spawn-worker` with `run-remote` when an environment exists, `control-agent` to probe or message, and a fresh worker with the consolidated scope instead of a resume. | orchestrate, autopilot-full, shipping |
+| `/loop` as a watcher or a heartbeat | `wake-on-event` for an event, `run-on-schedule` for a tick. A tick can start as a new agent with no memory, so its prompt names the trail, the plan, and the stop condition, and the adapter is reread in it. | autonomous-run, babysit, autopilot-full, multi-phase-plan |
+| The Origin forge (`origin pr ...`), Graphite (`gt`), a built-in PR tool | `use-forge`. Nothing else names a forge. | babysit, opening-a-pr, shipping, autopilot-full |
+| `deslop`, `control-ui`, `control-cli` from the Cursor team kit | The bundled **unslop** and **no-comments** skills through `run-skill`, and `drive-app` for driving a surface. | opening-a-pr, autopilot-full, multi-phase-plan, bug-fix |
+| Bugbot | `read-review-bot`, and "the review bot" in the triage reference. | babysit, multi-phase-plan, review-bot-triage |
+| The agent store the system prompt names | `durable-store`. A one-off report is scratch, not durable. | orchestrate, autopilot-full, multi-phase-plan |
+| An irreversible command copied into a playbook (merge, force-push, a comment reply, worktree removal, simulator cleanup) | Point at its section of `skills/resolve-capability/references/exact-steps.md` and say to run it as written. Do not copy the command. | shipping, babysit, worktree-cleanup, orchestrate |
+| A long run that must keep following the adapter | Name the points where it rereads `../../resolve-capability/SKILL.md`: the start of a run, a restart, after the context was compacted, every tick, and a takeover from another session. | orchestrate, autopilot-full, session-pickup, autonomous-run |
+| A plan that reads `pstack/skills/...` from the target repository's trunk | Read the installed pstack copy, written `<pstack>`. `check-plan.mjs` checks the adapter, `run-on-schedule`, and a named verification model. | multi-phase-plan |
+| Cursor app-data cleanup | Deleted. | worktree-cleanup |
 | A model the session cannot reach | Keep the entry as written and mark it `not reachable here`. Offer one bulk choice, `inherit-parent`, instead of a per-role replacement. When no CLI of that product can be started, the seat runs on the session's own model. | setup-pstack |
 
 ## Units
@@ -40,7 +50,7 @@ Each rule came from a unit that passed its check. Apply them to every later skil
 | 3 | Cross-model skills: arena, swarm, interrogate, reflect, architect, how, why | Done, checked by the author | See below |
 | 3b | The same skills, `poteto-help`, `orca-harness`, the setup guide, and the Claude Code adapter, moved from role lines to `select-model` | Done, checked by the author | See Unit 3b checks |
 | 3c | The seven cross-model skills name capabilities (`skills/resolve-capability/`), not products or commands | Done, checked by the author. Two runs that need a worker still fail on a low-effort model | See Unit 3c checks |
-| 4 | Playbooks, by remaining Cursor rows: orchestrate 33, multi-phase-plan 28, autopilot-full 12, babysit 10, opening-a-pr 8, worktree-cleanup 8, shipping 7, session-pickup 6 | Next | |
+| 4 | Playbooks: all 23, `review-bot-triage.md`, `check-plan.mjs`, and `worktree-audit.sh` | Done, checked by the author. Four of the 23 ran as plans or a first step | See Unit 4 checks |
 | 5 | Remaining skills, then `docs/guide` and the README | | |
 
 ### Unit 1 checks
@@ -154,6 +164,24 @@ Facts these runs settled:
 - The pointer fixed reading, not choosing. On `sonnet` at `low`, the seat table's diversity rule and the judge's phase lost to "keep it small". The same prompt at the default model started workers. That points to the model, not the wording, so it was not changed again.
 - The adapter's `durable-store` path was used for worker reports in one run, which created `~/.pstack/`. Transient reports are not what that capability is for.
 
+### Unit 4 checks
+
+All 23 playbooks, `references/review-bot-triage.md`, `scripts/check-plan.mjs` (with `bun test`), and `scripts/worktree-audit.sh` name capabilities and no product. They are in `scripts/rewritten.json`, and the capability-only lint covers them. The runs went through `verify-pstack` on `sonnet` at `low`, entered through `/poteto-mode`. pstack is installed globally on this computer, and Claude Code prefers a personal skill over a project skill of the same name, so these runs read the global copies. `vp sync --global` put HEAD (`66e467a`) there first, and `vp read` confirmed the copy each run used.
+
+| Run | Playbook | Result |
+| --- | --- | --- |
+| pb-orch | `orchestrate`, plan only | Pass. It read the playbook and the adapter, ran the Orca check, and read the worker, waiting, and exact-steps references. The plan covers starting workers, waiting, probing a silent worker read-only, and merging by the exact steps. |
+| pb-auto | `autopilot-full`, plan only | Pass. Owners as `spawn-worker` seats, an hourly tick with `run-on-schedule` and a self-contained prompt, probes through `control-agent`, and the adapter reread in the tick. |
+| pb-plan | `multi-phase-plan` and `check-plan` | Pass. The model wrote a two-PR plan to a path I gave, and `check-plan` reported 0 problems. The skeleton alone also passes `check-plan` once the model name is filled in. |
+| pb-wt | `worktree-cleanup`, step 1 | Pass. It ran the bundled audit from the installed copy and stopped. The testbed has one worktree, so the transcript scan and the removal steps had nothing to act on. |
+
+A throwaway repository with one worktree and a fake Claude store showed the audit's transcript scan: a chat folder named for the worktree marks it `verify-recent-chat`, and without one the worktree is `safe`.
+
+Facts these runs settled:
+
+- A playbook that names a capability and points at the adapter made a low-effort model read the adapter, ask whether Orca is here, and read the one reference it needed. None of the four skipped the check.
+- Plan-only runs cannot show whether a model follows the adapter once the work is long. The first multi-hour run is still unchecked.
+
 ### Not yet checked (for the maintainer)
 
 
@@ -170,3 +198,7 @@ Facts these runs settled:
 - A `select-model` generated from the user's real answers. The runs used the sample the generator's author wrote.
 - `arena` and `interrogate` at the default model after the adapter pointer. The default-model run covered `how` only.
 - The adapter's change that starts another vendor's CLI from the shell (`codex exec`, `claude -p`, `grok -p`) without Orca. The Unit 3c runs ran in an Orca terminal.
+- `babysit`, `shipping`, and `autopilot-stack` against a real pull request. The testbed has no remote.
+- `orchestrate`, `autopilot-full`, and `multi-phase-plan` executed, not planned.
+- `session-pickup` and `pause-safely` taking over a run that started in another environment.
+- The small playbooks (`bug-fix`, `feature`, `hillclimb`, `refactoring`, `perf-issue`, `eval`, and the rest). Their changes are model names, `drive-app`, and `inspect-runtime`, and none ran.
