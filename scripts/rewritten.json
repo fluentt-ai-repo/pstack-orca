@@ -1,5 +1,5 @@
 {
-  "_comment": "Skills this fork rewrote by hand so they carry no Cursor wording. The mirror audit skips them, the Orca pointer is not added to them, and scripts/lint-rewritten.mjs keeps Cursor wording out of them. `removed` lists paths this fork deleted. Their rows leave CURSOR-DEPENDENCIES.md and the upstream audit skips them.",
+  "_comment": "Skills this fork rewrote by hand so they carry no Cursor wording. The mirror audit skips them, the Orca pointer is not added to them, and scripts/lint-rewritten.mjs keeps Cursor wording out of them. `removed` lists paths this fork deleted, renamed, or replaced wholesale (the README, and bugbot-triage.md, now review-bot-triage.md). Their rows leave CURSOR-DEPENDENCIES.md and the upstream audit skips them.",
   "paths": [
     "skills/setup-pstack/",
     "skills/create-model-selection-skill/",
@@ -53,6 +53,8 @@
     "automations/",
     "skills/make-bot-ui/",
     "docs/harness/",
-    ".cursor-plugin/"
+    ".cursor-plugin/",
+    "README.md",
+    "skills/poteto-mode/references/bugbot-triage.md"
   ]
 }
