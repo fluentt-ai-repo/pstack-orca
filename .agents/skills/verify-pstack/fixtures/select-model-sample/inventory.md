@@ -4,33 +4,35 @@ Confirmed 2026-10-23 from Claude Code 2.1.309. Orca: yes, 1.4.237. This is a sna
 
 ## Environment
 
-- Harness: Claude Code, run inside Orca.
-- Orca is here (`ORCA_CLI_BIN_DIR` set). Catalog agents: claude, codex, grok.
-- `claude`, `codex`, `grok` are on `PATH`. Pins: `~/.claude/settings.json` model `opus`, effort `xhigh`; `~/.grok/config.toml` default `grok-4.7`.
+- Harness: Claude Code (Sonnet 5.5 session), started inside Orca.
+- `gh`: logged in (ynginkim). `bun`: 1.3.11.
+- Orca environments: grok (ws://100.106.114.19:6768), littleboy (ws://100.84.169.117:6768).
+- Pins: `~/.claude/settings.json` `model` = opus. `~/.codex/config.toml` `model` = gpt-6.1-sol, effort xhigh. `~/.grok/config.toml` `[models] default` = grok-4.7, `default_reasoning_effort` = high.
+- Headless CLIs found on `PATH`: codex 0.160.1, claude 2.1.309, grok 1.0.67. Not run: `not verified here`.
 
 ## claude
 
-- Models: opus (low, medium, high, xhigh, max), fable (same), sonnet (same), haiku (same), claude-opus-5, claude-sonnet-5, claude-fable-5, claude-opus-4-8, claude-opus-4-7, claude-haiku-4-5-20251001 (no efforts)
-- Start from here: `Agent` tool (`model`, `effort`), or an Orca worker with `--agent claude --model --effort`
-- Choose the model at start: yes
-- Loads this user's MCP servers: subagent types with `Tools: *` (claude, general-purpose) keep them; `claude-code-guide` (Bash, Read, WebFetch, WebSearch) does not. An Orca worker loads only Claude's own MCP config.
-- Read-only types: Explore and Plan (no Edit, Write, NotebookEdit; MCP tools kept per their "all tools except" lists), claude-code-guide
-- Confirmed: not verified here: proof jobs skipped by the user's instruction
-
-## grok
-
-- Models: grok-4.7, grok-4.7-build-fast, grok-4.6 (low, medium, high, xhigh), grok-4.5 (low, medium, high)
-- Start from here: `orca orchestration worker-start --agent grok` alone, or `grok -p "<brief>" -m <model> --reasoning-effort <effort>`
-- Choose the model at start: no through Orca (it runs `[models] default` = `grok-4.7` from `~/.grok/config.toml`); yes through `grok -p`
-- Loads this user's MCP servers: unknown
-- Read-only types: none; write "Read-only" in the brief and check `git status`
-- Confirmed: not verified here: proof jobs skipped by the user's instruction
+- Models: opus, fable, sonnet, haiku (low,medium,high,xhigh,max); claude-opus-5, claude-sonnet-5, claude-fable-5, claude-opus-4-8, claude-opus-4-7 (low..max incl. xhigh); claude-opus-4-6, claude-sonnet-4-6 (low,medium,high,max); claude-haiku-4-5-20251001 (no efforts).
+- Start from here: `Agent` tool (`model`: sonnet, opus, haiku, fable), or `orca orchestration worker-start --agent claude --model <m> --effort <e>`.
+- Choose the model at start: yes.
+- Loads this user's MCP servers: types with all tools (`claude`, `general-purpose`, `Explore`, `Plan`) keep them; `claude-code-guide` (Bash, Read, WebFetch, WebSearch) and `statusline-setup` (Read, Edit) do not. An Orca worker: unknown.
+- Read-only types: `Explore` and `Plan` (no Edit, Write, NotebookEdit); `claude-code-guide` (no edit tools).
+- Confirmed: not verified here: job start skipped by the user for this test.
 
 ## codex
 
-- Models: gpt-6.1-sol, gpt-6-astra, gpt-6-sol (low to ultra), gpt-6-luna (low to max), gpt-5.6-sol, gpt-5.6-terra (low to ultra), gpt-5.6-luna (low to max)
-- Start from here: Orca worker with `--agent codex --model --effort`, or `codex exec`
-- Choose the model at start: yes
-- Loads this user's MCP servers: unknown
-- Read-only types: none; write "Read-only" in the brief and check `git status`
-- Confirmed: not verified here: proof jobs skipped by the user's instruction
+- Models: gpt-6.1-sol, gpt-6-sol, gpt-6-astra, gpt-5.6-sol, gpt-5.6-terra (low,medium,high,xhigh,max,ultra); gpt-6-luna, gpt-5.6-luna (low,medium,high,xhigh,max).
+- Start from here: `orca orchestration worker-start --agent codex --model <m> --effort <e>`, or `codex exec`.
+- Choose the model at start: yes.
+- Loads this user's MCP servers: no (a worker loads only its own agent's MCP configuration).
+- Read-only types: none enforced. Say so in the brief, use `--worktree current`, check `git status`.
+- Confirmed: not verified here: job start skipped by the user for this test.
+
+## grok
+
+- Models: grok-4.7, grok-4.7-build-fast, grok-4.6 (low,medium,high,xhigh); grok-4.5 (low,medium,high).
+- Start from here: `orca orchestration worker-start --agent grok` (no model or effort flags), or `grok -p "<brief>" -m <model> --reasoning-effort <level>`.
+- Choose the model at start: no under Orca. The model is `[models] default` in `~/.grok/config.toml`, currently grok-4.7. Direct `grok -p` takes `-m`.
+- Loads this user's MCP servers: no.
+- Read-only types: none enforced. Say so in the brief, use `--worktree current`, check `git status`.
+- Confirmed: not verified here: job start skipped by the user for this test. The model that runs under Orca is read from the session record's `current_model_id`.
