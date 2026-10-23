@@ -71,6 +71,17 @@ Rules for spending:
 
 The lock is a JSON file at `~/.agents/verify-pstack-select-model.lock` (owner, purpose, time, placed sample, stash). Without `vp`, create it only when absent (`set -o noclobber`) and delete it only when it is yours.
 
+### The global install
+
+The user installed pstack globally (`npx skills add <repo> -g -a claude-code -a codex -a grok`). Real copies sit in `~/.agents/skills/<name>`, and `~/.claude/skills/<name>` and `~/.grok/skills/<name>` link to them. Claude Code prefers a personal skill over a project skill of the same name, and P-prio-164109 confirmed it: in the testbed, `/poteto-mode` came from `~/.claude/skills/poteto-mode`, not the testbed's freshly synced copy. Its `../resolve-capability/SKILL.md` then resolves to the global copy too.
+
+- A Claude run tests the global copies. `vp sync` still fills the testbed from the working tree, but Claude Code does not read those copies while a global one exists. An uncommitted change never reaches a Claude run.
+- To prove a change in a Claude run, commit it, then run `$VP sync --global`. It exports `skills/` at git HEAD to `~/.cache/verify-pstack/head-export` and runs `npx skills add <that folder> -g -a claude-code -a codex -a grok -s '*' -y`. It never installs uncommitted work into the user's real skills. `--dry-run` only exports and prints the command.
+- `sync --global` changes the install source the `skills` CLI records in `~/.agents/.skill-lock.json` from the repo path to the export folder. That is why the folder is kept. Say so when you run it.
+- `vp doctor` lists the skills whose global copy differs from HEAD. `vp read` names the copy each pstack skill came from (testbed, global, or fake home) and prints a warning when it is not the testbed's.
+- Codex docs say it may list both copies without merging. No run has checked which one Codex uses.
+- The `select-model` rules above do not change. A global install puts no `select-model` in place.
+
 ### The testbed
 
 - Other sessions launch runs in the same testbed. `vp` finds your session by the run id in the prompt and the launch time, so their sessions never mix with yours.
@@ -99,6 +110,7 @@ Known limits:
 
 - No Orca command closes a chat. `orca terminal close --terminal <handle>` takes terminal handles only, and a chat handle (`structured-agent-session-...`) gets `terminal_handle_stale`. Every chat run stays in the testbed until the user closes it in Orca's window. That is why runs default to a terminal.
 - `orca terminal close --worktree path:/Users/fluentt/Documents/pstack-testbed --all --json` failed with `terminal_close_incomplete` and left orphaned terminal records that the CLI cannot remove. Do not use it for cleanup.
+- Orca refuses `--model haiku --effort low` ("Agent claude model haiku does not support effort low"), though its catalog lists `low` for haiku. Use `--effort default` with haiku.
 - Orca starts a terminal Claude with `--dangerously-skip-permissions`, so a terminal run does not stop at a permission prompt. S-pair-154658 started an Orca worker from a terminal Claude without one. A run you start some other way can stop at one, and `vp wait` exits 4.
 - An Orca terminal sets `ORCA_CLI_BIN_DIR` but not `ORCA_CLI_COMMAND` or `ORCA_AGENT_SESSION_ID`. It sets `ORCA_TAB_ID`, `ORCA_TERMINAL_HANDLE`, and `ORCA_PANE_KEY`. An agent started in it inherits the same.
 - A tab closed in Orca's window while its agent is alive leaves the PTY running with no tab. `orca terminal close` then answers `terminal_handle_stale`. `vp cleanup` types the agent's exit command and then `exit` into that PTY. It ended Claude (`/exit`) this way in S-ro-155230 and R-missing-155347, where the tab was already gone at cleanup. The Codex command (`/quit`) has not been tried.
@@ -107,13 +119,13 @@ Known limits:
 
 ## Doctor
 
-`$VP doctor` is read-only. It checks that Orca answers and matches the snapshot in `orca/VERSION`, that the testbed is clean, which testbed copies differ from the working tree, that each `.claude/skills/<name>` link is the relative one, the state of `select-model` and its lock, any stash or fake home left behind, that `claude`, `codex`, and `grok` run, and your runs that were never cleaned. It also counts the testbed's open terminals and chats. It warns about a terminal whose title carries a run id, about orphaned or disconnected terminal records, and about open chats, and says when only the user can close them in Orca's window. Run it before the first launch and again after anything surprising. Fix every `FAIL` line before you launch. A `warn` line about a copy is a problem only when your run reads that skill.
+`$VP doctor` is read-only. It checks that Orca answers and matches the snapshot in `orca/VERSION`, that the testbed is clean, which testbed copies differ from the working tree, that each `.claude/skills/<name>` link is the relative one, the state of `select-model` and its lock, any stash or fake home left behind, that `claude`, `codex`, and `grok` run, and your runs that were never cleaned. It compares each global copy under `~/.agents/skills` with git HEAD. It also counts the testbed's open terminals and chats. It warns about a terminal whose title carries a run id, about orphaned or disconnected terminal records, and about open chats, and says when only the user can close them in Orca's window. Run it before the first launch and again after anything surprising. Fix every `FAIL` line before you launch. A `warn` line about a copy is a problem only when your run reads that skill.
 
 ## Drive
 
 1. Pick the runs from the table at the top.
 2. Run `$VP doctor`.
-3. Sync the skills your change touched: `$VP sync <name>...`. `$VP sync --check <name>...` only reports.
+3. Sync the skills your change touched: `$VP sync <name>...`. `$VP sync --check <name>...` only reports. When `vp doctor` reports a global install, Claude runs read the global copies instead, so commit the change and run `$VP sync --global` before a Claude run (see The global install).
 4. Set the `select-model` state the feature names, by the rules in Shared state.
 5. Launch with the feature's prompt.
 6. `$VP wait <run id>`. Exit 0 means finished. Exit 2 means still running, so call it again. Exit 3 means the session is waiting on a question. Read it with `$VP screen <run id>`. The question is the finding. Answer it with `$VP key` only to let the run finish. Exit 4 means a terminal run stopped at a permission prompt. `vp` prints the screen. Answer it with `$VP key`, and report it, because a driven agent should not need one. Give the Bash tool a timeout above `--timeout` (240 seconds by default). A foreground `sleep` longer than about 45 seconds is blocked in Claude Code, and `vp wait` polls inside node instead.
@@ -169,7 +181,8 @@ It never touches `select-model`. `$VP sm release` does that. It prints the evide
 | Command | What it does |
 | --- | --- |
 | `doctor` | The read-only check above. |
-| `sync <name>... \| --all [--check]` | `rsync -a --delete` each `skills/<name>/` into the testbed, and create its `.claude/skills` link if missing. |
+| `sync <name>... \| --all [--check]` | `rsync -a --delete` each `skills/<name>/` from the working tree into the testbed, and create its `.claude/skills` link if missing. |
+| `sync --global [--dry-run]` | Install `skills/` at git HEAD globally with the `skills` CLI. Never uncommitted changes. |
 | `sm status` | The state of `select-model`, the lock, and any stash. |
 | `sm lock "<purpose>"`, `sm place [--from <dir>]`, `sm remove`, `sm stash --approved "<words>"`, `sm restore`, `sm release`, `sm break --approved "<words>"` | The `select-model` rules above. |
 | `fakehome <name> [--sample] [--from <dir>]` | A home under `/tmp` and the prompt line that points the generator at it. `--sample` puts the fixture inside. |

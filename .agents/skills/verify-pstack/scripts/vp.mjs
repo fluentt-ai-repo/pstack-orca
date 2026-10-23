@@ -20,6 +20,11 @@ const STASH = path.join(HOME, '.agents/verify-pstack-stash')
 const SAMPLE_MARK = '.verify-pstack-sample'
 const FIXTURE = path.join(SKILL_DIR, 'fixtures/select-model-sample')
 const NOBIN = '/tmp/vp-nobin'
+// `npx skills add -g` puts real copies here and links them from ~/.claude/skills and ~/.grok/skills.
+const GLOBAL_SKILLS = path.join(HOME, '.agents/skills')
+const GLOBAL_LINK_DIRS = [GLOBAL_SKILLS, path.join(HOME, '.claude/skills'), path.join(HOME, '.grok/skills')]
+// Kept, not deleted, because the skills CLI records it as the install source.
+const HEAD_EXPORT = path.join(HOME, '.cache/verify-pstack/head-export')
 const ORCA = process.env.ORCA_CLI_COMMAND || 'orca'
 const ORCA_DATA = process.env.ORCA_USER_DATA_PATH || path.join(HOME, 'Library/Application Support/orca')
 const STALE_LOCK_MS = 2 * 3600 * 1000
@@ -51,8 +56,8 @@ function parseArgs(argv, booleans = []) {
   return { pos, opt }
 }
 
-function sh(cmd, args, { cwd, timeout } = {}) {
-  const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', maxBuffer: 1 << 28, timeout })
+function sh(cmd, args, { cwd, timeout, input } = {}) {
+  const r = spawnSync(cmd, args, { cwd, input, encoding: 'utf8', maxBuffer: 1 << 28, timeout })
   return { status: r.status, stdout: r.stdout || '', stderr: r.stderr || (r.error ? String(r.error) : '') }
 }
 
@@ -277,8 +282,54 @@ function repoSkills() {
     .map((e) => e.name)
 }
 
+// Git blob ids of skills/<name>/* at HEAD, keyed by skill name, then by path inside the skill.
+function headSkillBlobs() {
+  const out = new Map()
+  for (const line of sh('git', ['-C', REPO, 'ls-tree', '-r', 'HEAD', '--', 'skills/']).stdout.split('\n')) {
+    const m = line.match(/^\d+ blob ([0-9a-f]+)\tskills\/([^/]+)\/(.+)$/)
+    if (!m) continue
+    if (!out.has(m[2])) out.set(m[2], new Map())
+    out.get(m[2]).set(m[3], m[1])
+  }
+  return out
+}
+
+// Names whose global copy differs from HEAD, and whether any pstack skill is installed globally at all.
+function globalDrift() {
+  const head = headSkillBlobs()
+  const drift = []
+  let installed = 0
+  for (const [name, files] of head) {
+    const dir = path.join(GLOBAL_SKILLS, name)
+    if (!exists(path.join(dir, 'SKILL.md'))) continue
+    installed++
+    const rels = walk(dir)
+    const ids = sh('git', ['hash-object', '--stdin-paths'], { input: rels.map((f) => path.join(dir, f)).join('\n') }).stdout.trim().split('\n')
+    const local = new Map(rels.map((f, i) => [f, ids[i]]))
+    const same = local.size === files.size && [...files].every(([f, id]) => local.get(f) === id)
+    if (!same) drift.push(name)
+  }
+  return { installed, total: head.size, drift }
+}
+
+function syncGlobal(opt) {
+  if (exists(HEAD_EXPORT)) fs.rmSync(HEAD_EXPORT, { recursive: true })
+  fs.mkdirSync(HEAD_EXPORT, { recursive: true })
+  const tar = spawnSync('sh', ['-c', `git -C '${REPO}' archive HEAD skills | tar -x -C '${HEAD_EXPORT}'`], { encoding: 'utf8' })
+  if (tar.status !== 0) die(`could not export HEAD: ${tar.stderr}`)
+  const head = sh('git', ['-C', REPO, 'rev-parse', '--short', 'HEAD']).stdout.trim()
+  const cmd = ['skills', 'add', HEAD_EXPORT, '-g', '-a', 'claude-code', '-a', 'codex', '-a', 'grok', '-s', '*', '-y']
+  console.log(`exported skills/ at ${head} to ${HEAD_EXPORT}`)
+  if (opt['dry-run']) return console.log(`would run: npx ${cmd.join(' ')}`)
+  const r = spawnSync('npx', cmd, { stdio: 'inherit' })
+  if (r.status !== 0) die(`npx skills add exited ${r.status}`)
+  const after = globalDrift()
+  console.log(after.drift.length ? `still different from HEAD: ${after.drift.join(', ')}` : `global copies match ${head}`)
+}
+
 function sync(args) {
-  const { pos, opt } = parseArgs(args, ['all', 'check'])
+  const { pos, opt } = parseArgs(args, ['all', 'check', 'global', 'dry-run'])
+  if (opt.global) return syncGlobal(opt)
   const names = opt.all ? repoSkills() : pos
   if (!names.length) die('name the skills your change touched, or pass --all')
   for (const name of names) {
@@ -607,6 +658,32 @@ function tmpDirs(rec, sinceMs) {
   })
 }
 
+// Where each pstack skill the run used came from. Claude Code writes "Base directory for this skill: <dir>" when it expands one.
+function skillSources(rec) {
+  const names = new Set(repoSkills())
+  const raw = fs.statSync(rec.file).isDirectory() ? '' : fs.readFileSync(rec.file, 'utf8')
+  const paths = [
+    ...[...raw.matchAll(/Base directory for this skill: ([^"\\\n]+)/g)].map((m) => m[1].trim()),
+    ...rec.calls.flatMap((c) => [...callText(c).matchAll(/[\w./~@-]*\/skills\/[\w.-]+\/[\w./-]*/g)].map((m) => m[0])),
+  ]
+  const where = (p) => {
+    const abs = p.replace(/^~(?=\/)/, HOME)
+    if (abs.startsWith(TESTBED)) return 'testbed'
+    if (abs.startsWith('/tmp/vp-home-') || abs.startsWith('/private/tmp/vp-home-')) return 'fake home'
+    if (GLOBAL_LINK_DIRS.some((d) => abs.startsWith(`${d}/`))) return 'global'
+    if (abs.startsWith(path.join(REPO, 'skills'))) return 'repo'
+    return 'other'
+  }
+  const seen = new Map()
+  for (const p of paths) {
+    const m = p.match(/\/skills\/([\w.-]+)/)
+    if (!m || !names.has(m[1])) continue
+    const key = `${m[1]} ${where(p)}`
+    if (!seen.has(key)) seen.set(key, { skill: m[1], source: where(p), path: p })
+  }
+  return [...seen.values()]
+}
+
 function facts(rec, sinceMs, width) {
   const finalText = []
   for (let i = rec.events.length - 1; i >= 0 && !rec.events[i].call; i--) finalText.unshift(rec.events[i].text)
@@ -628,6 +705,7 @@ function facts(rec, sinceMs, width) {
     ],
     workers: workers(rec, sinceMs),
     cli_workers: cliWorkers(rec, width),
+    skill_sources: skillSources(rec),
     tmp_dirs: tmpDirs(rec, sinceMs),
     final_reply: finalText.join('\n\n'),
   }
@@ -639,6 +717,7 @@ function render(f, header = []) {
   L.push('', `first prompt: ${oneLine(f.first_prompt, 600)}`, '', `tool calls (${f.calls.length}):`)
   L.push('  (& marks a call sent in the same message as the one before it, so they started together)')
   for (const c of f.calls) L.push(`${c.same_message ? '&' : ' '}${String(c.n).padStart(3)}. ${c.name.padEnd(10)} ${c.shown}`)
+  L.push('', 'pstack skills used, by copy:', ...(f.skill_sources.length ? f.skill_sources.map((x) => `  ${x.skill.padEnd(28)} ${x.source.padEnd(9)} ${x.path}`) : ['  none']))
   L.push('', 'skill files named in tool calls:', ...(f.skill_files_read.length ? f.skill_files_read.map((p) => `  ${p}`) : ['  none']))
   L.push('', 'select-model touches:', ...(f.select_model_touches.length ? f.select_model_touches.map((c) => `  ${c.n}. ${c.name} ${c.shown}`) : ['  none']))
   if (f.todo.length) L.push('', 'last todo list:', ...f.todo.map((t) => `  ${t}`))
@@ -865,7 +944,10 @@ function read(args) {
   const before = r.before
   const smChanged = before.select_model.kind !== after.select_model.kind || before.select_model.hash !== after.select_model.hash
   const newResidue = after.testbed.filter((l) => !before.testbed.includes(l))
+  const expect = r.expect_copy ?? 'testbed'
+  const off = f.skill_sources.filter((x) => x.source !== expect && x.source !== 'fake home')
   const header = [
+    ...(off.length ? [`WARNING: expected the ${expect} copies, but the run used ${off.map((x) => `${x.skill} (${x.source})`).join(', ')}`] : []),
     `run ${r.id}  ${r.agent} ${r.surface}  launched with model=${r.model ?? 'default'} effort=${r.effort ?? 'default'}  started ${r.started_at}`,
     `select-model: ${before.select_model.kind} at launch, ${after.select_model.kind} now${smChanged ? '  VOID: select-model changed during the run, rerun it' : ''}`,
     `testbed: ${newResidue.length ? `${newResidue.length} new change(s): ${newResidue.join(' | ')}` : 'no new changes'}`,
@@ -1067,6 +1149,10 @@ function doctor() {
     if (stale.length) warn.push(`testbed copies differ from the working tree: ${stale.join(', ')}. Sync the ones your run reads (vp sync <name>)`)
     else ok('testbed skill copies match the working tree')
   }
+  const g = globalDrift()
+  if (!g.installed) ok('no global pstack install under ~/.agents/skills')
+  else if (g.drift.length) warn.push(`global copies differ from HEAD: ${g.drift.join(', ')}. Claude Code prefers them over the testbed's copies. Run vp sync --global to install HEAD`)
+  else ok(`global pstack copies (${g.installed} of ${g.total}) match HEAD`)
   const s = smState()
   console.log(`info  select-model: ${s.kind}${s.owner ? ` placed by ${s.owner}` : ''}. lock: ${describeLock(readLock())}`)
   if (s.kind === 'sample' && !readLock()) problems.push(`a sample select-model is installed with no lock (placed by ${s.owner}). Ask its owner or the user before removing it`)
@@ -1117,7 +1203,8 @@ function doctor() {
 const HELP = `vp.mjs: drive pstack skills in real agent sessions (see ../SKILL.md)
 
   doctor                          read-only health check; run first and after any surprise
-  sync <skill>... | --all [--check]   copy skills/<name> from this repo into the testbed
+  sync <skill>... | --all [--check]   copy skills/<name> from this repo's working tree into the testbed
+  sync --global [--dry-run]       install skills/ at git HEAD globally (npx skills add -g), never uncommitted changes
   sm status|lock "<purpose>"|place [--from <dir>]|remove|stash --approved "<words>"|restore|release|break --approved "<words>"
                                   the shared ~/.agents/skills/select-model and its lock
   fakehome <name> [--sample] [--from <dir>]   a throwaway home under /tmp for generator runs
