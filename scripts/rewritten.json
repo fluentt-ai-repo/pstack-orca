@@ -44,11 +44,14 @@
     "skills/poteto-mode/scripts/watch-pr/",
     "skills/poteto-mode/scripts/bootstrap.ts",
     "skills/poteto-mode/scripts/package.json",
-    "skills/poteto-mode/scripts/check-plan.test.ts"
+    "skills/poteto-mode/scripts/check-plan.test.ts",
+    "agents/",
+    "plugin.json"
   ],
   "removed": [
     "automations/",
     "skills/make-bot-ui/",
-    "docs/harness/"
+    "docs/harness/",
+    ".cursor-plugin/"
   ]
 }

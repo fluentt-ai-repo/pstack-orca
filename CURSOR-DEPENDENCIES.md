@@ -2,7 +2,7 @@
 
 Every place where upstream pstack ([`cursor/plugins/pstack`](https://github.com/cursor/plugins/tree/main/pstack)) depends on Cursor, and how this fork handles it in Orca. The rules these rows apply live in [`skills/resolve-capability/SKILL.md`](./skills/resolve-capability/SKILL.md). This file is the checklist that proves nothing was missed.
 
-153 rows. Locations refer to the `upstream` branch.
+134 rows. Locations refer to the `upstream` branch.
 
 ## How this list stays complete
 
@@ -27,28 +27,27 @@ Skills this fork rewrote by hand (`scripts/rewritten.json`) have no rows either,
 
 | Handling | Rows |
 | --- | --- |
-| `agent-native` | 64 |
-| `orca` | 47 |
-| `keep` | 22 |
+| `agent-native` | 52 |
+| `orca` | 45 |
+| `keep` | 20 |
 | `fallback-only` | 13 |
-| `skip` | 7 |
+| `skip` | 4 |
 
 | Category | Rows |
 | --- | --- |
-| `frontmatter` | 25 |
+| `frontmatter` | 23 |
 | `implicit` | 19 |
-| `cursor-ui` | 18 |
+| `cursor-ui` | 16 |
 | `automation` | 13 |
 | `bugbot` | 12 |
 | `transcript` | 12 |
-| `subagent-field` | 10 |
-| `settings-path` | 8 |
-| `skill-path` | 7 |
-| `url` | 7 |
 | `cloud-agent` | 6 |
 | `model-slug` | 6 |
+| `skill-path` | 6 |
 | `team-kit` | 6 |
-| `tool-name` | 2 |
+| `settings-path` | 5 |
+| `subagent-field` | 5 |
+| `url` | 3 |
 | `pr-tool` | 1 |
 | `script` | 1 |
 
@@ -141,20 +140,10 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 
 ## Subagent definitions (agents/)
 
-10 rows.
+0 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CD-668 | `agents/comment-sicko.md:3` | `description: A deranged comment-hater` | subagent-field | Cursor plugin custom-agent file. Its fields (name, description only) are portable, but registration differs per harness. | agent-native | Claude Code `pstack:comment-sicko` via plugin `agents/` or `~/.claude/agents/`; Grok `~/.grok/agents/comment-sicko.md`; Codex custom agent TOML, or an Orca worker with the body as `--spec`. | todo |
-| CD-669 | `agents/comment-sicko.md:26` | `` I run `/how`, `/why`, or both from the **how** and **why** skills `` | tool-name | A subagent slash-invoking skills, which needs Cursor's shared catalog. | agent-native | Read `<pstack>/skills/how/SKILL.md` and `why/SKILL.md`. In Grok the child cannot spawn the why investigators (depth 1), so it runs them inline; an Orca worker is a top-level session and can fan out. | todo |
-| CD-670 | `agents/poteto-agent.md:3` | `` Spawn a fresh `poteto-agent` for each new task, and resume `` | subagent-field | Cursor Task `resume`. | agent-native | Claude Code: `SendMessage` to the agent id, or a new spawn with the prior result pasted in. Grok: `resume_from`. Orca: `orca orchestration send --to dispatch:<id>`. | todo |
-| CD-671 | `agents/poteto-agent.md:3` | `` Substituting `generalPurpose` skips that read and drifts. `` | subagent-field | Cursor subagent_type slug `generalPurpose`. | agent-native | Claude Code and Grok call it `general-purpose`. | todo |
-| CD-672 | `agents/poteto-agent.md:3` | `` spawned during a `/poteto-mode` run `` | cursor-ui | Cursor slash name. | agent-native | `/pstack:poteto-mode` (Claude Code), `$poteto-mode` (Codex), `/poteto-mode` (Grok). | todo |
-| CD-673 | `agents/poteto-agent.md:4` | `is_background: true` | subagent-field | This is a Cursor plugin custom-agent file, and `is_background` is a Cursor-only field. | agent-native | Claude Code: plugin `agents/` gives `pstack:poteto-agent`, or copy to `~/.claude/agents/`; drop `is_background` (Agent runs in background by default). Grok: copy to `~/.grok/agents/poteto-agent.md`, drop the field (`spawn_subagent` `run_in_background` defaults true). Codex: convert to a custom agent TOML (`~/.codex/agents/`) with the body as instructions, or use `orca orchestration worker-start --spec "<body>" --agent codex`. | todo |
-| CD-674 | `agents/poteto-agent.md:9` | `Your skill catalog hides this skill` | frontmatter | Depends on Cursor hiding disable-model-invocation skills from subagent catalogs. | agent-native | The same holds in Claude Code and Grok (hidden from the model). Codex shows it, which is harmless. Read the file by path either way. | todo |
-| CD-675 | `agents/poteto-agent.md:9` | `owns the playbook, the todo list, and every Task spawn` | tool-name | Cursor `Task` tool. | agent-native | `Agent` (Claude Code), `spawn_subagent` (Grok), or Orca `worker-start`. Note that Grok children cannot spawn further (depth 1). | todo |
-| CD-676 | `agents/poteto-agent.md:9` | `` search `~/.cursor/plugins/` for a file whose path ends in `` | settings-path | Locates pstack only under the Cursor plugin cache. | agent-native | Search `~/.claude/plugins/` (Claude Code), `~/.grok/plugins` or the configured `[skills] paths` (Grok), and `~/.agents/skills` or `~/.codex/skills` (Codex). Best: the parent always passes the absolute path in the brief or `--spec`. | todo |
-| CD-677 | `agents/poteto-agent.md:9` | `` the copy whose `.cursor-plugin/plugin.json` has the highest `version` `` | settings-path | Cursor plugin manifest. | agent-native | `.claude-plugin/plugin.json` in Claude Code. Other harnesses have no manifest; use the path the parent gave. | todo |
 
 ## Docs (docs/)
 
@@ -221,16 +210,10 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 
 ## README and plugin manifests
 
-48 rows.
+39 rows.
 
 | ID | Location | Excerpt | Category | Cursor dependency | Handling | Orca handling and fallback | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| CD-921 | `.cursor-plugin/plugin.json:2` | `"name": "pstack",` | settings-path | The Cursor-only plugin manifest is used by `/add-plugin`. | skip | Not read by `npx skills add`, Claude Code `~/.claude/skills`, Codex `~/.agents/skills`, or Grok. Delete it or leave it inert. | todo |
-| CD-922 | `.cursor-plugin/plugin.json:9` | `"homepage": "https://github.com/cursor/plugins/tree/main/pstack",` | url | These URLs point at the Cursor monorepo. | skip | Drop with the file, or repoint if the file is kept. | todo |
-| CD-923 | `.cursor-plugin/plugin.json:10` | `"repository": "https://github.com/cursor/plugins",` | url | This is metadata in the Cursor plugin manifest and points at Cursor's plugin repo. | keep | Orca and the other agents load skills from skill folders and never read `.cursor-plugin/plugin.json`. The fork's real source is `ynginkim/pstack-orca`. | n/a |
-| CD-924 | `.cursor-plugin/plugin.json:12` | `"logo": "assets/logo.png",` | cursor-ui | The logo is for the Cursor marketplace UI. | skip | No skills-CLI equivalent. `orca skills share` bundles have no logo field. | todo |
-| CD-925 | `.cursor-plugin/plugin.json:29` | `"skills": "./skills/",` | skill-path | Cursor reads the skill root from the manifest. | agent-native | The skills CLI auto-discovers `skills/`. Install with `npx skills add <repo> -g -a claude-code` (→ ~/.claude/skills), `-a codex` (→ ~/.agents/skills), and `-a grok` (→ ~/.grok/skills), or use `orca skills install`-style pinned `npx skills@<v> add <repo>/tree/<commit>`. Confirm agent ids with `npx skills add --help`. | todo |
-| CD-926 | `.cursor-plugin/plugin.json:30` | `"agents": "./agents/"` | subagent-field | Cursor installs `poteto-agent` and `comment-sicko` as named subagent types from the manifest, but `npx skills add` installs skills only. | agent-native | Claude Code: copy `agents/*.md` to `~/.claude/agents/` with a separate install step. Codex and Grok have no subagent-definition dir, so skills must inline the agent brief or launch it as an Orca worker (`orca orchestration worker-start --spec "<agents/poteto-agent.md contents + task>" --agent codex`). | todo |
 | CD-927 | `README.md:3` | `i've worked with millions of lines of code at Meta, Netflix, and Cursor.` | implicit | Not a dependency: this is the author's bio naming Cursor as an employer. | keep | No action. It is prose. | n/a |
 | CD-928 | `README.md:7` | `this turns cursor into a real engineering team.` | implicit | The product framing assumes Cursor is the host. | skip | Reword for Orca, which hosts Claude Code, Codex, and Grok. | todo |
 | CD-929 | `README.md:11` | `**cursor gives you the best of all worlds.** every frontier model` | implicit | Multi-model claims assume Cursor's single picker across vendors, where one subagent call can pick any model family. | orca | Orca supplies cross-vendor workers: `orca orchestration worker-start --agent codex\|claude\|grok --model <id> --effort <lvl>`. Outside Orca: single vendor only, so panels collapse to the session model. | todo |
@@ -270,6 +253,3 @@ These are the `fallback-only` themes. Each one costs something real, and a skill
 | CD-963 | `README.md:279` | `## automations` | automation | This section heading introduces the Benny pack, which is built on Cursor Automations. | orca | Use `orca automations create`, which runs on a schedule only. For Slack triggers, poll with `--precheck <command>`. Secrets come from the host environment. | todo |
 | CD-964 | `README.md:281` | `its files are not registered as slash skills.` | skill-path | This relies on the Cursor manifest scoping skills to `./skills/`. | fallback-only | `npx skills add` may discover nested `automations/benny/skills/*/SKILL.md`. Install with explicit `--skill` names or exclude, and verify with `npx skills add <repo> --list`. | todo |
 | CD-965 | `README.md:283` | `` set it up, point cursor at [`FOR_AGENTS.md`](./automations/benny/FOR_AGENTS.md). setup copies the `` | automation | Benny is Cursor-only. | orca | Port to `orca automations create` (see benny rows). | todo |
-| CD-966 | `plugin.json:2` | `"$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"` | frontmatter | This plugin manifest schema is read by Cursor/Claude plugin installers, and `npx skills add` ignores it. | keep | Harmless metadata. `npx skills add` discovers `skills/*/SKILL.md` directly, so the manifest is optional for distribution into ~/.claude/skills, ~/.agents/skills, and ~/.grok/skills. | n/a |
-| CD-967 | `plugin.json:9` | `"homepage": "https://github.com/cursor/plugins/tree/main/pstack"` | url | The homepage points at the Cursor plugins monorepo. | orca | Repoint to the fork that `npx skills add <owner>/<repo>` will install from, for example `npx skills add <owner>/pstack-orca -g -a claude-code -a codex`. | todo |
-| CD-968 | `plugin.json:10` | `"repository": "https://github.com/cursor/plugins"` | url | The repository is the Cursor monorepo, and that is not the install source for skills CLI. | orca | Change to the Orca fork's repo URL. The skills CLI resolves `<owner>/<repo>` or a full git URL. | todo |
