@@ -1,0 +1,55 @@
+name: littleboy-release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: littleboy-release-${{ github.event.release.id }}
+  cancel-in-progress: false
+
+jobs:
+  release-point:
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check skill references and rewritten sources
+        run: |
+          node scripts/check-orca-commands.mjs
+          node scripts/lint-rewritten.mjs
+          node scripts/prune-cursor-deps.mjs --check
+      - uses: oven-sh/setup-bun@v2
+      - name: Test bundled scripts
+        working-directory: skills/poteto-mode/scripts
+        run: bun install --frozen-lockfile && bun run test
+      - name: Write the verified release point
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_ID: ${{ github.event.release.id }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          Path("littleboy-release.json").write_text(json.dumps({
+              "schema": 1,
+              "repository": os.environ["GITHUB_REPOSITORY"],
+              "release_id": int(os.environ["RELEASE_ID"]),
+              "tag": os.environ["RELEASE_TAG"],
+              "revision": revision,
+          }, indent=2) + "\n")
+          PY
+      - name: Attach the verified release point
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$RELEASE_TAG" littleboy-release.json --repo "$GITHUB_REPOSITORY"

@@ -19,7 +19,17 @@ npx skills add ynginkim/pstack-orca -g -a claude-code -a codex -a grok -s '*' -y
 
 This installs the skills for the three harnesses. Codex reads `~/.agents/skills/` directly, and Claude Code and Grok list them through links in `~/.claude/skills/` and `~/.grok/skills/`. Start a new session afterwards. Run the same command again to update, and `npx skills remove -g <name>` to remove one. A skill runs as `/name` in Claude Code and as `$name` in Codex.
 
+Inside Orca, install and update this way instead:
+
+```bash
+env -u CLAUDE_CONFIG_DIR npx skills add ynginkim/pstack-orca -g -a claude-code -a codex -a grok -s '*' -y
+```
+
+When Orca starts Claude Code under one of its accounts, it sets `CLAUDE_CONFIG_DIR` to that account's profile, and every command run from the session inherits it. With it set, the `skills` CLI (as of 1.7.4) writes links in `~/.claude/skills/` that point nowhere, and Claude Code stops listing the skills ([vercel-labs/skills#456](https://github.com/vercel-labs/skills/issues/456)). Codex and Grok still see them. `find ~/.claude/skills -maxdepth 1 -type l ! -exec test -e {} \; -print` lists the broken links, and the command above repairs them.
+
 The `agents/` files are not installed by the `skills` CLI. `poteto-mode` and `no-comments` carry what they need and work without them.
+
+The FluentT organization fork also provides [verified release points for littleboy](docs/littleboy-releases.md), consumed by its existing operations console.
 
 ## Get started
 

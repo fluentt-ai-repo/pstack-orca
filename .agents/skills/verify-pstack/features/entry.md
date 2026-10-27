@@ -14,6 +14,7 @@ A user types `/poteto-mode` (or `$poteto-mode` in Codex) with a task. The agent 
 - Claude Code in an Orca chat or terminal: `/poteto-mode <task>`.
 - Claude Code outside Orca: the same, in the plain surface.
 - Codex in an Orca terminal: `$poteto-mode <task>`.
+- Grok in an Orca terminal: `/poteto-mode <task>`.
 
 ## Driving it with vp
 
@@ -28,12 +29,14 @@ Preconditions:
 - **Copy.** "last todo list" starts with the four numbered steps of `skills/poteto-mode/playbooks/investigation.md`, in order and in the playbook's words. Compare with `grep -n '^[0-9]\. ' skills/poteto-mode/playbooks/investigation.md`.
 - **Hold.** "native subagents" and "Orca workers" both say `none`, and the testbed line says `no new changes`.
 - **Codex.** Run `$VP launch E --agent codex --prompt '$poteto-mode calc.js의 sum()이 마지막 원소를 빼먹는지 조사해줘. 이번은 진입 확인용이다. 선택한 playbook의 단계를 todo(todo 도구가 없으면 답변 목록)로 옮기는 데까지만 하고 멈춰라. 조사·subagent·worker는 시작하지 마.'`. The todo list comes from `update_plan`. Close it with `$VP cleanup <run id>`.
+- **Grok.** Run the Claude prompt with `--agent grok` and no model or effort. The first run in a folder stops at Grok's trust screen. Answer it as `../SKILL.md` (Launch) says. The todo list comes from Grok's `todo_write`.
 - **No Orca.** Run the Claude prompt with `--surface plain`, answer the first screen as `../SKILL.md` says, then wait and read. The criteria are the same.
 
 ## Gotchas
 
 - Earlier passes: E1 (Claude chat), E2 (Claude terminal), E3 (no Orca), E4 (Codex terminal). They ran before `select-model` existed.
 - Final pass before release: F1-entry-171628 (Claude terminal) and F2-entry-171630 (Codex terminal) both passed. Neither build offered a todo tool (Claude Code 2.1.309 showed no `TodoWrite`, and that Codex build's instructions had no `update_plan`), so both kept the list in the reply, which the criterion allows.
+- G-entry-131737 (Grok terminal, 2026-10-27) passed. It copied the four steps verbatim with `todo_write`, and read only the playbook, neither `select-model` nor `resolve-capability`.
 - `poteto-mode` reads `select-model` and `../resolve-capability/SKILL.md` near the start even for an entry check. Those reads are expected and are not criteria here.
 - E4 also tried to read a role-table file that no skill names any more. Note such a read in the verdict. It does not fail the entry.
 - The prompt says to stop after the todo list. A run that goes on to investigate fails `entry-hold`, even when its answer is right.
