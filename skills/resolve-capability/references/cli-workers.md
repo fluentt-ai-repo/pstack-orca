@@ -14,6 +14,7 @@ Run these from the shell tool. Start one in the background (Claude Code: `run_in
 ## Rules
 
 - The report is the output file or the JSON answer. There is no `worker_done` message and no inbox, so wait on the process, not on a message.
+- Silence is not a hang. With `--output-format json` a run prints nothing until it ends, and a review can run past five minutes. A Codex session once took six silent minutes for a hang and killed two reviewers that were still working. Before you stop one, look at its session record (Claude Code: `~/.claude/projects/<cwd with each / as ->/`, Grok: `~/.grok/sessions/<cwd, URL-encoded>/`). A record that still grows is working.
 - A process you started dies with the session that started it unless you started it with `claude --bg` or detached it yourself. Say so when the work is long.
 - A seat that writes needs `isolate-checkout`. A seat that reads is held by the product's own mode where one was named above, and by the brief. Check `git status` after either.
 - MCP servers do not cross products, and remaining usage cannot be read. A limit shows up as an error.
