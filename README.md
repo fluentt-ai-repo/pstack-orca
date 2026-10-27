@@ -29,6 +29,8 @@ When Orca starts Claude Code under one of its accounts, it sets `CLAUDE_CONFIG_D
 
 The `agents/` files are not installed by the `skills` CLI. `poteto-mode` and `no-comments` carry what they need and work without them.
 
+The FluentT organization fork also provides [verified release points for littleboy](docs/littleboy-releases.md), consumed by its existing operations console.
+
 ## Get started
 
 1. Run [`/setup-pstack`](./skills/setup-pstack/SKILL.md) (`$setup-pstack` in Codex) once. It asks five questions about budget and model preferences, and one about linking the result into each product's skill folder.
