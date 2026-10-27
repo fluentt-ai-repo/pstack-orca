@@ -13,7 +13,7 @@ const HOME = os.homedir()
 const SKILL_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const REPO = path.resolve(SKILL_DIR, '../../..')
 const TESTBED = process.env.VP_TESTBED || path.join(HOME, 'Documents/pstack-testbed')
-const EVIDENCE = process.env.VP_EVIDENCE || path.join(HOME, 'Documents/pstack-testbed-evidence')
+const EVIDENCE = process.env.VP_EVIDENCE || path.join(HOME, '.cache/verify-pstack/evidence')
 const SELECT_MODEL = path.join(HOME, '.agents/skills/select-model')
 const LOCK = path.join(HOME, '.agents/verify-pstack-select-model.lock')
 const STASH = path.join(HOME, '.agents/verify-pstack-stash')
@@ -312,7 +312,8 @@ function globalDrift() {
     const dir = path.join(GLOBAL_SKILLS, name)
     if (!exists(path.join(dir, 'SKILL.md'))) continue
     installed++
-    const rels = walk(dir)
+    // node_modules is what the bundled scripts install on first use, not part of the skill.
+    const rels = walk(dir).filter((f) => !f.split(path.sep).includes('node_modules'))
     const ids = sh('git', ['hash-object', '--stdin-paths'], { input: rels.map((f) => path.join(dir, f)).join('\n') }).stdout.trim().split('\n')
     const local = new Map(rels.map((f, i) => [f, ids[i]]))
     const same = local.size === files.size && [...files].every(([f, id]) => local.get(f) === id)
@@ -341,7 +342,10 @@ function syncGlobal(opt) {
   const cmd = ['skills', 'add', HEAD_EXPORT, '-g', '-a', 'claude-code', '-a', 'codex', '-a', 'grok', '-s', '*', '-y']
   console.log(`exported skills/ at ${head} to ${HEAD_EXPORT}`)
   if (opt['dry-run']) return console.log(`would run: npx ${cmd.join(' ')}`)
-  const r = spawnSync('npx', cmd, { stdio: 'inherit' })
+  // Under Orca, CLAUDE_CONFIG_DIR points at a profile whose skills folder links to ~/.claude/skills.
+  // The skills CLI computes each link from the profile path, which breaks it under ~/.claude/skills.
+  const { CLAUDE_CONFIG_DIR, ...env } = process.env
+  const r = spawnSync('npx', cmd, { stdio: 'inherit', env })
   if (r.status !== 0) die(`npx skills add exited ${r.status}`)
   const after = globalDrift()
   console.log(after.drift.length ? `still different from HEAD: ${after.drift.join(', ')}` : `global copies match ${head}`)
@@ -409,9 +413,11 @@ const claudeProjectDirs = (cwd) =>
   [...new Set([process.env.CLAUDE_CONFIG_DIR, path.join(HOME, '.claude')].filter(Boolean))].map((d) => path.join(d, 'projects', cwd.replace(/[^a-zA-Z0-9]/g, '-')))
 
 function codexRolloutFiles(sinceMs) {
-  const roots = [path.join(process.env.CODEX_HOME || path.join(HOME, '.codex'), 'sessions')]
+  // An Orca terminal sets CODEX_HOME to an account home, so the same folder can come up twice.
+  const homes = [process.env.CODEX_HOME, path.join(HOME, '.codex')].filter(Boolean)
   const accounts = path.join(ORCA_DATA, 'codex-accounts')
-  if (exists(accounts)) for (const a of fs.readdirSync(accounts)) roots.push(path.join(accounts, a, 'home/sessions'))
+  if (exists(accounts)) for (const a of fs.readdirSync(accounts)) homes.push(path.join(accounts, a, 'home'))
+  const roots = [...new Set(homes.map((h) => path.resolve(h, 'sessions')))]
   const days = new Set()
   for (let t = sinceMs - 86400000; t <= Date.now() + 86400000; t += 3600000) {
     const d = new Date(t)
@@ -511,7 +517,13 @@ function parseCodex(file) {
   let done = false
   for (const r of readJsonl(file)) {
     const p = r.payload || {}
-    if (r.type === 'session_meta') out.cwd = p.cwd
+    // A spawn_agent child writes its own rollout that names its parent, then repeats the parent's session_meta.
+    if (r.type === 'session_meta' && !out.threadId) {
+      out.cwd = p.cwd
+      out.threadId = p.id
+      out.parentThread = p.parent_thread_id ?? p.source?.subagent?.thread_spawn?.parent_thread_id ?? null
+      out.agentPath = p.agent_path ?? null
+    }
     if (r.type === 'turn_context') {
       if (p.model) out.models.add(p.model)
       out.effort = p.effort ?? p.reasoning_effort ?? out.effort
@@ -589,7 +601,7 @@ function findRecord(agent, cwd, marker, sinceMs) {
     } catch {
       continue
     }
-    if (rec.firstPrompt.includes(marker) && !rec.firstPrompt.startsWith(WORKER_PREAMBLE)) hits.push(f)
+    if (rec.firstPrompt.includes(marker) && !rec.firstPrompt.startsWith(WORKER_PREAMBLE) && !rec.parentThread) hits.push(f)
   }
   if (hits.length > 1) console.error(`vp: ${hits.length} records carry ${marker}, using the oldest: ${hits.join(', ')}`)
   return hits.sort((a, b) => fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs)[0] ?? null
@@ -611,6 +623,7 @@ function shown(call, width) {
   if (!input || typeof input !== 'object') return oneLine(input, width)
   if (['Agent', 'Task'].includes(call.name))
     return oneLine(`type=${input.subagent_type ?? '-'} model=${input.model ?? 'unset'} effort=${input.effort ?? 'unset'} background=${input.run_in_background ?? false} "${input.description ?? ''}"`, width)
+  if (call.name === 'spawn_agent') return oneLine(`task=${input.task_name ?? '-'} model=${input.model ?? 'inherited'} effort=${input.reasoning_effort ?? 'inherited'}`, width)
   if (call.name === 'TodoWrite') return `${(input.todos || []).length} items`
   if (call.name === 'update_plan') return `${(input.plan || []).length} steps`
   if (call.name === 'AskUserQuestion') return oneLine((input.questions || []).map((q) => q.question).join(' | '), width)
@@ -621,10 +634,10 @@ function shown(call, width) {
 const callText = (c) => (typeof c.input === 'string' ? c.input : JSON.stringify(c.input ?? ''))
 
 function todoList(rec) {
-  const last = [...rec.calls].reverse().find((c) => c.name === 'TodoWrite' || c.name === 'update_plan')
+  const last = [...rec.calls].reverse().find((c) => ['TodoWrite', 'update_plan', 'todo_write'].includes(c.name))
   if (!last) return []
   const input = typeof last.input === 'string' ? JSON.parse(last.input) : last.input
-  if (last.name === 'TodoWrite') return (input.todos || []).map((t) => `[${t.status}] ${t.content}`)
+  if (last.name !== 'update_plan') return (input.todos || []).map((t) => `[${t.status}] ${t.content}`)
   return (input.plan || []).map((t) => `[${t.status}] ${t.step}`)
 }
 
@@ -667,32 +680,99 @@ function workers(rec, sinceMs) {
 }
 
 // Another product's CLI started headless from a shell (resolve-capability/references/cli-workers.md). No Orca record exists for these.
-const CLI_WORKER = /\b(grok\s+(-p|--single)\b|codex\s+exec\b|claude\s+(-p|--print|--bg)\b)/
+// A script can start one from an argument list too, as ['grok', '-p', ...] or ['/path/to/grok', '--prompt-file', ...].
+const CLI_PRODUCTS = {
+  grok: /\bgrok\s+(-p|--single|--prompt-file)\b|["'](?:[^"'\s]*\/)?grok["']\s*,\s*["'](-p|--single|--prompt-file)["']/,
+  claude: /\bclaude\s+(-p|--print|--bg)\b|["'](?:[^"'\s]*\/)?claude["']\s*,\s*["'](-p|--print|--bg)["']/,
+  codex: /\bcodex\s+exec\b|["'](?:[^"'\s]*\/)?codex["']\s*,\s*["']exec["']/,
+}
 
-// A headless grok -p leaves a session record like any Grok session. Match it by the brief it was given,
-// or, when the brief came from a file, by being the only non-worker Grok session started during the run.
-function grokCliRecord(command, cwd, sinceMs) {
-  const sessions = candidates('grok', cwd || TESTBED, sinceMs).filter((dir) => !parseGrok(dir).firstPrompt.startsWith(WORKER_PREAMBLE))
-  const brief = command.match(/grok\s+(?:-p|--single)\s+"([^"$]{20,})/)?.[1]?.slice(0, 60)
-  const history = (dir) => fs.readFileSync(path.join(dir, 'chat_history.jsonl'), 'utf8')
-  const hit = brief ? sessions.find((dir) => history(dir).includes(JSON.stringify(brief).slice(1, -1))) : sessions.length === 1 ? sessions[0] : null
-  if (!hit) return null
-  const summary = exists(path.join(hit, 'summary.json')) ? readJson(path.join(hit, 'summary.json')) : {}
-  return `${summary.current_model_id ?? '?'} effort ${summary.reasoning_effort ?? '?'} (${hit})`
+// A headless claude -p or grok -p leaves a session record like any session, in whatever folder it ran from.
+// Match it by the brief: the call quotes it either in the command or where a script defines it, so try its
+// long quoted strings, longest first, against records started during the run.
+function cliRecord(product, text, sinceMs, exclude) {
+  const roots =
+    product === 'claude'
+      ? [...new Set([process.env.CLAUDE_CONFIG_DIR, path.join(HOME, '.claude')].filter(Boolean))].map((d) => path.join(d, 'projects'))
+      : [path.join(HOME, '.grok/sessions')]
+  const recent = (p, dir = false) => {
+    try {
+      const st = fs.statSync(p)
+      return st.mtimeMs >= sinceMs && (!dir || st.isDirectory())
+    } catch {
+      return false
+    }
+  }
+  const files = []
+  for (const root of roots.filter(exists))
+    for (const d of fs.readdirSync(root).map((n) => path.join(root, n)).filter((d) => recent(d, true)))
+      for (const n of fs.readdirSync(d)) {
+        const f = product === 'claude' ? path.join(d, n) : path.join(d, n, 'chat_history.jsonl')
+        if ((product === 'grok' || n.endsWith('.jsonl')) && f !== exclude && recent(f)) files.push(f)
+      }
+  // One pass per quote, since a single-quoted brief often sits inside a double-quoted command.
+  const quoted = [/"([^"\\]{30,})/g, /'([^'\\]{30,})/g]
+    .flatMap((re) => [...text.matchAll(re)].map((m) => m[1].trim()))
+    .sort((a, b) => b.length - a.length)
+    .map((s) => s.slice(0, 50))
+  const open = (f) => (product === 'claude' ? parseClaude(f) : parseGrok(path.dirname(f)))
+  for (const q of quoted) {
+    const needle = JSON.stringify(q).slice(1, -1)
+    const hit = files.find((f) => fs.readFileSync(f, 'utf8').includes(needle))
+    if (hit) return open(hit)
+  }
+  // A brief passed in a file or on stdin is not in the call. Fall back to a record that ran under a /tmp folder the call names.
+  // The record's folder name encodes its working directory: URL-encoded for Grok, every non-alphanumeric as - for Claude.
+  const tmp = [...new Set([...text.matchAll(/(?:\/private)?\/tmp\/[\w.-]+/g)].map((m) => m[0].replace(/^\/private/, '')))]
+  const under = (f) => {
+    const dir = path.basename(product === 'claude' ? path.dirname(f) : path.dirname(path.dirname(f)))
+    const cwd = product === 'claude' ? dir : decodeURIComponent(dir)
+    return tmp.some((t) => [t, `/private${t}`].some((p) => (product === 'claude' ? cwd.startsWith(p.replace(/[^a-zA-Z0-9]/g, '-')) : cwd.startsWith(p))))
+  }
+  const hit = tmp.length ? files.find(under) : null
+  return hit ? open(hit) : null
 }
 
 function cliWorkers(rec, width, sinceMs = 0) {
-  return rec.calls
-    .map((c, i) => ({ c, n: i + 1 }))
-    .filter(({ c }) => CLI_WORKER.test(callText(c)))
-    .map(({ c, n }) => {
-      const out = String(c.result ?? '')
-      const usage = out.match(/"modelUsage"\s*:\s*\{\s*"([^"]+)"/)
-      const model = out.match(/"(?:model|model_id|current_model_id)"\s*:\s*"([^"]+)"/)
-      const command = typeof c.input === 'object' && c.input !== null ? String(c.input.command ?? c.input.cmd ?? '') : String(c.input ?? '')
-      const record = /\bgrok\s+(-p|--single)\b/.test(command) ? grokCliRecord(command, rec.cwd, sinceMs) : null
-      return { n, shown: shown(c, width), ran: record ?? usage?.[1] ?? model?.[1] ?? null, output: oneLine(out, 300) }
+  const out = []
+  rec.calls.forEach((c, i) => {
+    const text = callText(c)
+    // A search for a running CLI (ps | rg 'claude -p') names it without starting it.
+    const started = text.replace(/\b(?:rg|grep|pgrep|pkill)\s[^;|&\n"]*/g, '')
+    const products = Object.keys(CLI_PRODUCTS).filter((p) => CLI_PRODUCTS[p].test(started))
+    const result = String(c.result ?? '')
+    for (const product of products) {
+      const own = product === 'codex' ? null : cliRecord(product, text, sinceMs, rec.file)
+      // The call's output names a model only for the one product a single-CLI call started.
+      const usage = products.length === 1 ? result.match(/"modelUsage"\s*:\s*\{\s*"([^"]+)"/)?.[1] ?? result.match(/"(?:model|model_id|current_model_id)"\s*:\s*"([^"]+)"/)?.[1] : null
+      const ran = own ? `${[...own.models].join(', ') || '?'} effort ${own.effort ?? '?'} (${own.file})` : usage ?? null
+      out.push({ n: i + 1, product, shown: shown(c, width), ran, output: oneLine(result, 300), record: own?.file ?? null })
+    }
+  })
+  return out
+}
+
+// Codex's spawn_agent children, found by the parent thread id in their own rollouts, grandchildren included.
+function codexSubagents(rec, sinceMs) {
+  const kids = codexRolloutFiles(sinceMs)
+    .map((f) => {
+      try {
+        return parseCodex(f)
+      } catch {
+        return null
+      }
     })
+    .filter((k) => k?.parentThread)
+  const out = []
+  const parents = [rec.threadId]
+  while (parents.length) {
+    const id = parents.shift()
+    for (const k of kids.filter((x) => x.parentThread === id)) {
+      out.push({ agentType: k.agentPath, model: [...k.models].join(', ') || null, effort: k.effort, finished: k.done, description: path.basename(k.file), file: k.file })
+      parents.push(k.threadId)
+    }
+  }
+  return out
 }
 
 function tmpDirs(rec, sinceMs) {
@@ -757,8 +837,8 @@ function facts(rec, sinceMs, width) {
     select_model_touches: rec.calls.map((c, i) => ({ n: i + 1, name: c.name, shown: shown(c, width) })).filter((c, i) => callText(rec.calls[i]).includes('select-model')),
     todo: todoList(rec),
     subagents: [
-      ...rec.calls.filter((c) => ['Agent', 'Task'].includes(c.name)).map((c) => ({ from: 'tool call', shown: shown(c, 400) })),
-      ...rec.subagents.map((s) => ({ from: 'subagent meta', shown: `type=${s.agentType} model=${s.model ?? 'unset'} effort=${s.effort ?? 'unset'} finished=${s.finished} "${s.description ?? ''}"` })),
+      ...rec.calls.filter((c) => ['Agent', 'Task', 'spawn_agent'].includes(c.name)).map((c) => ({ from: 'tool call', shown: shown(c, 400) })),
+      ...(rec.agent === 'codex' ? codexSubagents(rec, sinceMs) : rec.subagents).map((s) => ({ from: rec.agent === 'codex' ? 'own record' : 'subagent meta', shown: `type=${s.agentType} model=${s.model ?? 'unset'} effort=${s.effort ?? 'unset'} finished=${s.finished} "${s.description ?? ''}"`, record: s.file ?? null })),
     ],
     workers: workers(rec, sinceMs),
     cli_workers: cliWorkers(rec, width, sinceMs),
@@ -791,7 +871,7 @@ function render(f, header = []) {
   }
   L.push('', 'CLI workers (another product started from the shell):')
   if (!f.cli_workers.length) L.push('  none')
-  for (const w of f.cli_workers) L.push(`  call ${w.n}: ${w.shown}`, `      ran: ${w.ran ?? 'not named in the output'}. output: ${w.output || '(none yet)'}`)
+  for (const w of f.cli_workers) L.push(`  call ${w.n} (${w.product}): ${w.shown}`,`      ran: ${w.ran ?? 'not named in the output'}. output: ${w.output || '(none yet)'}`)
   if (f.tmp_dirs.length) L.push('', 'temp dirs the run created:', ...f.tmp_dirs.map((d) => `  ${d}`))
   L.push('', 'final reply:', f.final_reply || '(none yet)')
   return L.join('\n')
@@ -1015,6 +1095,8 @@ function read(args) {
   const copy = (src, name) => fs.cpSync(src, path.join(dir, 'records', name), { recursive: true })
   copy(file, path.basename(file))
   for (const w of f.workers) if (w.ran?.record) copy(w.ran.record, `worker-${w.id}-${path.basename(w.ran.record)}`)
+  for (const s of f.subagents) if (s.record) copy(s.record, `subagent-${path.basename(s.record)}`)
+  for (const w of f.cli_workers) if (w.record) copy(w.record, `cli-${w.product}-${path.basename(w.record)}`)
   if (r.agent === 'claude' && exists(file.replace(/\.jsonl$/, ''))) copy(file.replace(/\.jsonl$/, ''), path.basename(file, '.jsonl'))
   writeJson(path.join(dir, 'facts.json'), { ...f, after, before, void: smChanged, new_testbed_changes: newResidue })
   fs.writeFileSync(path.join(dir, 'summary.txt'), `${text}\n`)
@@ -1211,6 +1293,10 @@ function doctor() {
   else if (g.drift.length) warn.push(`global copies differ from HEAD: ${g.drift.join(', ')}. Claude Code prefers them over the testbed's copies. Run vp sync --global to install HEAD`)
   else ok(`global pstack copies (${g.installed} of ${g.total}) match HEAD`)
   if (g.orphans.length) warn.push(`orphan global skills (installed from this repo, no longer in it): ${g.orphans.join(', ')}. Agents can still load them. Only the user removes them: npx skills remove -g <name>`)
+  const brokenLinks = GLOBAL_LINK_DIRS.slice(1).flatMap((dir) =>
+    [...g.headNames].filter((n) => { try { return fs.lstatSync(path.join(dir, n)).isSymbolicLink() && !exists(path.join(dir, n)) } catch { return false } })
+      .map((n) => `${path.relative(HOME, dir)}/${n}`))
+  if (brokenLinks.length) warn.push(`${brokenLinks.length} global skill links resolve to nothing (${brokenLinks.slice(0, 3).join(', ')}${brokenLinks.length > 3 ? ', ...' : ''}). An install run under Orca's CLAUDE_CONFIG_DIR writes them. Relink each as ../../.agents/skills/<name>`)
   const testbedOrphans = exists(path.join(TESTBED, '.agents/skills'))
     ? fs.readdirSync(path.join(TESTBED, '.agents/skills')).filter((n) => exists(path.join(TESTBED, '.agents/skills', n, 'SKILL.md')) && !g.headNames.has(n))
     : []
