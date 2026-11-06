@@ -22,7 +22,7 @@ Confirmed 2026-10-23 from Claude Code 2.1.309. Orca: yes, 1.4.237. This is a sna
 ## codex
 
 - Models: gpt-6.1-sol, gpt-6-sol, gpt-6-astra, gpt-5.6-sol, gpt-5.6-terra (low,medium,high,xhigh,max,ultra); gpt-6-luna, gpt-5.6-luna (low,medium,high,xhigh,max).
-- Start from here: `orca orchestration worker-start --agent codex --model <m> --effort <e>`, or `codex exec`.
+- Start from here: `orca orchestration worker-start --agent codex --model <m> --effort <e>`, or `codex exec ... < /dev/null`.
 - Choose the model at start: yes.
 - Loads this user's MCP servers: no (a worker loads only its own agent's MCP configuration).
 - Read-only types: none enforced. Say so in the brief, use `--worktree current`, check `git status`.
